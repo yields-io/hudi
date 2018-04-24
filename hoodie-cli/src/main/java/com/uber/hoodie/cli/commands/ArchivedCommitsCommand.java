@@ -19,6 +19,9 @@ package com.uber.hoodie.cli.commands;
 import com.uber.hoodie.avro.model.HoodieArchivedMetaEntry;
 import com.uber.hoodie.cli.HoodieCLI;
 import com.uber.hoodie.cli.HoodiePrintHelper;
+import com.uber.hoodie.cli.TableBuffer;
+import com.uber.hoodie.cli.TableFieldType;
+import com.uber.hoodie.cli.TableHeader;
 import com.uber.hoodie.common.model.HoodieLogFile;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.log.HoodieLogFormat;
@@ -26,7 +29,9 @@ import com.uber.hoodie.common.table.log.block.HoodieAvroDataBlock;
 import com.uber.hoodie.common.util.FSUtils;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
@@ -47,16 +52,29 @@ public class ArchivedCommitsCommand implements CommandMarker {
   }
 
   @CliCommand(value = "show archived commits", help = "Read commits from archived files and show details")
-  public String showCommits(@CliOption(key = {
-      "limit"}, mandatory = false, help = "Limit commits", unspecifiedDefaultValue = "10") final Integer limit)
-      throws IOException {
+  public String showCommits(
+      @CliOption(key = {"limit"}, mandatory = false, help = "Limit commits", unspecifiedDefaultValue = "10")
+      final Integer limit,
+      @CliOption(key = {"sortBy"}, mandatory = false, help = "Sorting Field", unspecifiedDefaultValue = "")
+      final String sortByField,
+      @CliOption(key = {"desc"}, mandatory = false, help = "Ordering", unspecifiedDefaultValue = "false")
+      final boolean descending,
+      @CliOption(key = {"headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false")
+      final boolean headerOnly) throws IOException {
+
+    TableHeader header = new TableHeader()
+        .addTableHeaderField("CommitTime", TableFieldType.NUMERIC)
+        .addTableHeaderField("CommitType", TableFieldType.TEXT)
+        .addTableHeaderField("CommitDetails", TableFieldType.TEXT);
+    if (headerOnly) {
+      return HoodiePrintHelper.print(header);
+    }
 
     System.out.println("===============> Showing only " + limit + " archived commits <===============");
     String basePath = HoodieCLI.tableMetadata.getBasePath();
     FileStatus[] fsStatuses = FSUtils.getFs(basePath, HoodieCLI.conf)
         .globStatus(new Path(basePath + "/.hoodie/.commits_.archive*"));
     List<String[]> allCommits = new ArrayList<>();
-    int commits = 0;
     for (FileStatus fs : fsStatuses) {
       //read the archived file
       HoodieLogFormat.Reader reader = HoodieLogFormat.newReader(FSUtils.getFs(basePath, HoodieCLI.conf),
@@ -68,20 +86,18 @@ public class ArchivedCommitsCommand implements CommandMarker {
         HoodieAvroDataBlock blk = (HoodieAvroDataBlock) reader.next();
         List<IndexedRecord> records = blk.getRecords();
         readRecords.addAll(records);
-        if (commits == limit) {
-          break;
-        }
-        commits++;
       }
       List<String[]> readCommits = readRecords.stream().map(r -> (GenericRecord) r).map(r -> readCommit(r))
           .collect(Collectors.toList());
       allCommits.addAll(readCommits);
-      if (commits == limit) {
-        break;
-      }
     }
-    return HoodiePrintHelper.print(new String[] {"CommitTime", "CommitType", "CommitDetails"},
-        allCommits.toArray(new String[allCommits.size()][]));
+
+
+    TableBuffer buffer = new TableBuffer(header, new HashMap<>(),
+        Optional.ofNullable(sortByField.isEmpty() ? null : sortByField),
+        Optional.ofNullable(descending), Optional.ofNullable(limit)).addAllRows(allCommits).flip();
+
+    return HoodiePrintHelper.print(buffer);
   }
 
   private String[] readCommit(GenericRecord record) {
