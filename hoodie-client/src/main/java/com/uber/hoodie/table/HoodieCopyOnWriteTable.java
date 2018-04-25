@@ -200,7 +200,7 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
           "Error in finding the old file path at commit " + commitTime + " at fileLoc: " + fileLoc);
     } else {
       AvroReadSupport.setAvroReadSchema(getHadoopConf(), upsertHandle.getSchema());
-      ParquetReader<IndexedRecord> reader = AvroParquetReader.builder(upsertHandle.getOldFilePath())
+      ParquetReader<IndexedRecord> reader = AvroParquetReader.<IndexedRecord>builder(upsertHandle.getOldFilePath())
           .withConf(getHadoopConf()).build();
       final ExecutorService writerService = Executors.newFixedThreadPool(1);
       try {
