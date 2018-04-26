@@ -99,11 +99,11 @@ public class StatsCommand implements CommandMarker {
   }
 
   private Comparable[] printFileSizeHistogram(String commitTime, Snapshot s) {
-    return new Comparable[]{commitTime, Double.valueOf(s.getMin()).toString(),
-        Double.valueOf(s.getValue(0.1)).toString(), Double.valueOf(s.getMedian()).toString(),
-        Double.valueOf(s.getMean()).toString(), Double.valueOf(s.get95thPercentile()).toString(),
-        Double.valueOf(s.getMax()).toString(), String.valueOf(s.size()),
-        Double.valueOf(s.getStdDev()).toString()};
+    return new Comparable[]{commitTime, s.getMin(),
+        s.getValue(0.1), s.getMedian(),
+        s.getMean(), s.get95thPercentile(),
+        s.getMax(), s.size(),
+        s.getStdDev()};
   }
 
   @CliCommand(value = "stats filesizes", help = "File Sizes. Display summary stats on sizes of files")

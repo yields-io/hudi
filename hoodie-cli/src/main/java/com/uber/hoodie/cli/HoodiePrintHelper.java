@@ -63,7 +63,8 @@ public class HoodiePrintHelper {
 
     Table table = new Table(rowHeader, fieldNameToConverterMap,
         Optional.ofNullable(sortByField.isEmpty() ? null : sortByField),
-        Optional.ofNullable(isDescending), Optional.ofNullable(limit)).addAllRows(rows).flip();
+        Optional.ofNullable(isDescending),
+        Optional.ofNullable(limit <= 0 ? null : limit)).addAllRows(rows).flip();
 
     return HoodiePrintHelper.print(table);
   }
