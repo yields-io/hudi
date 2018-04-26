@@ -20,7 +20,6 @@ import dnl.utils.text.table.TextTable;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,7 +61,7 @@ public class HoodiePrintHelper {
       return HoodiePrintHelper.print(rowHeader);
     }
 
-    Table table = new Table(rowHeader, new HashMap<>(),
+    Table table = new Table(rowHeader, fieldNameToConverterMap,
         Optional.ofNullable(sortByField.isEmpty() ? null : sortByField),
         Optional.ofNullable(isDescending), Optional.ofNullable(limit)).addAllRows(rows).flip();
 
