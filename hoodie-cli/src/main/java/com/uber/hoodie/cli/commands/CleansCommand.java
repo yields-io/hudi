@@ -20,8 +20,6 @@ import com.uber.hoodie.avro.model.HoodieCleanMetadata;
 import com.uber.hoodie.avro.model.HoodieCleanPartitionMetadata;
 import com.uber.hoodie.cli.HoodieCLI;
 import com.uber.hoodie.cli.HoodiePrintHelper;
-import com.uber.hoodie.cli.TableBuffer;
-import com.uber.hoodie.cli.TableFieldType;
 import com.uber.hoodie.cli.TableHeader;
 import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
@@ -34,7 +32,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.shell.core.CommandMarker;
 import org.springframework.shell.core.annotation.CliAvailabilityIndicator;
@@ -65,37 +62,29 @@ public class CleansCommand implements CommandMarker {
       @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
       @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
       @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
-      @CliOption(key = {"headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false")
-      final boolean headerOnly) throws IOException {
-
-    TableHeader header = new TableHeader()
-        .addTableHeaderField("CleanTime", TableFieldType.NUMERIC)
-        .addTableHeaderField("EarliestCommandRetained", TableFieldType.TEXT)
-        .addTableHeaderField("Total Files Deleted", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Time Taken", TableFieldType.NUMERIC);
-
-    if (headerOnly) {
-      return HoodiePrintHelper.print(header);
-    }
+      @CliOption(key = {
+          "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
+      throws IOException {
 
     HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
     HoodieTimeline timeline = activeTimeline.getCleanerTimeline().filterCompletedInstants();
     List<HoodieInstant> cleans = timeline.getInstants().collect(Collectors.toList());
-    List<String[]> rows = new ArrayList<>();
+    List<Comparable[]> rows = new ArrayList<>();
     Collections.reverse(cleans);
     for (int i = 0; i < cleans.size(); i++) {
       HoodieInstant clean = cleans.get(i);
       HoodieCleanMetadata cleanMetadata = AvroUtils
           .deserializeHoodieCleanMetadata(timeline.getInstantDetails(clean).get());
-      rows.add(new String[]{clean.getTimestamp(), cleanMetadata.getEarliestCommitToRetain(),
-          String.valueOf(cleanMetadata.getTotalFilesDeleted()), String.valueOf(cleanMetadata.getTimeTakenInMillis())});
+      rows.add(new Comparable[]{clean.getTimestamp(), cleanMetadata.getEarliestCommitToRetain(),
+          cleanMetadata.getTotalFilesDeleted(), cleanMetadata.getTimeTakenInMillis()});
     }
 
-    TableBuffer buffer = new TableBuffer(header, new HashMap<>(),
-        Optional.ofNullable(sortByField.isEmpty() ? null : sortByField),
-        Optional.of(descending),
-        Optional.ofNullable(limit <= 0 ? null : limit)).addAllRows(rows).flip();
-    return HoodiePrintHelper.print(buffer);
+    TableHeader header = new TableHeader()
+        .addTableHeaderField("CleanTime")
+        .addTableHeaderField("EarliestCommandRetained")
+        .addTableHeaderField("Total Files Deleted")
+        .addTableHeaderField("Total Time Taken");
+    return HoodiePrintHelper.print(header, new HashMap<>(), sortByField, descending, limit, headerOnly, rows);
   }
 
   @CliCommand(value = "cleans refresh", help = "Refresh the commits")
@@ -111,17 +100,10 @@ public class CleansCommand implements CommandMarker {
       @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
       @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
       @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
-      @CliOption(key = {"headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false")
-      final boolean headerOnly) throws Exception {
-    TableHeader header = new TableHeader()
-        .addTableHeaderField("Partition Path", TableFieldType.TEXT)
-        .addTableHeaderField("Cleaning policy", TableFieldType.TEXT)
-        .addTableHeaderField("Total Files Successfully Deleted", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Failed Deletions", TableFieldType.NUMERIC);
-    if (headerOnly) {
-      return HoodiePrintHelper.print(header);
+      @CliOption(key = {
+          "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
+      throws Exception {
 
-    }
     HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
     HoodieTimeline timeline = activeTimeline.getCleanerTimeline().filterCompletedInstants();
     HoodieInstant cleanInstant = new HoodieInstant(false, HoodieTimeline.CLEAN_ACTION, commitTime);
@@ -129,22 +111,25 @@ public class CleansCommand implements CommandMarker {
     if (!timeline.containsInstant(cleanInstant)) {
       return "Clean " + commitTime + " not found in metadata " + timeline;
     }
+
     HoodieCleanMetadata cleanMetadata = AvroUtils.deserializeHoodieCleanMetadata(
         timeline.getInstantDetails(cleanInstant).get());
-    List<String[]> rows = new ArrayList<>();
+    List<Comparable[]> rows = new ArrayList<>();
     for (Map.Entry<String, HoodieCleanPartitionMetadata> entry : cleanMetadata.getPartitionMetadata().entrySet()) {
       String path = entry.getKey();
       HoodieCleanPartitionMetadata stats = entry.getValue();
       String policy = stats.getPolicy();
-      String totalSuccessDeletedFiles = String.valueOf(stats.getSuccessDeleteFiles().size());
-      String totalFailedDeletedFiles = String.valueOf(stats.getFailedDeleteFiles().size());
-      rows.add(new String[]{path, policy, totalSuccessDeletedFiles, totalFailedDeletedFiles});
+      Integer totalSuccessDeletedFiles = stats.getSuccessDeleteFiles().size();
+      Integer totalFailedDeletedFiles = stats.getFailedDeleteFiles().size();
+      rows.add(new Comparable[]{path, policy, totalSuccessDeletedFiles, totalFailedDeletedFiles});
     }
 
-    TableBuffer buffer = new TableBuffer(header, new HashMap<>(),
-        Optional.ofNullable(sortByField.isEmpty() ? null : sortByField),
-        Optional.of(descending),
-        Optional.ofNullable(limit <= 0 ? null : limit)).addAllRows(rows).flip();
-    return HoodiePrintHelper.print(buffer);
+    TableHeader header = new TableHeader()
+        .addTableHeaderField("Partition Path")
+        .addTableHeaderField("Cleaning policy")
+        .addTableHeaderField("Total Files Successfully Deleted")
+        .addTableHeaderField("Total Failed Deletions");
+    return HoodiePrintHelper.print(header, new HashMap<>(), sortByField, descending, limit, headerOnly, rows);
+
   }
 }

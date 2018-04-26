@@ -19,8 +19,6 @@ package com.uber.hoodie.cli.commands;
 import com.uber.hoodie.avro.model.HoodieArchivedMetaEntry;
 import com.uber.hoodie.cli.HoodieCLI;
 import com.uber.hoodie.cli.HoodiePrintHelper;
-import com.uber.hoodie.cli.TableBuffer;
-import com.uber.hoodie.cli.TableFieldType;
 import com.uber.hoodie.cli.TableHeader;
 import com.uber.hoodie.common.model.HoodieLogFile;
 import com.uber.hoodie.common.table.HoodieTimeline;
@@ -31,7 +29,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
@@ -53,28 +50,18 @@ public class ArchivedCommitsCommand implements CommandMarker {
 
   @CliCommand(value = "show archived commits", help = "Read commits from archived files and show details")
   public String showCommits(
-      @CliOption(key = {"limit"}, mandatory = false, help = "Limit commits", unspecifiedDefaultValue = "10")
-      final Integer limit,
-      @CliOption(key = {"sortBy"}, mandatory = false, help = "Sorting Field", unspecifiedDefaultValue = "")
-      final String sortByField,
-      @CliOption(key = {"desc"}, mandatory = false, help = "Ordering", unspecifiedDefaultValue = "false")
-      final boolean descending,
-      @CliOption(key = {"headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false")
-      final boolean headerOnly) throws IOException {
-
-    TableHeader header = new TableHeader()
-        .addTableHeaderField("CommitTime", TableFieldType.NUMERIC)
-        .addTableHeaderField("CommitType", TableFieldType.TEXT)
-        .addTableHeaderField("CommitDetails", TableFieldType.TEXT);
-    if (headerOnly) {
-      return HoodiePrintHelper.print(header);
-    }
+      @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "10") final Integer limit,
+      @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
+      @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
+      @CliOption(key = {
+          "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
+      throws IOException {
 
     System.out.println("===============> Showing only " + limit + " archived commits <===============");
     String basePath = HoodieCLI.tableMetadata.getBasePath();
     FileStatus[] fsStatuses = FSUtils.getFs(basePath, HoodieCLI.conf)
         .globStatus(new Path(basePath + "/.hoodie/.commits_.archive*"));
-    List<String[]> allCommits = new ArrayList<>();
+    List<Comparable[]> allCommits = new ArrayList<>();
     for (FileStatus fs : fsStatuses) {
       //read the archived file
       HoodieLogFormat.Reader reader = HoodieLogFormat.newReader(FSUtils.getFs(basePath, HoodieCLI.conf),
@@ -87,59 +74,58 @@ public class ArchivedCommitsCommand implements CommandMarker {
         List<IndexedRecord> records = blk.getRecords();
         readRecords.addAll(records);
       }
-      List<String[]> readCommits = readRecords.stream().map(r -> (GenericRecord) r).map(r -> readCommit(r))
+      List<Comparable[]> readCommits = readRecords.stream().map(r -> (GenericRecord) r).map(r -> readCommit(r))
           .collect(Collectors.toList());
       allCommits.addAll(readCommits);
     }
 
+    TableHeader header = new TableHeader().addTableHeaderField("CommitTime")
+        .addTableHeaderField("CommitType")
+        .addTableHeaderField("CommitDetails");
 
-    TableBuffer buffer = new TableBuffer(header, new HashMap<>(),
-        Optional.ofNullable(sortByField.isEmpty() ? null : sortByField),
-        Optional.ofNullable(descending), Optional.ofNullable(limit)).addAllRows(allCommits).flip();
-
-    return HoodiePrintHelper.print(buffer);
+    return HoodiePrintHelper.print(header, new HashMap<>(), sortByField, descending, limit, headerOnly, allCommits);
   }
 
-  private String[] readCommit(GenericRecord record) {
-    List<String> commitDetails = new ArrayList<>();
+  private Comparable[] readCommit(GenericRecord record) {
+    List<Object> commitDetails = new ArrayList<>();
     try {
       switch (record.get("actionType").toString()) {
         case HoodieTimeline.CLEAN_ACTION: {
-          commitDetails.add(record.get("commitTime").toString());
+          commitDetails.add(record.get("commitTime"));
           commitDetails.add(record.get("actionType").toString());
           commitDetails.add(record.get("hoodieCleanMetadata").toString());
           break;
         }
         case HoodieTimeline.COMMIT_ACTION: {
-          commitDetails.add(record.get("commitTime").toString());
+          commitDetails.add(record.get("commitTime"));
           commitDetails.add(record.get("actionType").toString());
           commitDetails.add(record.get("hoodieCommitMetadata").toString());
           break;
         }
         case HoodieTimeline.DELTA_COMMIT_ACTION: {
-          commitDetails.add(record.get("commitTime").toString());
+          commitDetails.add(record.get("commitTime"));
           commitDetails.add(record.get("actionType").toString());
           commitDetails.add(record.get("hoodieCommitMetadata").toString());
           break;
         }
         case HoodieTimeline.ROLLBACK_ACTION: {
-          commitDetails.add(record.get("commitTime").toString());
+          commitDetails.add(record.get("commitTime"));
           commitDetails.add(record.get("actionType").toString());
           commitDetails.add(record.get("hoodieRollbackMetadata").toString());
           break;
         }
         case HoodieTimeline.SAVEPOINT_ACTION: {
-          commitDetails.add(record.get("commitTime").toString());
+          commitDetails.add(record.get("commitTime"));
           commitDetails.add(record.get("actionType").toString());
           commitDetails.add(record.get("hoodieSavePointMetadata").toString());
           break;
         }
         default:
-          return commitDetails.toArray(new String[commitDetails.size()]);
+          return commitDetails.toArray(new Comparable[commitDetails.size()]);
       }
     } catch (Exception e) {
       e.printStackTrace();
     }
-    return commitDetails.toArray(new String[commitDetails.size()]);
+    return commitDetails.toArray(new Comparable[commitDetails.size()]);
   }
 }

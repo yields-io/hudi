@@ -18,8 +18,6 @@ package com.uber.hoodie.cli.commands;
 
 import com.uber.hoodie.cli.HoodieCLI;
 import com.uber.hoodie.cli.HoodiePrintHelper;
-import com.uber.hoodie.cli.TableBuffer;
-import com.uber.hoodie.cli.TableFieldType;
 import com.uber.hoodie.cli.TableHeader;
 import com.uber.hoodie.cli.utils.InputStreamConsumer;
 import com.uber.hoodie.cli.utils.SparkUtil;
@@ -36,7 +34,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.spark.launcher.SparkLauncher;
@@ -74,39 +71,26 @@ public class CommitsCommand implements CommandMarker {
       "limit"}, mandatory = false, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
       @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
       @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
-      @CliOption(key = {"headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false")
-      final boolean headerOnly) throws IOException {
-
-    TableHeader header = new TableHeader()
-        .addTableHeaderField("CommitTime", TableFieldType.TEXT)
-        .addTableHeaderField("Total Bytes Written", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Files Added", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Files Updated", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Partitions Written", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Records Written", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Update Records Written", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Errors", TableFieldType.NUMERIC);
-
-    if (headerOnly) {
-      return HoodiePrintHelper.print(header);
-    }
+      @CliOption(key = {
+          "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
+      throws IOException {
 
     HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
     HoodieTimeline timeline = activeTimeline.getCommitsTimeline().filterCompletedInstants();
     List<HoodieInstant> commits = timeline.getInstants().collect(Collectors.toList());
-    List<String[]> rows = new ArrayList<>();
+    List<Comparable[]> rows = new ArrayList<>();
     Collections.reverse(commits);
     for (int i = 0; i < commits.size(); i++) {
       HoodieInstant commit = commits.get(i);
       HoodieCommitMetadata commitMetadata = HoodieCommitMetadata.fromBytes(timeline.getInstantDetails(commit).get());
-      rows.add(new String[] {commit.getTimestamp(),
-          Long.valueOf(commitMetadata.fetchTotalBytesWritten()).toString(),
-          String.valueOf(commitMetadata.fetchTotalFilesInsert()),
-          String.valueOf(commitMetadata.fetchTotalFilesUpdated()),
-          String.valueOf(commitMetadata.fetchTotalPartitionsWritten()),
-          String.valueOf(commitMetadata.fetchTotalRecordsWritten()),
-          String.valueOf(commitMetadata.fetchTotalUpdateRecordsWritten()),
-          String.valueOf(commitMetadata.fetchTotalWriteErrors())});
+      rows.add(new Comparable[]{commit.getTimestamp(),
+          commitMetadata.fetchTotalBytesWritten(),
+          commitMetadata.fetchTotalFilesInsert(),
+          commitMetadata.fetchTotalFilesUpdated(),
+          commitMetadata.fetchTotalPartitionsWritten(),
+          commitMetadata.fetchTotalRecordsWritten(),
+          commitMetadata.fetchTotalUpdateRecordsWritten(),
+          commitMetadata.fetchTotalWriteErrors()});
     }
 
     Map<String, Function<Object, String>> fieldNameToConverterMap = new HashMap<>();
@@ -114,11 +98,16 @@ public class CommitsCommand implements CommandMarker {
       return NumericUtils.humanReadableByteCount((Double.valueOf(entry.toString())));
     });
 
-    TableBuffer buffer = new TableBuffer(header, fieldNameToConverterMap,
-        Optional.ofNullable(sortByField.isEmpty() ? null : sortByField),
-        Optional.of(descending),
-        Optional.ofNullable(limit <= 0 ? null : limit)).addAllRows(rows).flip();
-    return HoodiePrintHelper.print(buffer);
+    TableHeader header = new TableHeader()
+        .addTableHeaderField("CommitTime")
+        .addTableHeaderField("Total Bytes Written")
+        .addTableHeaderField("Total Files Added")
+        .addTableHeaderField("Total Files Updated")
+        .addTableHeaderField("Total Partitions Written")
+        .addTableHeaderField("Total Records Written")
+        .addTableHeaderField("Total Update Records Written")
+        .addTableHeaderField("Total Errors");
+    return HoodiePrintHelper.print(header, fieldNameToConverterMap, sortByField, descending, limit, headerOnly, rows);
   }
 
   @CliCommand(value = "commits refresh", help = "Refresh the commits")
@@ -160,21 +149,9 @@ public class CommitsCommand implements CommandMarker {
       @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
       @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
       @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
-      @CliOption(key = {"headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false")
-      final boolean headerOnly) throws Exception {
-
-    TableHeader header = new TableHeader()
-        .addTableHeaderField("Partition Path", TableFieldType.TEXT)
-        .addTableHeaderField("Total Files Added", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Files Updated", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Records Inserted", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Records Updated", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Bytes Written", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Errors", TableFieldType.NUMERIC);
-
-    if (headerOnly) {
-      return HoodiePrintHelper.print(header);
-    }
+      @CliOption(key = {
+          "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
+      throws Exception {
 
     HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
     HoodieTimeline timeline = activeTimeline.getCommitsTimeline().filterCompletedInstants();
@@ -184,7 +161,7 @@ public class CommitsCommand implements CommandMarker {
       return "Commit " + commitTime + " not found in Commits " + timeline;
     }
     HoodieCommitMetadata meta = HoodieCommitMetadata.fromBytes(activeTimeline.getInstantDetails(commitInstant).get());
-    List<String[]> rows = new ArrayList<String[]>();
+    List<Comparable[]> rows = new ArrayList<>();
     for (Map.Entry<String, List<HoodieWriteStat>> entry : meta.getPartitionToWriteStats().entrySet()) {
       String path = entry.getKey();
       List<HoodieWriteStat> stats = entry.getValue();
@@ -205,9 +182,9 @@ public class CommitsCommand implements CommandMarker {
         totalBytesWritten += stat.getTotalWriteBytes();
         totalWriteErrors += stat.getTotalWriteErrors();
       }
-      rows.add(new String[] {path, String.valueOf(totalFilesAdded), String.valueOf(totalFilesUpdated),
-          String.valueOf(totalRecordsInserted), String.valueOf(totalRecordsUpdated),
-          Long.valueOf(totalBytesWritten).toString(), String.valueOf(totalWriteErrors)});
+      rows.add(new Comparable[]{path, totalFilesAdded, totalFilesUpdated,
+          totalRecordsInserted, totalRecordsUpdated,
+          totalBytesWritten, totalWriteErrors});
     }
 
     Map<String, Function<Object, String>> fieldNameToConverterMap = new HashMap<>();
@@ -215,11 +192,16 @@ public class CommitsCommand implements CommandMarker {
       return NumericUtils.humanReadableByteCount((Long.valueOf(entry.toString())));
     });
 
-    TableBuffer buffer = new TableBuffer(header, fieldNameToConverterMap,
-        Optional.ofNullable(sortByField.isEmpty() ? null : sortByField),
-        Optional.of(descending),
-        Optional.ofNullable(limit <= 0 ? null : limit)).addAllRows(rows).flip();
-    return HoodiePrintHelper.print(buffer);
+    TableHeader header = new TableHeader()
+        .addTableHeaderField("Partition Path")
+        .addTableHeaderField("Total Files Added")
+        .addTableHeaderField("Total Files Updated")
+        .addTableHeaderField("Total Records Inserted")
+        .addTableHeaderField("Total Records Updated")
+        .addTableHeaderField("Total Bytes Written")
+        .addTableHeaderField("Total Errors");
+
+    return HoodiePrintHelper.print(header, fieldNameToConverterMap, sortByField, descending, limit, headerOnly, rows);
   }
 
   @CliCommand(value = "commit showfiles", help = "Show file level details of a commit")
@@ -228,21 +210,9 @@ public class CommitsCommand implements CommandMarker {
       @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
       @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
       @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
-      @CliOption(key = {"headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false")
-      final boolean headerOnly) throws Exception {
-
-    TableHeader header = new TableHeader()
-        .addTableHeaderField("Partition Path", TableFieldType.TEXT)
-        .addTableHeaderField("File ID", TableFieldType.TEXT)
-        .addTableHeaderField("Previous Commit", TableFieldType.TEXT)
-        .addTableHeaderField("Total Records Updated", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Records Written", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Bytes Written", TableFieldType.NUMERIC)
-        .addTableHeaderField("Total Errors", TableFieldType.NUMERIC);
-
-    if (headerOnly) {
-      return HoodiePrintHelper.print(header);
-    }
+      @CliOption(key = {
+          "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
+      throws Exception {
 
     HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
     HoodieTimeline timeline = activeTimeline.getCommitsTimeline().filterCompletedInstants();
@@ -252,22 +222,27 @@ public class CommitsCommand implements CommandMarker {
       return "Commit " + commitTime + " not found in Commits " + timeline;
     }
     HoodieCommitMetadata meta = HoodieCommitMetadata.fromBytes(activeTimeline.getInstantDetails(commitInstant).get());
-    List<String[]> rows = new ArrayList<String[]>();
+    List<Comparable[]> rows = new ArrayList<>();
     for (Map.Entry<String, List<HoodieWriteStat>> entry : meta.getPartitionToWriteStats().entrySet()) {
       String path = entry.getKey();
       List<HoodieWriteStat> stats = entry.getValue();
       for (HoodieWriteStat stat : stats) {
-        rows.add(new String[] {path, stat.getFileId(), stat.getPrevCommit(), String.valueOf(stat.getNumUpdateWrites()),
-            String.valueOf(stat.getNumWrites()), String.valueOf(stat.getTotalWriteBytes()),
-            String.valueOf(stat.getTotalWriteErrors())});
+        rows.add(new Comparable[]{path, stat.getFileId(), stat.getPrevCommit(), stat.getNumUpdateWrites(),
+            stat.getNumWrites(), stat.getTotalWriteBytes(),
+            stat.getTotalWriteErrors()});
       }
     }
 
-    TableBuffer buffer = new TableBuffer(header, new HashMap<>(),
-        Optional.ofNullable(sortByField.isEmpty() ? null : sortByField),
-        Optional.of(descending),
-        Optional.ofNullable(limit <= 0 ? null : limit)).addAllRows(rows).flip();
-    return HoodiePrintHelper.print(buffer);
+    TableHeader header = new TableHeader()
+        .addTableHeaderField("Partition Path")
+        .addTableHeaderField("File ID")
+        .addTableHeaderField("Previous Commit")
+        .addTableHeaderField("Total Records Updated")
+        .addTableHeaderField("Total Records Written")
+        .addTableHeaderField("Total Bytes Written")
+        .addTableHeaderField("Total Errors");
+
+    return HoodiePrintHelper.print(header, new HashMap<>(), sortByField, descending, limit, headerOnly, rows);
   }
 
   @CliAvailabilityIndicator({"commits compare"})

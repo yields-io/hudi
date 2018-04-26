@@ -17,10 +17,7 @@
 package com.uber.hoodie.cli;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Header for the table to be rendered
@@ -30,51 +27,27 @@ public class TableHeader {
   // List of fields (columns)
   private final List<String> fieldNames = new ArrayList<>();
 
-  // Fields to their types
-  private final Map<String, TableFieldType> fieldTypes = new HashMap<>();
-
   /**
    * Add a field (column) to table
+   *
    * @param fieldName field Name
-   * @param fieldType field Type
-   * @return
    */
-  public TableHeader addTableHeaderField(String fieldName, TableFieldType fieldType) {
+  public TableHeader addTableHeaderField(String fieldName) {
     fieldNames.add(fieldName);
-    fieldTypes.put(fieldName, fieldType);
     return this;
   }
 
   /**
    * Get all field names
-   * @return
    */
   public List<String> getFieldNames() {
     return fieldNames;
   }
 
   /**
-   * Get type for a field name
-   * @param fieldName Name of the field
-   * @return
-   */
-  public TableFieldType getFieldType(String fieldName) {
-    return fieldTypes.get(fieldName);
-  }
-
-  /**
-   * Get Comparator to be used for the field
-   * @param fieldName
-   * @return
-   */
-  public Comparator<Object> getComparator(String fieldName) {
-    return fieldTypes.get(fieldName).getComparator();
-  }
-
-  /**
    * Index of the field in the table
+   *
    * @param fieldName Field Name
-   * @return
    */
   public int indexOf(String fieldName) {
     return fieldNames.indexOf(fieldName);
@@ -82,8 +55,6 @@ public class TableHeader {
 
   /**
    * Lookup field by offset
-   * @param index
-   * @return
    */
   public String get(int index) {
     return fieldNames.get(index);
@@ -91,7 +62,6 @@ public class TableHeader {
 
   /**
    * Get number of fields in the table
-   * @return
    */
   public int getNumFields() {
     return fieldNames.size();

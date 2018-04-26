@@ -20,8 +20,6 @@ import com.beust.jcommander.internal.Maps;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.hoodie.cli.HoodieCLI;
 import com.uber.hoodie.cli.HoodiePrintHelper;
-import com.uber.hoodie.cli.TableBuffer;
-import com.uber.hoodie.cli.TableFieldType;
 import com.uber.hoodie.cli.TableHeader;
 import com.uber.hoodie.common.model.HoodieLogFile;
 import com.uber.hoodie.common.model.HoodieRecord;
@@ -76,17 +74,6 @@ public class HoodieLogFileCommand implements CommandMarker {
       @CliOption(key = {"headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false")
       final boolean headerOnly) throws IOException {
 
-    TableHeader header = new TableHeader()
-        .addTableHeaderField("InstantTime", TableFieldType.TEXT)
-        .addTableHeaderField("RecordCount", TableFieldType.NUMERIC)
-        .addTableHeaderField("BlockType", TableFieldType.TEXT)
-        .addTableHeaderField("HeaderMetadata", TableFieldType.TEXT)
-        .addTableHeaderField("FooterMetadata", TableFieldType.TEXT);
-
-    if (headerOnly) {
-      return HoodiePrintHelper.print(header);
-    }
-
     FileSystem fs = HoodieCLI.tableMetadata.getFs();
     List<String> logFilePaths = Arrays.stream(fs.globStatus(new Path(logFilePathPattern)))
         .map(status -> status.getPath().toString()).collect(Collectors.toList());
@@ -139,7 +126,7 @@ public class HoodieLogFileCommand implements CommandMarker {
         }
       }
     }
-    List<String[]> rows = new ArrayList<>();
+    List<Comparable[]> rows = new ArrayList<>();
     int i = 0;
     ObjectMapper objectMapper = new ObjectMapper();
     for (Map.Entry<String, List<Tuple3<HoodieLogBlockType,
@@ -148,9 +135,9 @@ public class HoodieLogFileCommand implements CommandMarker {
       String instantTime = entry.getKey().toString();
       for (Tuple3<HoodieLogBlockType, Tuple2<Map<HeaderMetadataType, String>,
           Map<HeaderMetadataType, String>>, Integer> tuple3 : entry.getValue()) {
-        String[] output = new String[5];
+        Comparable[] output = new Comparable[5];
         output[0] = instantTime;
-        output[1] = String.valueOf(tuple3._3());
+        output[1] = tuple3._3();
         output[2] = tuple3._1().toString();
         output[3] = objectMapper.writeValueAsString(tuple3._2()._1());
         output[4] = objectMapper.writeValueAsString(tuple3._2()._2());
@@ -159,11 +146,14 @@ public class HoodieLogFileCommand implements CommandMarker {
       }
     }
 
-    TableBuffer buffer = new TableBuffer(header, new HashMap<>(),
-        Optional.ofNullable(sortByField.isEmpty() ? null : sortByField),
-        Optional.of(descending),
-        Optional.ofNullable(limit <= 0 ? null : limit)).addAllRows(rows).flip();
-    return HoodiePrintHelper.print(buffer);
+    TableHeader header = new TableHeader()
+        .addTableHeaderField("InstantTime")
+        .addTableHeaderField("RecordCount")
+        .addTableHeaderField("BlockType")
+        .addTableHeaderField("HeaderMetadata")
+        .addTableHeaderField("FooterMetadata");
+
+    return HoodiePrintHelper.print(header, new HashMap<>(), sortByField, descending, limit, headerOnly, rows);
   }
 
   @CliCommand(value = "show logfile records", help = "Read records from log files")

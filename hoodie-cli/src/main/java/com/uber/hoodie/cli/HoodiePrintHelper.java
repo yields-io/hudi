@@ -20,6 +20,11 @@ import dnl.utils.text.table.TextTable;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Helper class to render table for hoodie-cli
@@ -38,11 +43,38 @@ public class HoodiePrintHelper {
   }
 
   /**
-   * Render rows in Table Buffer
-   * @param buffer Table Buffer
+   * Serialize Table to printable string
+   * @param rowHeader Row Header
+   * @param fieldNameToConverterMap  Field Specific Converters
+   * @param sortByField Sorting field
+   * @param isDescending Order
+   * @param limit Limit
+   * @param headerOnly Headers only
+   * @param rows List of rows
+   * @return Serialized form for printing
+   */
+  public static String print(TableHeader rowHeader,
+      Map<String, Function<Object, String>> fieldNameToConverterMap,
+      String sortByField, boolean isDescending, Integer limit, boolean headerOnly,
+      List<Comparable[]> rows) {
+
+    if (headerOnly) {
+      return HoodiePrintHelper.print(rowHeader);
+    }
+
+    Table table = new Table(rowHeader, new HashMap<>(),
+        Optional.ofNullable(sortByField.isEmpty() ? null : sortByField),
+        Optional.ofNullable(isDescending), Optional.ofNullable(limit)).addAllRows(rows).flip();
+
+    return HoodiePrintHelper.print(table);
+  }
+
+  /**
+   * Render rows in Table
+   * @param buffer Table
    * @return output
    */
-  public static String print(TableBuffer buffer) {
+  private static String print(Table buffer) {
     String[] header = new String[buffer.getFieldNames().size()];
     buffer.getFieldNames().toArray(header);
 
@@ -58,7 +90,7 @@ public class HoodiePrintHelper {
    * @param header Table Header
    * @return output
    */
-  public static String print(TableHeader header) {
+  private static String print(TableHeader header) {
     String[] head = new String[header.getFieldNames().size()];
     header.getFieldNames().toArray(head);
     TextTable textTable = new TextTable(head, new String[][]{});
