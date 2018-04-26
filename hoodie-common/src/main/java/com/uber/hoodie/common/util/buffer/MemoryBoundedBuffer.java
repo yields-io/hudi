@@ -14,10 +14,11 @@
  *  limitations under the License.
  */
 
-package com.uber.hoodie.func;
+package com.uber.hoodie.common.util.buffer;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.uber.hoodie.common.util.SizeEstimator;
 import com.uber.hoodie.exception.HoodieException;
 import java.util.Iterator;
 import java.util.Optional;
@@ -30,17 +31,18 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.apache.spark.util.SizeEstimator;
 
 /**
  * Used for buffering input records. Buffer limit is controlled by {@link #bufferMemoryLimit}. It
  * internally samples every {@link #RECORD_SAMPLING_RATE}th record and adjusts number of records in
  * buffer accordingly. This is done to ensure that we don't OOM.
  *
+ * This buffer supports multiple producer single consumer pattern.
+ *
  * @param <I> input payload data type
  * @param <O> output payload data type
  */
-public class BufferedIterator<I, O> implements Iterator<O> {
+public class MemoryBoundedBuffer<I, O> implements Iterable<O> {
 
   // interval used for polling records in the queue.
   public static final int RECORD_POLL_INTERVAL_SEC = 5;
@@ -48,7 +50,7 @@ public class BufferedIterator<I, O> implements Iterator<O> {
   public static final int RECORD_SAMPLING_RATE = 64;
   // maximum records that will be cached
   private static final int RECORD_CACHING_LIMIT = 128 * 1024;
-  private static Logger logger = LogManager.getLogger(BufferedIterator.class);
+  private static Logger logger = LogManager.getLogger(MemoryBoundedBuffer.class);
   // It indicates number of records to cache. We will be using sampled record's average size to
   // determine how many
   // records we should cache and will change (increase/decrease) permits accordingly.
@@ -61,8 +63,6 @@ public class BufferedIterator<I, O> implements Iterator<O> {
       LinkedBlockingQueue<>();
   // maximum amount of memory to be used for buffering records.
   private final long bufferMemoryLimit;
-  // original iterator from where records are read for buffering.
-  private final Iterator<I> inputIterator;
   // it holds the root cause of the exception in case either buffering records (reading from
   // inputIterator) fails or
   // thread reading records from buffer fails.
@@ -78,16 +78,39 @@ public class BufferedIterator<I, O> implements Iterator<O> {
   public long avgRecordSizeInBytes = 0;
   // indicates number of samples collected so far.
   private long numSamples = 0;
-  // next record to be read from buffer.
-  private O nextRecord;
   // Function to transform the input payload to the expected output payload
-  private Function<I, O> bufferedIteratorTransform;
+  private final Function<I, O> bufferedIteratorTransform;
 
-  public BufferedIterator(final Iterator<I> iterator, final long bufferMemoryLimit,
-      final Function<I, O> bufferedIteratorTransform) {
-    this.inputIterator = iterator;
+  // Payload Size Estimator
+  private final SizeEstimator<O> payloadSizeEstimator;
+
+  // Singleton (w.r.t this instance) Iterator for this buffer
+  private final BufferIterator iterator;
+
+  /**
+   * Construct MemoryBoundedBuffer with default SizeEstimator
+   * @param bufferMemoryLimit MemoryLimit in bytes
+   * @param bufferedIteratorTransform Transformer Function to convert input payload type to stored payload type
+   */
+  public MemoryBoundedBuffer(final long bufferMemoryLimit, final Function<I, O> bufferedIteratorTransform) {
+    this(bufferMemoryLimit, bufferedIteratorTransform, new SizeEstimator<O>() {
+    });
+  }
+
+  /**
+   * Construct MemoryBoundedBuffer with passed in size estimator
+   * @param bufferMemoryLimit MemoryLimit in bytes
+   * @param bufferedIteratorTransform Transformer Function to convert input payload type to stored payload type
+   * @param payloadSizeEstimator Payload Size Estimator
+   */
+  public MemoryBoundedBuffer(
+      final long bufferMemoryLimit,
+      final Function<I, O> bufferedIteratorTransform,
+      final SizeEstimator<O> payloadSizeEstimator) {
     this.bufferMemoryLimit = bufferMemoryLimit;
     this.bufferedIteratorTransform = bufferedIteratorTransform;
+    this.payloadSizeEstimator = payloadSizeEstimator;
+    this.iterator = new BufferIterator();
   }
 
   @VisibleForTesting
@@ -95,16 +118,19 @@ public class BufferedIterator<I, O> implements Iterator<O> {
     return this.buffer.size();
   }
 
-  // It samples records with "RECORD_SAMPLING_RATE" frequency and computes average record size in
-  // bytes. It is used
-  // for determining how many maximum records to buffer. Based on change in avg size it may
-  // increase or decrease
-  // available permits.
-  private void adjustBufferSizeIfNeeded(final I record) throws InterruptedException {
+  /**
+   * Samples records with "RECORD_SAMPLING_RATE" frequency and computes average record size in bytes. It is used
+   * for determining how many maximum records to buffer. Based on change in avg size it ma increase or decrease
+   * available permits.
+   *
+   * @param payload Payload to size
+   */
+  private void adjustBufferSizeIfNeeded(final O payload) throws InterruptedException {
     if (this.samplingRecordCounter.incrementAndGet() % RECORD_SAMPLING_RATE != 0) {
       return;
     }
-    final long recordSizeInBytes = SizeEstimator.estimate(record);
+
+    final long recordSizeInBytes = payloadSizeEstimator.sizeEstimate(payload);
     final long newAvgRecordSizeInBytes = Math
         .max(1, (avgRecordSizeInBytes * numSamples + recordSizeInBytes) / (numSamples + 1));
     final int newRateLimit = (int) Math
@@ -122,22 +148,35 @@ public class BufferedIterator<I, O> implements Iterator<O> {
     numSamples++;
   }
 
-  // inserts record into internal buffer. It also fetches insert value from the record to offload
-  // computation work on to
-  // buffering thread.
-  private void insertRecord(I t) throws Exception {
+  /**
+   * Inserts record into buffer after applying transformation
+   *
+   * @param t Item to be buffered
+   */
+  public void insertRecord(I t) throws Exception {
+    // We need to stop buffering if buffer-reader has failed and exited.
+    throwExceptionIfFailed();
+
     rateLimiter.acquire();
-    adjustBufferSizeIfNeeded(t);
     // We are retrieving insert value in the record buffering thread to offload computation
     // around schema validation
     // and record creation to it.
     final O payload = bufferedIteratorTransform.apply(t);
+    adjustBufferSizeIfNeeded(payload);
     buffer.put(Optional.of(payload));
   }
 
-  private void readNextRecord() {
+  /**
+   * Reader interface but never exposed to outside world as this is a single consumer buffer.
+   * Reading is done through a singleton iterator for this buffer.
+   */
+  private Optional<O> readNextRecord() {
+    if (this.isDone.get()) {
+      return Optional.empty();
+    }
+
     rateLimiter.release();
-    Optional<O> newRecord;
+    Optional<O> newRecord = Optional.empty();
     while (true) {
       try {
         throwExceptionIfFailed();
@@ -151,47 +190,20 @@ public class BufferedIterator<I, O> implements Iterator<O> {
       }
     }
     if (newRecord.isPresent()) {
-      this.nextRecord = newRecord.get();
+      return newRecord;
     } else {
       // We are done reading all the records from internal iterator.
       this.isDone.set(true);
-      this.nextRecord = null;
+      return Optional.empty();
     }
   }
 
-  public void startBuffering() throws Exception {
-    logger.info("starting to buffer records");
-    try {
-      while (inputIterator.hasNext()) {
-        // We need to stop buffering if buffer-reader has failed and exited.
-        throwExceptionIfFailed();
-        insertRecord(inputIterator.next());
-      }
-      // done buffering records notifying buffer-reader.
-      buffer.put(Optional.empty());
-    } catch (Exception e) {
-      logger.error("error buffering records", e);
-      // Used for notifying buffer-reader thread of the failed operation.
-      markAsFailed(e);
-      throw e;
-    }
-    logger.info("finished buffering records");
-  }
-
-  @Override
-  public boolean hasNext() {
-    if (this.nextRecord == null && !this.isDone.get()) {
-      readNextRecord();
-    }
-    return !this.isDone.get();
-  }
-
-  @Override
-  public O next() {
-    Preconditions.checkState(hasNext() && this.nextRecord != null);
-    final O ret = this.nextRecord;
-    this.nextRecord = null;
-    return ret;
+  /**
+   * Puts an empty entry to buffer to denote termination
+   */
+  public void stopProducing() throws InterruptedException {
+    // done buffering records notifying buffer-reader.
+    buffer.put(Optional.empty());
   }
 
   private void throwExceptionIfFailed() {
@@ -200,10 +212,44 @@ public class BufferedIterator<I, O> implements Iterator<O> {
     }
   }
 
+  /**
+   * API to allow producers and consumer to communicate termination due to failure
+   */
   public void markAsFailed(Exception e) {
     this.hasFailed.set(e);
     // release the permits so that if the buffering thread is waiting for permits then it will
     // get it.
     this.rateLimiter.release(RECORD_CACHING_LIMIT + 1);
+  }
+
+  @Override
+  public Iterator<O> iterator() {
+    return iterator;
+  }
+
+  /**
+   * Iterator for the memory bounded buffer
+   */
+  private final class BufferIterator implements Iterator<O> {
+
+    // next record to be read from buffer.
+    private O nextRecord;
+
+    @Override
+    public boolean hasNext() {
+      if (this.nextRecord == null) {
+        Optional<O> res = readNextRecord();
+        this.nextRecord = res.orElse(null);
+      }
+      return this.nextRecord != null;
+    }
+
+    @Override
+    public O next() {
+      Preconditions.checkState(hasNext() && this.nextRecord != null);
+      final O ret = this.nextRecord;
+      this.nextRecord = null;
+      return ret;
+    }
   }
 }

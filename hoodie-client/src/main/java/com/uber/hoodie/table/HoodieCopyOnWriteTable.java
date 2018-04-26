@@ -33,17 +33,16 @@ import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
 import com.uber.hoodie.common.util.FSUtils;
+import com.uber.hoodie.common.util.buffer.BufferedIteratorExecutor;
+import com.uber.hoodie.common.util.buffer.MemoryBoundedBuffer;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.exception.HoodieException;
 import com.uber.hoodie.exception.HoodieIOException;
 import com.uber.hoodie.exception.HoodieNotSupportedException;
 import com.uber.hoodie.exception.HoodieUpsertException;
-import com.uber.hoodie.func.BufferedIterator;
-import com.uber.hoodie.func.BufferedIteratorExecutor;
 import com.uber.hoodie.func.LazyInsertIterable;
 import com.uber.hoodie.func.ParquetReaderIterator;
-import com.uber.hoodie.func.payload.AbstractBufferedIteratorPayload;
-import com.uber.hoodie.func.payload.GenericRecordBufferedIteratorPayload;
+import com.uber.hoodie.func.SparkBufferedIteratorExecutor;
 import com.uber.hoodie.io.HoodieCleanHelper;
 import com.uber.hoodie.io.HoodieMergeHandle;
 import java.io.IOException;
@@ -58,8 +57,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import org.apache.avro.generic.GenericRecord;
@@ -182,16 +179,6 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
     return handleUpdateInternal(upsertHandle, commitTime, fileLoc);
   }
 
-  /**
-   * Transformer function to help transform a GenericRecord. This transformer is used by BufferedIterator to offload
-   * some expensive operations of transformation to the reader thread.
-   *
-   */
-  public static java.util.function.Function<GenericRecord, AbstractBufferedIteratorPayload>
-      bufferedItrPayloadTransform() {
-    return (genericRecord) -> new GenericRecordBufferedIteratorPayload(genericRecord);
-  }
-
   protected Iterator<List<WriteStatus>> handleUpdateInternal(HoodieMergeHandle upsertHandle,
       String commitTime, String fileLoc)
       throws IOException {
@@ -202,15 +189,13 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
       AvroReadSupport.setAvroReadSchema(getHadoopConf(), upsertHandle.getSchema());
       ParquetReader<IndexedRecord> reader = AvroParquetReader.builder(upsertHandle.getOldFilePath())
           .withConf(getHadoopConf()).build();
-      final ExecutorService writerService = Executors.newFixedThreadPool(1);
+      BufferedIteratorExecutor<GenericRecord, GenericRecord, Void> wrapper = null;
       try {
-        java.util.function.Function<BufferedIterator, Void> runnableFunction = (bufferedIterator) -> {
+        java.util.function.Function<MemoryBoundedBuffer, Void> runnableFunction = (bufferedIterator) -> {
           handleWrite(bufferedIterator, upsertHandle);
           return null;
         };
-        BufferedIteratorExecutor<GenericRecord, AbstractBufferedIteratorPayload, Void> wrapper =
-            new BufferedIteratorExecutor(config, new ParquetReaderIterator(reader), bufferedItrPayloadTransform(),
-                writerService);
+        wrapper = new SparkBufferedIteratorExecutor(config, new ParquetReaderIterator(reader), x -> x);
         Future writerResult = wrapper.start(runnableFunction);
         writerResult.get();
       } catch (Exception e) {
@@ -218,7 +203,9 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
       } finally {
         reader.close();
         upsertHandle.close();
-        writerService.shutdownNow();
+        if (null != wrapper) {
+          wrapper.shutdown();
+        }
       }
     }
 
@@ -231,12 +218,12 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
         .iterator();
   }
 
-  private void handleWrite(final BufferedIterator<GenericRecord, GenericRecord> bufferedIterator,
+  private void handleWrite(final MemoryBoundedBuffer<GenericRecord, GenericRecord> buffer,
       final HoodieMergeHandle upsertHandle) {
-    while (bufferedIterator.hasNext()) {
-      final GenericRecordBufferedIteratorPayload payload = (GenericRecordBufferedIteratorPayload) bufferedIterator
-          .next();
-      upsertHandle.write(payload.getOutputPayload());
+    Iterator<GenericRecord> itr = buffer.iterator();
+    while (itr.hasNext()) {
+      final GenericRecord payload = itr.next();
+      upsertHandle.write(payload);
     }
   }
 

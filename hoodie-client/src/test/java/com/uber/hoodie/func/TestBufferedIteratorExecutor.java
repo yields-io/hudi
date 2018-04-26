@@ -16,39 +16,34 @@
 
 package com.uber.hoodie.func;
 
+import static com.uber.hoodie.func.LazyInsertIterable.getTransformFunction;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.uber.hoodie.common.HoodieTestDataGenerator;
 import com.uber.hoodie.common.model.HoodieRecord;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
+import com.uber.hoodie.common.util.buffer.BufferedIteratorExecutor;
+import com.uber.hoodie.common.util.buffer.MemoryBoundedBuffer;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 public class TestBufferedIteratorExecutor {
 
   private final HoodieTestDataGenerator hoodieTestDataGenerator = new HoodieTestDataGenerator();
   private final String commitTime = HoodieActiveTimeline.createNewCommitTime();
-  private ExecutorService executorService = null;
-
-  @Before
-  public void beforeTest() {
-    this.executorService = Executors.newFixedThreadPool(1);
-  }
+  private BufferedIteratorExecutor bufferedIteratorExecutor = null;
 
   @After
   public void afterTest() {
-    if (this.executorService != null) {
-      this.executorService.shutdownNow();
-      this.executorService = null;
+    if (this.bufferedIteratorExecutor != null) {
+      this.bufferedIteratorExecutor.shutdown();
+      this.bufferedIteratorExecutor = null;
     }
   }
 
@@ -59,14 +54,13 @@ public class TestBufferedIteratorExecutor {
 
     HoodieWriteConfig hoodieWriteConfig = mock(HoodieWriteConfig.class);
     when(hoodieWriteConfig.getWriteBufferLimitBytes()).thenReturn(1024);
-    BufferedIteratorExecutor bufferedIteratorExecutor = new BufferedIteratorExecutor(hoodieWriteConfig,
-        hoodieRecords.iterator(), LazyInsertIterable.bufferedItrPayloadTransform(HoodieTestDataGenerator.avroSchema),
-        executorService);
-    Function<BufferedIterator, Integer> function = (bufferedIterator) -> {
+    bufferedIteratorExecutor = new SparkBufferedIteratorExecutor(hoodieWriteConfig,
+        hoodieRecords.iterator(), getTransformFunction(HoodieTestDataGenerator.avroSchema));
+    Function<MemoryBoundedBuffer, Integer> function = (buffer) -> {
       Integer count = 0;
-      while (bufferedIterator.hasNext()) {
+      while (buffer.iterator().hasNext()) {
         count++;
-        bufferedIterator.next();
+        buffer.iterator().next();
       }
       return count;
     };

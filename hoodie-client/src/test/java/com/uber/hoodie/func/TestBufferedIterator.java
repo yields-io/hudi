@@ -16,31 +16,42 @@
 
 package com.uber.hoodie.func;
 
+import static com.uber.hoodie.func.LazyInsertIterable.getTransformFunction;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.uber.hoodie.common.HoodieTestDataGenerator;
 import com.uber.hoodie.common.model.HoodieRecord;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
+import com.uber.hoodie.common.util.SizeEstimator;
+import com.uber.hoodie.common.util.buffer.BufferProducer;
+import com.uber.hoodie.common.util.buffer.CompositeBufferProducer;
+import com.uber.hoodie.common.util.buffer.FunctionBasedBufferProducer;
+import com.uber.hoodie.common.util.buffer.IteratorBasedBufferProducer;
+import com.uber.hoodie.common.util.buffer.MemoryBoundedBuffer;
 import com.uber.hoodie.exception.HoodieException;
-import com.uber.hoodie.func.payload.AbstractBufferedIteratorPayload;
-import com.uber.hoodie.func.payload.HoodieRecordBufferedIteratorPayload;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.commons.io.FileUtils;
-import org.apache.spark.util.SizeEstimator;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import scala.Tuple2;
 
 public class TestBufferedIterator {
 
@@ -50,7 +61,7 @@ public class TestBufferedIterator {
 
   @Before
   public void beforeTest() {
-    this.recordReader = Executors.newFixedThreadPool(1);
+    this.recordReader = Executors.newFixedThreadPool(2);
   }
 
   @After
@@ -63,106 +74,208 @@ public class TestBufferedIterator {
 
   // Test to ensure that we are reading all records from buffered iterator in the same order
   // without any exceptions.
+  @SuppressWarnings("unchecked")
   @Test(timeout = 60000)
-  public void testRecordReading() throws IOException, ExecutionException, InterruptedException {
+  public void testRecordReading() throws Exception {
     final int numRecords = 128;
     final List<HoodieRecord> hoodieRecords = hoodieTestDataGenerator.generateInserts(commitTime, numRecords);
-    final BufferedIterator bufferedIterator = new BufferedIterator(hoodieRecords.iterator(), FileUtils.ONE_KB,
-        LazyInsertIterable.bufferedItrPayloadTransform(HoodieTestDataGenerator.avroSchema));
-    Future<Boolean> result = recordReader.submit(() -> {
-      bufferedIterator.startBuffering();
-      return true;
-    });
+    final MemoryBoundedBuffer<HoodieRecord,
+        Tuple2<HoodieRecord, Optional<IndexedRecord>>> buffer = new MemoryBoundedBuffer(FileUtils.ONE_KB,
+        getTransformFunction(HoodieTestDataGenerator.avroSchema));
+    // Produce
+    Future<Void> resFuture =
+        new IteratorBasedBufferProducer<>(hoodieRecords.iterator()).start(buffer, recordReader, () -> {
+          return null;
+        });
+
     final Iterator<HoodieRecord> originalRecordIterator = hoodieRecords.iterator();
     int recordsRead = 0;
-    while (bufferedIterator.hasNext()) {
+    while (buffer.iterator().hasNext()) {
       final HoodieRecord originalRecord = originalRecordIterator.next();
       final Optional<IndexedRecord> originalInsertValue = originalRecord.getData()
           .getInsertValue(HoodieTestDataGenerator.avroSchema);
-      final HoodieRecordBufferedIteratorPayload payload = (HoodieRecordBufferedIteratorPayload) bufferedIterator.next();
+      final Tuple2<HoodieRecord, Optional<IndexedRecord>> payload = buffer.iterator().next();
       // Ensure that record ordering is guaranteed.
-      Assert.assertEquals(originalRecord, payload.getInputPayload());
+      Assert.assertEquals(originalRecord, payload._1());
       // cached insert value matches the expected insert value.
       Assert.assertEquals(originalInsertValue,
-          ((HoodieRecord) payload.getInputPayload()).getData().getInsertValue(HoodieTestDataGenerator.avroSchema));
+          payload._1().getData().getInsertValue(HoodieTestDataGenerator.avroSchema));
       recordsRead++;
     }
-    Assert.assertFalse(bufferedIterator.hasNext() || originalRecordIterator.hasNext());
+    Assert.assertFalse(buffer.iterator().hasNext() || originalRecordIterator.hasNext());
     // all the records should be read successfully.
     Assert.assertEquals(numRecords, recordsRead);
     // should not throw any exceptions.
-    Assert.assertTrue(result.get());
+    resFuture.get();
+  }
+
+  /**
+   * Test to ensure that we are reading all records from buffered iterator when we have multiple producers
+   */
+  @SuppressWarnings("unchecked")
+  @Test(timeout = 60000)
+  public void testCompositeProducerRecordReading() throws Exception {
+    final int numRecords = 1000;
+    final int numProducers = 40;
+    final List<List<HoodieRecord>> recs = new ArrayList<>();
+
+    final MemoryBoundedBuffer<HoodieRecord, Tuple2<HoodieRecord, Optional<IndexedRecord>>> buffer =
+        new MemoryBoundedBuffer(FileUtils.ONE_KB, getTransformFunction(HoodieTestDataGenerator.avroSchema));
+
+    // Record Key to <Producer Index, Rec Index within a producer>
+    Map<String, Tuple2<Integer, Integer>> keyToProducerAndIndexMap = new HashMap<>();
+
+    for (int i = 0; i < numProducers; i++) {
+      List<HoodieRecord> pRecs = hoodieTestDataGenerator.generateInserts(commitTime, numRecords);
+      int j = 0;
+      for (HoodieRecord r : pRecs) {
+        Assert.assertTrue(!keyToProducerAndIndexMap.containsKey(r.getRecordKey()));
+        keyToProducerAndIndexMap.put(r.getRecordKey(), new Tuple2<>(i, j));
+        j++;
+      }
+      recs.add(pRecs);
+    }
+
+    List<BufferProducer<HoodieRecord>> producers = new ArrayList<>();
+    for (int i = 0; i < recs.size(); i++) {
+      final List<HoodieRecord> r = recs.get(i);
+      // Alternate between pull and push based iterators
+      if (i % 2 == 0) {
+        producers.add(new IteratorBasedBufferProducer<>(r.iterator()));
+      } else {
+        producers.add(new FunctionBasedBufferProducer<HoodieRecord>((buf) -> {
+          Iterator<HoodieRecord> itr = r.iterator();
+          while (itr.hasNext()) {
+            try {
+              buf.insertRecord(itr.next());
+            } catch (Exception e) {
+              throw new HoodieException(e);
+            }
+          }
+          return true;
+        }));
+      }
+    }
+
+    BufferProducer<HoodieRecord> compositeProducer =
+        new CompositeBufferProducer<HoodieRecord>(producers);
+
+    // Start Producer
+    Future<Void> res = compositeProducer.start(buffer, recordReader, () -> null);
+
+    // Used to ensure that consumer sees the records generated by a single producer in FIFO order
+    Map<Integer, Integer> lastSeenMap = IntStream.range(0, numProducers).boxed()
+        .collect(Collectors.toMap(Function.identity(), x -> -1));
+    Map<Integer, Integer> countMap = IntStream.range(0, numProducers).boxed()
+        .collect(Collectors.toMap(Function.identity(), x -> 0));
+
+    // Read recs and ensure we have covered all producer recs.
+    while (buffer.iterator().hasNext()) {
+      final Tuple2<HoodieRecord, Optional<IndexedRecord>> payload = buffer.iterator().next();
+      final HoodieRecord rec = payload._1();
+      Tuple2<Integer, Integer> producerPos = keyToProducerAndIndexMap.get(rec.getRecordKey());
+      Integer lastSeenPos = lastSeenMap.get(producerPos._1());
+      countMap.put(producerPos._1(), countMap.get(producerPos._1()) + 1);
+      lastSeenMap.put(producerPos._1(), lastSeenPos + 1);
+      // Ensure we are seeing the next record generated
+      Assert.assertEquals(lastSeenPos + 1, producerPos._2().intValue());
+    }
+
+    for (int i = 0; i < numProducers; i++) {
+      // Ensure we have seen all the records for each producers
+      Assert.assertEquals(Integer.valueOf(numRecords), countMap.get(i));
+    }
+
+    //Ensure producers completed fine
+    res.get();
   }
 
   // Test to ensure that record buffering is throttled when we hit memory limit.
+  @SuppressWarnings("unchecked")
   @Test(timeout = 60000)
-  public void testMemoryLimitForBuffering() throws IOException, InterruptedException {
+  public void testMemoryLimitForBuffering() throws Exception {
     final int numRecords = 128;
     final List<HoodieRecord> hoodieRecords = hoodieTestDataGenerator.generateInserts(commitTime, numRecords);
     // maximum number of records to keep in memory.
     final int recordLimit = 5;
-    final long memoryLimitInBytes = recordLimit * SizeEstimator.estimate(hoodieRecords.get(0));
-    final BufferedIterator<HoodieRecord, AbstractBufferedIteratorPayload> bufferedIterator =
-        new BufferedIterator(hoodieRecords.iterator(), memoryLimitInBytes,
-        LazyInsertIterable.bufferedItrPayloadTransform(HoodieTestDataGenerator.avroSchema));
-    Future<Boolean> result = recordReader.submit(() -> {
-      bufferedIterator.startBuffering();
-      return true;
-    });
+    final SizeEstimator<Tuple2<HoodieRecord, Optional<IndexedRecord>>> sizeEstimator =
+        new SizeEstimator<Tuple2<HoodieRecord, Optional<IndexedRecord>>>() {
+        };
+    final long objSize = sizeEstimator.sizeEstimate(
+        getTransformFunction(HoodieTestDataGenerator.avroSchema).apply(hoodieRecords.get(0)));
+    final long memoryLimitInBytes = recordLimit * objSize;
+    final MemoryBoundedBuffer<HoodieRecord, Tuple2<HoodieRecord, Optional<IndexedRecord>>> buffer =
+        new MemoryBoundedBuffer(memoryLimitInBytes,
+            getTransformFunction(HoodieTestDataGenerator.avroSchema));
+    final ExecutorCompletionService<Void> service = new ExecutorCompletionService<Void>(recordReader);
+    // Produce
+    Future<Void> resFuture = new IteratorBasedBufferProducer<>(hoodieRecords.iterator())
+        .start(buffer, recordReader, () -> {
+          return null;
+        });
     // waiting for permits to expire.
-    while (!isQueueFull(bufferedIterator.rateLimiter)) {
+    while (!isQueueFull(buffer.rateLimiter)) {
       Thread.sleep(10);
     }
-    Assert.assertEquals(0, bufferedIterator.rateLimiter.availablePermits());
-    Assert.assertEquals(recordLimit, bufferedIterator.currentRateLimit);
-    Assert.assertEquals(recordLimit, bufferedIterator.size());
-    Assert.assertEquals(recordLimit - 1, bufferedIterator.samplingRecordCounter.get());
+    Assert.assertEquals(0, buffer.rateLimiter.availablePermits());
+    Assert.assertEquals(recordLimit, buffer.currentRateLimit);
+    Assert.assertEquals(recordLimit, buffer.size());
+    Assert.assertEquals(recordLimit - 1, buffer.samplingRecordCounter.get());
 
     // try to read 2 records.
-    Assert.assertEquals(hoodieRecords.get(0), bufferedIterator.next().getInputPayload());
-    Assert.assertEquals(hoodieRecords.get(1), bufferedIterator.next().getInputPayload());
+    Assert.assertEquals(hoodieRecords.get(0), buffer.iterator().next()._1());
+    Assert.assertEquals(hoodieRecords.get(1), buffer.iterator().next()._1());
 
     // waiting for permits to expire.
-    while (!isQueueFull(bufferedIterator.rateLimiter)) {
+    while (!isQueueFull(buffer.rateLimiter)) {
       Thread.sleep(10);
     }
     // No change is expected in rate limit or number of buffered records. We only expect
     // buffering thread to read
     // 2 more records into the buffer.
-    Assert.assertEquals(0, bufferedIterator.rateLimiter.availablePermits());
-    Assert.assertEquals(recordLimit, bufferedIterator.currentRateLimit);
-    Assert.assertEquals(recordLimit, bufferedIterator.size());
-    Assert.assertEquals(recordLimit - 1 + 2, bufferedIterator.samplingRecordCounter.get());
+    Assert.assertEquals(0, buffer.rateLimiter.availablePermits());
+    Assert.assertEquals(recordLimit, buffer.currentRateLimit);
+    Assert.assertEquals(recordLimit, buffer.size());
+    Assert.assertEquals(recordLimit - 1 + 2, buffer.samplingRecordCounter.get());
   }
 
   // Test to ensure that exception in either buffering thread or BufferedIterator-reader thread
   // is propagated to
   // another thread.
+  @SuppressWarnings("unchecked")
   @Test(timeout = 60000)
-  public void testException() throws IOException, InterruptedException {
+  public void testException() throws Exception {
     final int numRecords = 256;
     final List<HoodieRecord> hoodieRecords = hoodieTestDataGenerator.generateInserts(commitTime, numRecords);
+    final SizeEstimator<Tuple2<HoodieRecord, Optional<IndexedRecord>>> sizeEstimator =
+        new SizeEstimator<Tuple2<HoodieRecord, Optional<IndexedRecord>>>() {
+        };
     // buffer memory limit
-    final long memoryLimitInBytes = 4 * SizeEstimator.estimate(hoodieRecords.get(0));
+    final long objSize = sizeEstimator.sizeEstimate(
+        getTransformFunction(HoodieTestDataGenerator.avroSchema).apply(hoodieRecords.get(0)));
+    final long memoryLimitInBytes = 4 * objSize;
 
     // first let us throw exception from bufferIterator reader and test that buffering thread
     // stops and throws
     // correct exception back.
-    BufferedIterator bufferedIterator1 = new BufferedIterator(hoodieRecords.iterator(), memoryLimitInBytes,
-        LazyInsertIterable.bufferedItrPayloadTransform(HoodieTestDataGenerator.avroSchema));
-    Future<Boolean> result = recordReader.submit(() -> {
-      bufferedIterator1.startBuffering();
-      return true;
-    });
+    MemoryBoundedBuffer<HoodieRecord, Tuple2<HoodieRecord, Optional<IndexedRecord>>> buffer1 =
+        new MemoryBoundedBuffer(memoryLimitInBytes, getTransformFunction(HoodieTestDataGenerator.avroSchema));
+
+    // Produce
+    Future<Void> resFuture =
+        new IteratorBasedBufferProducer<>(hoodieRecords.iterator()).start(buffer1, recordReader, () -> {
+          return null;
+        });
+
     // waiting for permits to expire.
-    while (!isQueueFull(bufferedIterator1.rateLimiter)) {
+    while (!isQueueFull(buffer1.rateLimiter)) {
       Thread.sleep(10);
     }
     // notify buffering thread of an exception and ensure that it exits.
     final Exception e = new Exception("Failing it :)");
-    bufferedIterator1.markAsFailed(e);
+    buffer1.markAsFailed(e);
     try {
-      result.get();
+      resFuture.get();
       Assert.fail("exception is expected");
     } catch (ExecutionException e1) {
       Assert.assertEquals(HoodieException.class, e1.getCause().getClass());
@@ -176,21 +289,22 @@ public class TestBufferedIterator {
     final Iterator<HoodieRecord> mockHoodieRecordsIterator = mock(Iterator.class);
     when(mockHoodieRecordsIterator.hasNext()).thenReturn(true);
     when(mockHoodieRecordsIterator.next()).thenThrow(expectedException);
-    BufferedIterator bufferedIterator2 = new BufferedIterator(mockHoodieRecordsIterator, memoryLimitInBytes,
-        LazyInsertIterable.bufferedItrPayloadTransform(HoodieTestDataGenerator.avroSchema));
-    Future<Boolean> result2 = recordReader.submit(() -> {
-      bufferedIterator2.startBuffering();
-      return true;
-    });
+    MemoryBoundedBuffer<HoodieRecord, Tuple2<HoodieRecord, Optional<IndexedRecord>>> buffer2 =
+        new MemoryBoundedBuffer(memoryLimitInBytes, getTransformFunction(HoodieTestDataGenerator.avroSchema));
+    // Produce
+    Future<Void> resFuture2 =
+        new IteratorBasedBufferProducer<>(mockHoodieRecordsIterator).start(buffer2, recordReader, () -> {
+          return null;
+        });
     try {
-      bufferedIterator2.hasNext();
+      buffer2.iterator().hasNext();
       Assert.fail("exception is expected");
     } catch (Exception e1) {
       Assert.assertEquals(expectedException, e1.getCause());
     }
     // buffering thread should also have exited. make sure that it is not running.
     try {
-      result2.get();
+      resFuture2.get();
       Assert.fail("exception is expected");
     } catch (ExecutionException e2) {
       Assert.assertEquals(expectedException, e2.getCause());
