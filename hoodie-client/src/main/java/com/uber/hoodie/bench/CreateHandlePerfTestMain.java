@@ -73,7 +73,7 @@ public class CreateHandlePerfTestMain {
   }
 
   public List<RawTripPayload> readParquet() {
-    logger.info(String.format("Reading hoodie table from %targetBasePath ", config.basePath));
+    System.out.println("Reading hoodie table from " + config.basePath);
     List<RawTripPayload> payloadList = new ArrayList<>();
     while (readerIterator.hasNext()) {
       RawTripPayload payload = readerIterator.next();
