@@ -47,12 +47,11 @@ public class CreateHandlePerfTestMain {
   private final ParquetReaderIterator<RawTripPayload> readerIterator;
   private final List<RawTripPayload> rawTripPayloadList;
 
-  public CreateHandlePerfTestMain(String basePath, String inputParquetFilePath, String avroSchemaFilePath)
+  public CreateHandlePerfTestMain(JavaSparkContext jsc,
+      String basePath, String inputParquetFilePath, String avroSchemaFilePath)
       throws IOException {
+    this.jsc = jsc;
     this.config = new Config(basePath, inputParquetFilePath, avroSchemaFilePath);
-    SparkConf sparkConf = new SparkConf().setAppName("Hoodie-snapshot-copier");
-    sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-    this.jsc = new JavaSparkContext(sparkConf);
     this.fs = FSUtils.getFs(config.basePath, jsc.hadoopConfiguration());
     this.schema = new Schema.Parser().parse(new File(config.avroSchemaFilePath));
     AvroReadSupport.setAvroReadSchema(jsc.hadoopConfiguration(), schema);
@@ -66,7 +65,10 @@ public class CreateHandlePerfTestMain {
     // Take input configs
     final Config cfg = new Config();
     new JCommander(cfg, args);
-    CreateHandlePerfTestMain perfMain = new CreateHandlePerfTestMain(cfg.basePath,
+    SparkConf sparkConf = new SparkConf().setAppName("Hoodie-snapshot-copier");
+    sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+    JavaSparkContext jsc = new JavaSparkContext(sparkConf);
+    CreateHandlePerfTestMain perfMain = new CreateHandlePerfTestMain(jsc, cfg.basePath,
         cfg.inputParquetFilePath, cfg.avroSchemaFilePath);
   }
 
