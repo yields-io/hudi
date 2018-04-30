@@ -1,0 +1,4627 @@
+{
+    "fields": [
+        {
+            "name": "hoodie",
+            "type": {
+                "name": "HoodieMetaDataRecord",
+                "type": "record",
+                "fields": [
+                    {
+                        "name": "commitTs",
+                        "type": "string"
+                    },
+                    {
+                        "name": "sequenceId",
+                        "type": "string"
+                    }
+                ]
+            }
+        },
+        {
+            "default": null,
+            "name": "ts",
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        {
+            "default": null,
+            "name": "_row_key",
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        {
+            "default": null,
+            "name": "_shard",
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        {
+            "default": null,
+            "name": "_max_added_id",
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        {
+            "default": null,
+            "name": "ANNOTATED_STATE_CHANGES",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-01-26 19:50:51 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "city_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "state_changes",
+                            "type": [
+                                "null",
+                                {
+                                    "items": {
+                                        "fields": [
+                                            {
+                                                "default": null,
+                                                "name": "driver_full_name",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "driver_uuid",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "state",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "driver_id",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "time",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "address",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "lat",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "lng",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            }
+                                        ],
+                                        "name": "ANNOTATED_STATE_CHANGES_state_changesItems",
+                                        "type": "record"
+                                    },
+                                    "type": "array"
+                                }
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "territory_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "ANNOTATED_STATE_CHANGES",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "BASE",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-02-07 16:27:47 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "flow_type",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "sub_status",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "begintrip_lat",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "territory_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "city_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "state_changes",
+                            "type": [
+                                "null",
+                                {
+                                    "items": {
+                                        "fields": [
+                                            {
+                                                "default": null,
+                                                "name": "driver_full_name",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "driver_uuid",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "state",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "driver_id",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "time",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "lat",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "lng",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            }
+                                        ],
+                                        "name": "BASE_state_changesItems",
+                                        "type": "record"
+                                    },
+                                    "type": "array"
+                                }
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "session_hash",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "partner_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_lat",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_lng",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "destination_string",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "predicted_eta",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "actual_eta",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_lat",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_app_version",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_device",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "partner_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "surge_model_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_lng",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "expense_memo",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "vehicle_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "begintrip_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_requested_a_vehicle_view",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_vehicle_view_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "begintrip_lng",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_vehicle_category_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "vehicle_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "status",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "BASE",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "BILLED_ROUTE",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-02-01 20:46:50 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "all_points",
+                            "type": [
+                                "null",
+                                {
+                                    "items": {
+                                        "fields": [
+                                            {
+                                                "default": null,
+                                                "name": "latitude",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "epoch",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "speed",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "longitude",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            }
+                                        ],
+                                        "name": "BILLED_ROUTE_all_pointsItems",
+                                        "type": "record"
+                                    },
+                                    "type": "array"
+                                }
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "BILLED_ROUTE",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "CLIENT_FARE",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-01-26 19:27:54 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "client_adjustment_admin_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_adjustment_time",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_fare_adjustment",
+                            "type": [
+                                "null",
+                                {
+                                    "fields": [
+                                        {
+                                            "default": null,
+                                            "name": "admin_uuid",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "reason",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "amount",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "new_fare",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "client_transaction_uuids",
+                                            "type": [
+                                                "null",
+                                                {
+                                                    "items": "string",
+                                                    "type": "array"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "adjusted_at",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "message",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "applied_to",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "user_uuid",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        }
+                                    ],
+                                    "name": "CLIENT_FARE_client_fare_adjustment",
+                                    "type": "record"
+                                }
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_fare",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_adjustment_reason",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "has_client_fare_adjustment",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_adjustment_message",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "CLIENT_FARE",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "CLIENT_FEEDBACK",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-01-26 19:26:36 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "status",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_feedback",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_rating",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "territory_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "city_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_vehicle_view_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_feedback_type_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "has_feedback",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "CLIENT_FEEDBACK",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "CONCIERGE",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-02-26 17:50:28 -0753",
+                    "fields": [
+                        {
+                            "default": "",
+                            "name": "operatorUUID",
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        },
+                        {
+                            "default": "",
+                            "name": "guestUUID",
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "CONCIERGE",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "DRIVER_FARE",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-01-26 19:29:25 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "has_driver_fare_adjustment",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_fare",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_adjustment_message",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_fare_adjustment",
+                            "type": [
+                                "null",
+                                {
+                                    "fields": [
+                                        {
+                                            "default": null,
+                                            "name": "admin_uuid",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "reason",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "amount",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "new_fare",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "adjusted_at",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "message",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "applied_to",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "user_uuid",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        }
+                                    ],
+                                    "name": "DRIVER_FARE_driver_fare_adjustment",
+                                    "type": "record"
+                                }
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_adjustment_time",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_adjustment_reason",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_adjustment_admin_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "DRIVER_FARE",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "DRIVER_FEEDBACK",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-01-26 19:25:37 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "status",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "territory_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_feedback",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "city_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_rating",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_vehicle_view_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "has_feedback",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_feedback_type_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "DRIVER_FEEDBACK",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "DRIVER_PREFERRED_DESTINATION",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-02-01 20:44:35 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "driver_destination_subtitle",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_destination_lat",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_destination_address",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_destination_lng",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_destination_title",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "DRIVER_PREFERRED_DESTINATION",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "ETA",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-01-26 19:20:24 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "status",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "predicted_eta",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "city_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "google_eta",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "actual_eta",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "territory_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "post_eta",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "osrm_eta",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_vehicle_view_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "ETA",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "ETD_INFO",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-03-24 04:33:10 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "server_timestamp",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "ex_algo_version",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "matched_trip_time",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "mitm_trip_time_constraint",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pool_algo_version",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "state",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "lighthouse_request_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "unmatched_trip_time",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "variance",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "trip_time_constraint",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "ETD_INFO",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "FARE",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-01-26 19:18:35 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "breakdown",
+                            "type": [
+                                "null",
+                                {
+                                    "fields": [
+                                        {
+                                            "default": null,
+                                            "name": "profile",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "cutoff_mps",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "discounts",
+                                            "type": [
+                                                "null",
+                                                {
+                                                    "items": {
+                                                        "fields": [
+                                                            {
+                                                                "default": null,
+                                                                "name": "variable_rate",
+                                                                "note": "string for precision",
+                                                                "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "default": null,
+                                                                "name": "amount",
+                                                                "note": "string for precision",
+                                                                "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "default": null,
+                                                                "name": "id",
+                                                                "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "default": null,
+                                                                "name": "fixed_rate",
+                                                                "note": "string for precision",
+                                                                "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "default": null,
+                                                                "name": "name",
+                                                                "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                ]
+                                                            }
+                                                        ],
+                                                        "name": "FARE_discountsItems",
+                                                        "type": "record"
+                                                    },
+                                                    "type": "array"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "charges",
+                                            "type": [
+                                                "null",
+                                                {
+                                                    "items": {
+                                                        "fields": [
+                                                            {
+                                                                "default": null,
+                                                                "name": "input_amount",
+                                                                "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "default": null,
+                                                                "name": "name",
+                                                                "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "default": null,
+                                                                "name": "variable_rate",
+                                                                "note": "string for precision",
+                                                                "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "default": null,
+                                                                "name": "fixed_rate",
+                                                                "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "default": null,
+                                                                "name": "amount",
+                                                                "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "default": null,
+                                                                "name": "id",
+                                                                "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                ]
+                                                            }
+                                                        ],
+                                                        "name": "FARE_chargesItems",
+                                                        "type": "record"
+                                                    },
+                                                    "type": "array"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "taxes",
+                                            "type": [
+                                                "null",
+                                                {
+                                                    "items": {
+                                                        "fields": [
+                                                            {
+                                                                "default": null,
+                                                                "name": "rates",
+                                                                "type": [
+                                                                    "null",
+                                                                    {
+                                                                        "fields": [
+                                                                            {
+                                                                                "default": null,
+                                                                                "name": "uber",
+                                                                                "type": [
+                                                                                    "null",
+                                                                                    "string"
+                                                                                ]
+                                                                            },
+                                                                            {
+                                                                                "default": null,
+                                                                                "name": "partner",
+                                                                                "type": [
+                                                                                    "null",
+                                                                                    "string"
+                                                                                ]
+                                                                            },
+                                                                            {
+                                                                                "default": null,
+                                                                                "name": "join_and_support",
+                                                                                "type": [
+                                                                                    "null",
+                                                                                    "string"
+                                                                                ]
+                                                                            }
+                                                                        ],
+                                                                        "name": "FARE_rates",
+                                                                        "type": "record"
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                "default": null,
+                                                                "name": "model",
+                                                                "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "default": null,
+                                                                "name": "type",
+                                                                "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                ]
+                                                            }
+                                                        ],
+                                                        "name": "FARE_taxesItems",
+                                                        "type": "record"
+                                                    },
+                                                    "type": "array"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "currency",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "total_not_rounded",
+                                            "note": "string for precision",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "total",
+                                            "note": "string for precision",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        }
+                                    ],
+                                    "name": "FARE_breakdown",
+                                    "type": "record"
+                                }
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "distance",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "usd_fx_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "territory_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "usd_fx_rate",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "city_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "currency_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "begintrip_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "status",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "duration",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "total",
+                            "note": "string for precision",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_vehicle_view_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "currency_code",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "FARE",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "FARE_ESTIMATE",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-02-01 20:42:33 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "driver_destination_subtitle",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_destination_lat",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_destination_address",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_destination_lng",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_destination_title",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "FARE_ESTIMATE",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "FRAUD_FLAGS",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-03-18 23:25:41 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "notes",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "action_reason",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "admin_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": "",
+                            "name": "actor_type",
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "apply_to_driver",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "apply_to_client",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": "",
+                            "name": "fraud_flags_created_at",
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        },
+                        {
+                            "default": "",
+                            "name": "fraud_status",
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "FRAUD_FLAGS",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "MINION",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-02-01 20:39:28 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "city_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "territory_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "minions",
+                            "type": [
+                                "null",
+                                {
+                                    "items": {
+                                        "fields": [
+                                            {
+                                                "default": null,
+                                                "name": "trip_uuid",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "client_uuid",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "type",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "client_id",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            }
+                                        ],
+                                        "name": "MINION_minionsItems",
+                                        "type": "record"
+                                    },
+                                    "type": "array"
+                                }
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "MINION",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "NOTES",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-02-01 20:38:33 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "city_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "notes",
+                            "type": [
+                                "null",
+                                {
+                                    "items": {
+                                        "fields": [
+                                            {
+                                                "default": null,
+                                                "name": "note",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "type",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "created_at",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "user_id",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "user_uuid",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            }
+                                        ],
+                                        "name": "NOTES_notesItems",
+                                        "type": "record"
+                                    },
+                                    "type": "array"
+                                }
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "territory_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "NOTES",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "PAYMENT_PROFILE",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-01-26 19:04:22 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "client_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "city_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "use_credits",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "vehicle_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "payment_data",
+                            "type": [
+                                "null",
+                                {
+                                    "fields": [
+                                        {
+                                            "default": null,
+                                            "name": "pay_pal_correlation_id",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "payment_profile_id",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        }
+                                    ],
+                                    "name": "PAYMENT_PROFILE_payment_data",
+                                    "type": "record"
+                                }
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "has_business_details",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "payment_profile_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "status",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "territory_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_vehicle_view_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "client_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "payment_profile_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "vehicle_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "PAYMENT_PROFILE",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "RIDEPOOL",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-02-01 20:33:52 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_view_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "trips",
+                            "type": [
+                                "null",
+                                {
+                                    "items": {
+                                        "fields": [
+                                            {
+                                                "default": null,
+                                                "name": "type",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "uuid",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            }
+                                        ],
+                                        "name": "RIDEPOOL_tripsItems",
+                                        "type": "record"
+                                    },
+                                    "type": "array"
+                                }
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "RIDEPOOL",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "ROUTE",
+            "type": [
+                "null",
+                {
+                    "date_created": "2015-09-24 13:36:49 -0700",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "all_points",
+                            "type": [
+                                "null",
+                                {
+                                    "items": {
+                                        "fields": [
+                                            {
+                                                "default": null,
+                                                "name": "altitude",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "course",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "created",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "epoch",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "horizontalAccuracy",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "lat",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "latitude",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "lng",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "longitude",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "speed",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "verticalAccuracy",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            }
+                                        ],
+                                        "name": "ROUTE_all_pointsItems",
+                                        "type": "record"
+                                    },
+                                    "type": "array"
+                                }
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "city_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "last_modified": "2015-09-24 15:48:09 -0700",
+                    "name": "ROUTE",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "RUSH",
+            "type": [
+                "null",
+                {
+                    "date_created": "2015-12-18 18:02:17 -0800",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "memo",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "rush_notes",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_city",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_phone",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_company_name",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_state_short_name",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_last_name",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_address1",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_detail_copy",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_address2",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_signature_required",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_email",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_title_copy",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_apt_or_suite",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_country",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_postal_code",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_phone_sms_enabled",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "quote_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_apt_or_suite",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_state_short_name",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_title_copy",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_city",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "order_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_phone_sms_enabled",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_detail_copy",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_postal_code",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_first_name",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_company_name",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_subtitle_copy",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_country",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_last_name",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "items",
+                            "type": [
+                                "null",
+                                {
+                                    "items": {
+                                        "fields": [
+                                            {
+                                                "default": null,
+                                                "name": "count",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "uuid",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "title",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "price",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "isFragile",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "height",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "width",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "length",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "currency_code",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            },
+                                            {
+                                                "default": null,
+                                                "name": "quantity",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ]
+                                            }
+                                        ],
+                                        "name": "RUSH_itemsItems",
+                                        "type": "record"
+                                    },
+                                    "type": "array"
+                                }
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_address2",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_first_name",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_signature_required",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_address1",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_phone",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "dropoff_subtitle_copy",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "pickup_email",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "RUSH",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "SHIFT_HOURLY",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-01-26 18:54:32 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "status",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "shift_hourly_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "city_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "driver_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "territory_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "SHIFT_HOURLY",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "TRIP_CHAINING",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-02-01 20:47:55 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "chain_index",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "chain_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "TRIP_CHAINING",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        },
+        {
+            "default": null,
+            "name": "UPFRONT_FARE",
+            "type": [
+                "null",
+                {
+                    "date_created": "2016-02-01 20:25:27 -0753",
+                    "fields": [
+                        {
+                            "default": null,
+                            "name": "fare",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "origin_lng",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "original_fare",
+                            "note": "string for precision",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "destination_lat",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "upfront_fare_uuid",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "currency_code",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "signature",
+                            "type": [
+                                "null",
+                                {
+                                    "fields": [
+                                        {
+                                            "default": null,
+                                            "name": "issued_at",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "version",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "expires_at",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        },
+                                        {
+                                            "default": null,
+                                            "name": "signature",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
+                                        }
+                                    ],
+                                    "name": "UPFRONT_FARE_signature",
+                                    "type": "record"
+                                }
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "request_vehicle_view_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "origin_lat",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "destination_lng",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_added_id",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_column_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_created_at",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_dbname",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_ref_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_row_key",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_shard",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "default": null,
+                            "name": "_updated",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        }
+                    ],
+                    "name": "UPFRONT_FARE",
+                    "schema_id": 1,
+                    "type": "record"
+                }
+            ]
+        }
+    ],
+    "name": "union",
+    "namespace": "mezzanine.trips",
+    "type": "record"
+}
