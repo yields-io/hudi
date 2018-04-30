@@ -79,7 +79,7 @@ public class CreateHandlePerfMain {
     return payloadList;
   }
 
-  static class Config implements Serializable {
+  public static class Config implements Serializable {
 
     @Parameter(names = {"--base-path", "-bp"}, description = "Hoodie table base path", required = true)
     String basePath = null;
