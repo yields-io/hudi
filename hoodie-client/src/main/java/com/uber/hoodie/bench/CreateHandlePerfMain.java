@@ -49,11 +49,7 @@ public class CreateHandlePerfMain {
 
   public CreateHandlePerfMain(String basePath, String inputParquetFilePath, String avroSchemaFilePath)
       throws IOException {
-    this(new Config(basePath, inputParquetFilePath, avroSchemaFilePath));
-  }
-
-  public CreateHandlePerfMain(Config config) throws IOException {
-    this.config = config;
+    this.config = new Config(basePath, inputParquetFilePath, avroSchemaFilePath);
     SparkConf sparkConf = new SparkConf().setAppName("Hoodie-snapshot-copier");
     sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
     this.jsc = new JavaSparkContext(sparkConf);
@@ -70,7 +66,8 @@ public class CreateHandlePerfMain {
     // Take input configs
     final Config cfg = new Config();
     new JCommander(cfg, args);
-    CreateHandlePerfMain perfMain = new CreateHandlePerfMain(cfg);
+    CreateHandlePerfMain perfMain = new CreateHandlePerfMain(cfg.basePath,
+        cfg.inputParquetFilePath, cfg.avroSchemaFilePath);
   }
 
   public List<RawTripPayload> readParquet() {
