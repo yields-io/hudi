@@ -37,9 +37,9 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 
 
-public class CreateHandlePerfMain {
+public class CreateHandlePerfTestMain {
 
-  private static Logger logger = LogManager.getLogger(CreateHandlePerfMain.class);
+  private static Logger logger = LogManager.getLogger(CreateHandlePerfTestMain.class);
   private final Config config;
   private final JavaSparkContext jsc;
   private final FileSystem fs;
@@ -47,7 +47,7 @@ public class CreateHandlePerfMain {
   private final ParquetReaderIterator<RawTripPayload> readerIterator;
   private final List<RawTripPayload> rawTripPayloadList;
 
-  public CreateHandlePerfMain(String basePath, String inputParquetFilePath, String avroSchemaFilePath)
+  public CreateHandlePerfTestMain(String basePath, String inputParquetFilePath, String avroSchemaFilePath)
       throws IOException {
     this.config = new Config(basePath, inputParquetFilePath, avroSchemaFilePath);
     SparkConf sparkConf = new SparkConf().setAppName("Hoodie-snapshot-copier");
@@ -66,7 +66,7 @@ public class CreateHandlePerfMain {
     // Take input configs
     final Config cfg = new Config();
     new JCommander(cfg, args);
-    CreateHandlePerfMain perfMain = new CreateHandlePerfMain(cfg.basePath,
+    CreateHandlePerfTestMain perfMain = new CreateHandlePerfTestMain(cfg.basePath,
         cfg.inputParquetFilePath, cfg.avroSchemaFilePath);
   }
 
