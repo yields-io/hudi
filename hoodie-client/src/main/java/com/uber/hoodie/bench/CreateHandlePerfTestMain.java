@@ -19,6 +19,7 @@ package com.uber.hoodie.bench;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.uber.hoodie.common.util.FSUtils;
+import com.uber.hoodie.common.util.HoodieAvroUtils;
 import com.uber.hoodie.func.ParquetReaderIterator;
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +54,7 @@ public class CreateHandlePerfTestMain {
     this.jsc = jsc;
     this.config = new Config(basePath, inputParquetFilePath, avroSchemaFilePath);
     this.fs = FSUtils.getFs(config.basePath, jsc.hadoopConfiguration());
-    this.schema = new Schema.Parser().parse(new File(config.avroSchemaFilePath));
+    this.schema = HoodieAvroUtils.addMetadataFields(new Schema.Parser().parse(new File(config.avroSchemaFilePath)));
     AvroReadSupport.setAvroReadSchema(jsc.hadoopConfiguration(), schema);
     ParquetReader<RawTripPayload> reader = AvroParquetReader.builder(new Path(config.inputParquetFilePath))
         .withConf(jsc.hadoopConfiguration()).build();
