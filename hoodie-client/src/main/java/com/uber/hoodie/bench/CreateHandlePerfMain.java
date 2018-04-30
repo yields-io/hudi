@@ -47,6 +47,11 @@ public class CreateHandlePerfMain {
   private final ParquetReaderIterator<RawTripPayload> readerIterator;
   private final List<RawTripPayload> rawTripPayloadList;
 
+  public CreateHandlePerfMain(String basePath, String inputParquetFilePath, String avroSchemaFilePath)
+      throws IOException {
+    this(new Config(basePath, inputParquetFilePath, avroSchemaFilePath));
+  }
+
   public CreateHandlePerfMain(Config config) throws IOException {
     this.config = config;
     SparkConf sparkConf = new SparkConf().setAppName("Hoodie-snapshot-copier");
@@ -89,6 +94,15 @@ public class CreateHandlePerfMain {
 
     @Parameter(names = {"--avro-schema-file", "-i"}, required = true, description = "Avro schema to read from")
     String avroSchemaFilePath = null;
+
+    public Config() {
+    }
+
+    public Config(String basePath, String inputParquetFilePath, String avroSchemaFilePath) {
+      this.basePath = basePath;
+      this.inputParquetFilePath = inputParquetFilePath;
+      this.avroSchemaFilePath = avroSchemaFilePath;
+    }
 
     public String getBasePath() {
       return basePath;
