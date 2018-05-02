@@ -50,12 +50,12 @@ import org.apache.spark.api.java.JavaSparkContext;
 
 public class CreateHandlePerfTestMain {
 
-  private final Config config;
-  private final JavaSparkContext jsc;
-  private final FileSystem fs;
-  private final Schema schema;
-  private final ParquetReaderIterator<IndexedRecord> readerIterator;
-  private final List<IndexedRecord> recordList;
+  public final Config config;
+  public final JavaSparkContext jsc;
+  public final FileSystem fs;
+  public final Schema schema;
+  public final ParquetReaderIterator<IndexedRecord> readerIterator;
+  public final List<IndexedRecord> recordList;
 
   public CreateHandlePerfTestMain(JavaSparkContext jsc,
       String basePath, String inputParquetFilePath, String avroSchemaFilePath,
@@ -83,11 +83,11 @@ public class CreateHandlePerfTestMain {
         cfg.inputParquetFilePath, cfg.avroSchemaFilePath, cfg.outputDir, cfg.numParquetFilesToWrite);
   }
 
-  public void run() throws Exception {
-    run(config.numParquetFilesToWrite);
+  public Timer run() throws Exception {
+    return run(config.numParquetFilesToWrite);
   }
 
-  public void run(int numParquetFilesToWrite) throws Exception {
+  public Timer run(int numParquetFilesToWrite) throws Exception {
     final MetricRegistry metrics = new MetricRegistry();
     final Timer latencyTimer = metrics.timer("latency");
     for (int i = 0; i < numParquetFilesToWrite; i++) {
@@ -106,6 +106,7 @@ public class CreateHandlePerfTestMain {
     System.out.println("98th :" + snapshot.get98thPercentile());
     System.out.println("Max :" + snapshot.getMax());
     System.out.println("StdDev :" + snapshot.getStdDev());
+    return latencyTimer;
   }
 
   private void writeOneRound() throws Exception {
@@ -137,7 +138,7 @@ public class CreateHandlePerfTestMain {
     while (readerIterator.hasNext()) {
       IndexedRecord payload = readerIterator.next();
       payloadList.add(payload);
-      System.out.println("Payload : " + payload);
+      //System.out.println("Payload : " + payload);
     }
     return payloadList;
   }
