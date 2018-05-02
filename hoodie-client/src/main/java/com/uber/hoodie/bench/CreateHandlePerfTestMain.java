@@ -151,7 +151,7 @@ public class CreateHandlePerfTestMain {
     @Parameter(names = {"--input-parquet-file", "-i"}, required = true, description = "Parquet File to read from")
     String inputParquetFilePath = null;
 
-    @Parameter(names = {"--avro-schema-file", "-i"}, required = true, description = "Avro schema to read from")
+    @Parameter(names = {"--avro-schema-file", "-s"}, required = true, description = "Avro schema to read from")
     String avroSchemaFilePath = null;
 
     @Parameter(names = {"--output-dir", "-o"}, description = "Output Dir to write parquet files", required = true)
