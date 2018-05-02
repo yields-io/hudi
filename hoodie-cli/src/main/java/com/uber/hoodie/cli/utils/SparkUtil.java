@@ -44,6 +44,7 @@ public class SparkUtil {
       sparkLauncher.addJar(new File(libDirectory, library).getAbsolutePath());
     }
     return sparkLauncher;
+
   }
 
   public static JavaSparkContext initJavaSparkConf(String name) {

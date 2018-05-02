@@ -59,7 +59,9 @@ public class HoodieAvroWriteSupport extends AvroWriteSupport {
   }
 
   public void add(String recordKey) {
-    this.bloomFilter.add(recordKey);
+    if (bloomFilter != null) {
+      this.bloomFilter.add(recordKey);
+    }
     if (minRecordKey != null) {
       minRecordKey = minRecordKey.compareTo(recordKey) <= 0 ? minRecordKey : recordKey;
     } else {

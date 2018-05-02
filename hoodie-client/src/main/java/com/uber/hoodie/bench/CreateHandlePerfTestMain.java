@@ -18,48 +18,58 @@ package com.uber.hoodie.bench;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Snapshot;
+import com.codahale.metrics.Timer;
+import com.uber.hoodie.avro.HoodieAvroWriteSupport;
+import com.uber.hoodie.common.BloomFilter;
 import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.common.util.HoodieAvroUtils;
+import com.uber.hoodie.config.HoodieStorageConfig;
 import com.uber.hoodie.func.ParquetReaderIterator;
+import com.uber.hoodie.io.storage.HoodieParquetConfig;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.IndexedRecord;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.apache.parquet.avro.AvroParquetReader;
 import org.apache.parquet.avro.AvroReadSupport;
+import org.apache.parquet.avro.AvroSchemaConverter;
+import org.apache.parquet.hadoop.ParquetFileWriter;
 import org.apache.parquet.hadoop.ParquetReader;
+import org.apache.parquet.hadoop.ParquetWriter;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 
-
 public class CreateHandlePerfTestMain {
 
-  private static Logger logger = LogManager.getLogger(CreateHandlePerfTestMain.class);
   private final Config config;
   private final JavaSparkContext jsc;
   private final FileSystem fs;
   private final Schema schema;
-  private final ParquetReaderIterator<RawTripPayload> readerIterator;
-  private final List<RawTripPayload> rawTripPayloadList;
+  private final ParquetReaderIterator<IndexedRecord> readerIterator;
+  private final List<IndexedRecord> recordList;
 
   public CreateHandlePerfTestMain(JavaSparkContext jsc,
-      String basePath, String inputParquetFilePath, String avroSchemaFilePath)
+      String basePath, String inputParquetFilePath, String avroSchemaFilePath,
+      String outputDir, Integer numParquetFilesToWrite)
       throws IOException {
     this.jsc = jsc;
-    this.config = new Config(basePath, inputParquetFilePath, avroSchemaFilePath);
+    this.config = new Config(basePath, inputParquetFilePath, avroSchemaFilePath, outputDir, numParquetFilesToWrite);
     this.fs = FSUtils.getFs(config.basePath, jsc.hadoopConfiguration());
     this.schema = HoodieAvroUtils.addMetadataFields(new Schema.Parser().parse(new File(config.avroSchemaFilePath)));
     AvroReadSupport.setAvroReadSchema(jsc.hadoopConfiguration(), schema);
-    ParquetReader<RawTripPayload> reader = AvroParquetReader.builder(new Path(config.inputParquetFilePath))
+    ParquetReader<IndexedRecord> reader = AvroParquetReader.builder(new Path(config.inputParquetFilePath))
         .withConf(jsc.hadoopConfiguration()).build();
-    this.readerIterator = new ParquetReaderIterator<RawTripPayload>(reader);
-    this.rawTripPayloadList = readParquet();
+    this.readerIterator = new ParquetReaderIterator<>(reader);
+    this.recordList = readParquet();
   }
 
   public static void main(String[] args) throws Exception {
@@ -70,14 +80,62 @@ public class CreateHandlePerfTestMain {
     sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
     JavaSparkContext jsc = new JavaSparkContext(sparkConf);
     CreateHandlePerfTestMain perfMain = new CreateHandlePerfTestMain(jsc, cfg.basePath,
-        cfg.inputParquetFilePath, cfg.avroSchemaFilePath);
+        cfg.inputParquetFilePath, cfg.avroSchemaFilePath, cfg.outputDir, cfg.numParquetFilesToWrite);
   }
 
-  public List<RawTripPayload> readParquet() {
+  public void run() throws Exception {
+    run(config.numParquetFilesToWrite);
+  }
+
+  public void run(int numParquetFilesToWrite) throws Exception {
+    final MetricRegistry metrics = new MetricRegistry();
+    final Timer latencyTimer = metrics.timer("latency");
+    for (int i = 0; i < numParquetFilesToWrite; i++) {
+      Timer.Context c = latencyTimer.time();
+      writeOneRound();
+      c.stop();
+    }
+
+    Snapshot snapshot = latencyTimer.getSnapshot();
+    System.out.println("Count :" + latencyTimer.getCount());
+    System.out.println("Median :" + snapshot.getMedian());
+    System.out.println("Mean :" + snapshot.getMean());
+    System.out.println("Min :" + snapshot.getMin());
+    System.out.println("75th :" + snapshot.get75thPercentile());
+    System.out.println("95th :" + snapshot.get95thPercentile());
+    System.out.println("98th :" + snapshot.get98thPercentile());
+    System.out.println("Max :" + snapshot.getMax());
+    System.out.println("StdDev :" + snapshot.getStdDev());
+  }
+
+  private void writeOneRound() throws Exception {
+    String fileId = UUID.randomUUID().toString();
+    String path = config.outputDir + "/" + fileId + ".test.parquet";
+    HoodieAvroWriteSupport writeSupport = new HoodieAvroWriteSupport(
+        new AvroSchemaConverter().convert(schema), schema, new BloomFilter(recordList.size(), 0.00001, 1));
+
+    HoodieParquetConfig parquetConfig =
+        new HoodieParquetConfig(writeSupport, CompressionCodecName.GZIP,
+            ParquetWriter.DEFAULT_BLOCK_SIZE, ParquetWriter.DEFAULT_PAGE_SIZE, 120 * 1024 * 1024,
+            jsc.hadoopConfiguration(),
+            Double.valueOf(HoodieStorageConfig.DEFAULT_STREAM_COMPRESSION_RATIO));
+    ParquetWriter writer = new ParquetWriter(new Path(path), ParquetFileWriter.Mode.CREATE,
+        parquetConfig.getWriteSupport(),
+        parquetConfig.getCompressionCodecName(), parquetConfig.getBlockSize(),
+        parquetConfig.getPageSize(), parquetConfig.getPageSize(),
+        ParquetWriter.DEFAULT_IS_DICTIONARY_ENABLED, ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
+        ParquetWriter.DEFAULT_WRITER_VERSION, jsc.hadoopConfiguration());
+    for (IndexedRecord r : recordList) {
+      writer.write(r);
+    }
+    writer.close();
+  }
+
+  public List<IndexedRecord> readParquet() {
     System.out.println("Reading hoodie table from " + config.basePath);
-    List<RawTripPayload> payloadList = new ArrayList<>();
+    List<IndexedRecord> payloadList = new ArrayList<>();
     while (readerIterator.hasNext()) {
-      RawTripPayload payload = readerIterator.next();
+      IndexedRecord payload = readerIterator.next();
       payloadList.add(payload);
       System.out.println("Payload : " + payload);
     }
@@ -95,37 +153,22 @@ public class CreateHandlePerfTestMain {
     @Parameter(names = {"--avro-schema-file", "-i"}, required = true, description = "Avro schema to read from")
     String avroSchemaFilePath = null;
 
+    @Parameter(names = {"--output-dir", "-o"}, description = "Output Dir to write parquet files", required = true)
+    String outputDir = null;
+
+    @Parameter(names = {"--num-output-files", "-n"}, description = "#parquet files to write", required = true)
+    Integer numParquetFilesToWrite = 10;
+
     public Config() {
     }
 
-    public Config(String basePath, String inputParquetFilePath, String avroSchemaFilePath) {
+    public Config(String basePath, String inputParquetFilePath, String avroSchemaFilePath,
+        String outputDir, Integer numParquetFilesToWrite) {
       this.basePath = basePath;
       this.inputParquetFilePath = inputParquetFilePath;
       this.avroSchemaFilePath = avroSchemaFilePath;
-    }
-
-    public String getBasePath() {
-      return basePath;
-    }
-
-    public void setBasePath(String basePath) {
-      this.basePath = basePath;
-    }
-
-    public String getInputParquetFilePath() {
-      return inputParquetFilePath;
-    }
-
-    public void setInputParquetFilePath(String inputParquetFilePath) {
-      this.inputParquetFilePath = inputParquetFilePath;
-    }
-
-    public String getAvroSchemaFilePath() {
-      return avroSchemaFilePath;
-    }
-
-    public void setAvroSchemaFilePath(String avroSchemaFilePath) {
-      this.avroSchemaFilePath = avroSchemaFilePath;
+      this.outputDir = outputDir;
+      this.numParquetFilesToWrite = numParquetFilesToWrite;
     }
   }
 }
