@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.uber.hoodie.bench;
+package com.uber.hoodie.cli.bench;
 
 import java.io.File;
 import java.util.Arrays;

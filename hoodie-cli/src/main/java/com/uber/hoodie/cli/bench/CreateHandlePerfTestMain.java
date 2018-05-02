@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.uber.hoodie.bench;
+package com.uber.hoodie.cli.bench;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -56,6 +56,7 @@ public class CreateHandlePerfTestMain {
   public final Schema schema;
   public final ParquetReaderIterator<IndexedRecord> readerIterator;
   public final List<IndexedRecord> recordList;
+  public final MetricRegistry metrics = new MetricRegistry();
 
   public CreateHandlePerfTestMain(JavaSparkContext jsc,
       String basePath, String inputParquetFilePath, String avroSchemaFilePath,
@@ -88,25 +89,28 @@ public class CreateHandlePerfTestMain {
   }
 
   public Timer run(int numParquetFilesToWrite) throws Exception {
-    final MetricRegistry metrics = new MetricRegistry();
-    final Timer latencyTimer = metrics.timer("latency");
+    final Timer latencyTimer = metrics.timer("write_latency");
     for (int i = 0; i < numParquetFilesToWrite; i++) {
       Timer.Context c = latencyTimer.time();
       writeOneRound();
       c.stop();
     }
 
-    Snapshot snapshot = latencyTimer.getSnapshot();
-    System.out.println("Count :" + latencyTimer.getCount());
-    System.out.println("Median :" + snapshot.getMedian());
-    System.out.println("Mean :" + snapshot.getMean());
-    System.out.println("Min :" + snapshot.getMin());
-    System.out.println("75th :" + snapshot.get75thPercentile());
-    System.out.println("95th :" + snapshot.get95thPercentile());
-    System.out.println("98th :" + snapshot.get98thPercentile());
-    System.out.println("Max :" + snapshot.getMax());
-    System.out.println("StdDev :" + snapshot.getStdDev());
+    printTimer(latencyTimer, "Write");
     return latencyTimer;
+  }
+
+  private static void printTimer(Timer latencyTimer, String name) {
+    Snapshot snapshot = latencyTimer.getSnapshot();
+    System.out.println(name + " Count :" + latencyTimer.getCount());
+    System.out.println(name + " Median :" + snapshot.getMedian());
+    System.out.println(name + " Mean :" + snapshot.getMean());
+    System.out.println(name + " Min :" + snapshot.getMin());
+    System.out.println(name + " 75th :" + snapshot.get75thPercentile());
+    System.out.println(name + " 95th :" + snapshot.get95thPercentile());
+    System.out.println(name + " 98th :" + snapshot.get98thPercentile());
+    System.out.println(name + " Max :" + snapshot.getMax());
+    System.out.println(name + " StdDev :" + snapshot.getStdDev());
   }
 
   private void writeOneRound() throws Exception {
@@ -134,12 +138,16 @@ public class CreateHandlePerfTestMain {
 
   public List<IndexedRecord> readParquet() {
     System.out.println("Reading hoodie table from " + config.basePath);
+    final Timer latencyTimer = metrics.timer("read_latency");
     List<IndexedRecord> payloadList = new ArrayList<>();
+    Timer.Context c = latencyTimer.time();
     while (readerIterator.hasNext()) {
       IndexedRecord payload = readerIterator.next();
       payloadList.add(payload);
       //System.out.println("Payload : " + payload);
     }
+    c.stop();
+    printTimer(latencyTimer, "Read");
     return payloadList;
   }
 

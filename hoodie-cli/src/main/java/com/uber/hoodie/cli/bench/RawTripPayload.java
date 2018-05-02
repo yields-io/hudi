@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.uber.hoodie.bench;
+package com.uber.hoodie.cli.bench;
 
 import com.uber.hoodie.avro.MercifulJsonConverter;
 import com.uber.hoodie.common.model.HoodieRecordPayload;
