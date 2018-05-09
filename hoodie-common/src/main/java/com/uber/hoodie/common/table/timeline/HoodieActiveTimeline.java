@@ -232,24 +232,37 @@ public class HoodieActiveTimeline extends HoodieDefaultTimeline {
     return readDataFromPath(detailPath);
   }
 
-  protected void moveInflightToComplete(HoodieInstant inflight, HoodieInstant completed,
+  protected void moveRequestedToInflight(HoodieInstant requestedInstant, HoodieInstant inflightInstant,
       Optional<byte[]> data) {
-    Path commitFilePath = new Path(metaClient.getMetaPath(), completed.getFileName());
+    Preconditions.checkArgument(requestedInstant.getAction().equals(HoodieTimeline.COMPACTION_ACTION));
+    transitionState(requestedInstant, inflightInstant, data);
+  }
+
+  protected void moveInflightToComplete(HoodieInstant inflightInstant, HoodieInstant commitInstant,
+      Optional<byte[]> data) {
+    transitionState(inflightInstant, commitInstant, data);
+  }
+
+  private void transitionState(HoodieInstant fromInstant, HoodieInstant toInstant,
+      Optional<byte[]> data) {
+    Preconditions.checkArgument(fromInstant.getTimestamp().equals(toInstant.getTimestamp()));
+    Path commitFilePath = new Path(metaClient.getMetaPath(), toInstant.getFileName());
     try {
       // open a new file and write the commit metadata in
-      Path inflightCommitFile = new Path(metaClient.getMetaPath(), inflight.getFileName());
-      createFileInMetaPath(inflight.getFileName(), data);
+      Path inflightCommitFile = new Path(metaClient.getMetaPath(), fromInstant.getFileName());
+      createFileInMetaPath(fromInstant.getFileName(), data);
       boolean success = metaClient.getFs().rename(inflightCommitFile, commitFilePath);
       if (!success) {
         throw new HoodieIOException(
             "Could not rename " + inflightCommitFile + " to " + commitFilePath);
       }
     } catch (IOException e) {
-      throw new HoodieIOException("Could not complete " + inflight, e);
+      throw new HoodieIOException("Could not complete " + fromInstant, e);
     }
   }
 
   protected void moveCompleteToInflight(HoodieInstant completed, HoodieInstant inflight) {
+    Preconditions.checkArgument(completed.getTimestamp().equals(inflight.getTimestamp()));
     Path inFlightCommitFilePath = new Path(metaClient.getMetaPath(), inflight.getFileName());
     try {
       if (!metaClient.getFs().exists(inFlightCommitFilePath)) {
@@ -266,6 +279,11 @@ public class HoodieActiveTimeline extends HoodieDefaultTimeline {
   }
 
   public void saveToInflight(HoodieInstant instant, Optional<byte[]> content) {
+    createFileInMetaPath(instant.getFileName(), content);
+  }
+
+  public void saveToRequested(HoodieInstant instant, Optional<byte[]> content) {
+    Preconditions.checkArgument(instant.getAction().equals(HoodieTimeline.COMPACTION_ACTION));
     createFileInMetaPath(instant.getFileName(), content);
   }
 
