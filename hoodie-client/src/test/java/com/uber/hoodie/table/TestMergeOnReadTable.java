@@ -696,7 +696,7 @@ public class TestMergeOnReadTable {
     // Do a compaction
     String commitTime = writeClient.startCompaction();
     statuses = writeClient.compact(commitTime);
-    writeClient.commitCompaction(commitTime, statuses);
+    writeClient.commitCompaction(commitTime, statuses, Optional.empty());
     // total time taken for scanning log files should be greater than 0
     long timeTakenForScanner = statuses.map(writeStatus -> writeStatus.getStat().getRuntimeStats().getTotalScanTime())
         .reduce((a,b) -> a + b).longValue();
