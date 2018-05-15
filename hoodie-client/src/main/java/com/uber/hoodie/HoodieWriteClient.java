@@ -57,7 +57,6 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -475,14 +474,14 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
    * Commit changes performed at the given commitTime marker
    */
   public boolean commit(String commitTime, JavaRDD<WriteStatus> writeStatuses,
-      Optional<HashMap<String, String>> extraMetadata) {
+      Optional<Map<String, String>> extraMetadata) {
     HoodieTable<T> table = HoodieTable.getHoodieTable(
         new HoodieTableMetaClient(jsc.hadoopConfiguration(), config.getBasePath(), true), config);
     return commit(commitTime, writeStatuses, extraMetadata, table.getCommitActionType());
   }
 
   private boolean commit(String commitTime, JavaRDD<WriteStatus> writeStatuses,
-      Optional<HashMap<String, String>> extraMetadata, String actionType) {
+      Optional<Map<String, String>> extraMetadata, String actionType) {
 
     logger.info("Commiting " + commitTime);
     // Create a Hoodie table which encapsulated the commits and files visible
@@ -490,31 +489,12 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
         new HoodieTableMetaClient(jsc.hadoopConfiguration(), config.getBasePath(), true), config);
 
     HoodieActiveTimeline activeTimeline = table.getActiveTimeline();
-
-    List<Tuple2<String, HoodieWriteStat>> stats = writeStatuses.mapToPair(
-        (PairFunction<WriteStatus, String, HoodieWriteStat>) writeStatus -> new Tuple2<>(
-            writeStatus.getPartitionPath(), writeStatus.getStat())).collect();
-
     HoodieCommitMetadata metadata = new HoodieCommitMetadata();
-    for (Tuple2<String, HoodieWriteStat> stat : stats) {
-      metadata.addWriteStat(stat._1(), stat._2());
-    }
+    List<Tuple2<String, HoodieWriteStat>> stats =
+        CommitUtils.generateWriteStats(metadata, writeStatuses, extraMetadata);
 
     // Finalize write
-    final Timer.Context finalizeCtx = metrics.getFinalizeCtx();
-    final Optional<Integer> result = table.finalizeWrite(jsc, stats);
-    if (finalizeCtx != null && result.isPresent()) {
-      Optional<Long> durationInMs = Optional.of(metrics.getDurationInMs(finalizeCtx.stop()));
-      durationInMs.ifPresent(duration -> {
-        logger.info("Finalize write elapsed time (milliseconds): " + duration);
-        metrics.updateFinalizeWriteMetrics(duration, result.get());
-      });
-    }
-
-    // add in extra metadata
-    if (extraMetadata.isPresent()) {
-      extraMetadata.get().forEach((k, v) -> metadata.addMetadata(k, v));
-    }
+    CommitUtils.finalizeWrite(jsc, table, metrics, stats);
 
     try {
       activeTimeline.saveAsComplete(new HoodieInstant(true, actionType, commitTime),
@@ -835,9 +815,8 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
     HoodieTable<T> table = HoodieTable.getHoodieTable(
         new HoodieTableMetaClient(jsc.hadoopConfiguration(), config.getBasePath(), true), config);
     writeTimerContext = metrics.getCommitCtx();
-    JavaRDD<WriteStatus> statuses = compactionHandler.compact(table, commitTime);
-    String actionType = HoodieActiveTimeline.COMMIT_ACTION;
-    commitOnAutoCommit(commitTime, statuses, actionType);
+    JavaRDD<WriteStatus> statuses = compactionHandler.compact(table, commitTime, config.shouldAutoCommit(),
+        Optional.empty());
     return statuses;
   }
 
@@ -845,17 +824,11 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
    * Commit a compaction operation
    */
   public void commitCompaction(String commitTime, JavaRDD<WriteStatus> writeStatuses,
-      Optional<HashMap<String, String>> extraMetadata) {
-    String commitCompactionActionType = HoodieActiveTimeline.COMMIT_ACTION;
-    commit(commitTime, writeStatuses, extraMetadata, commitCompactionActionType);
-  }
-
-  /**
-   * Commit a compaction operation
-   */
-  public void commitCompaction(String commitTime, JavaRDD<WriteStatus> writeStatuses) {
-    String commitCompactionActionType = HoodieActiveTimeline.COMMIT_ACTION;
-    commit(commitTime, writeStatuses, Optional.empty(), commitCompactionActionType);
+      Optional<Map<String, String>> extraMetadata) {
+    // Create a Hoodie table which encapsulated the commits and files visible
+    HoodieTable<T> table = HoodieTable.getHoodieTable(
+        new HoodieTableMetaClient(jsc.hadoopConfiguration(), config.getBasePath(), true), config);
+    compactionHandler.commitCompaction(writeStatuses, table, commitTime, true, extraMetadata);
   }
 
   /**
