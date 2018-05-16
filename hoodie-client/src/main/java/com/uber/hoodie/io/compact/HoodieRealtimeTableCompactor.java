@@ -22,6 +22,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.uber.hoodie.WriteStatus;
+import com.uber.hoodie.avro.model.HoodieCompactionOperation;
+import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
 import com.uber.hoodie.common.model.HoodieLogFile;
 import com.uber.hoodie.common.model.HoodieTableType;
 import com.uber.hoodie.common.model.HoodieWriteStat.RuntimeStats;
@@ -75,19 +77,22 @@ public class HoodieRealtimeTableCompactor implements HoodieCompactor {
     jsc.sc().register(totalLogFiles);
     jsc.sc().register(totalFileSlices);
 
-    List<CompactionOperation> operations = getCompactionWorkload(jsc, hoodieTable, config,
+    HoodieCompactionWorkload compactionWorkload = generateCompactionWorkload(jsc, hoodieTable, config,
         compactionCommitTime);
-    if (operations == null) {
+    List<HoodieCompactionOperation> operations = compactionWorkload.getOperations();
+    if ((operations == null) || (operations.isEmpty())) {
       return jsc.emptyRDD();
     }
-    return executeCompaction(jsc, operations, hoodieTable, config, compactionCommitTime);
+    return executeCompaction(jsc, compactionWorkload, hoodieTable, config, compactionCommitTime);
   }
 
-  private JavaRDD<WriteStatus> executeCompaction(JavaSparkContext jsc,
-      List<CompactionOperation> operations, HoodieTable hoodieTable, HoodieWriteConfig config,
+  @Override
+  public JavaRDD<WriteStatus> executeCompaction(JavaSparkContext jsc,
+      HoodieCompactionWorkload compactionWorkload, HoodieTable hoodieTable, HoodieWriteConfig config,
       String compactionCommitTime) throws IOException {
-
-    log.info("After filtering, Compacting " + operations + " files");
+    List<CompactionOperation> operations = compactionWorkload.getOperations().stream()
+        .map(CompactionOperation::fromHoodieCompactionOperation).collect(toList());
+    log.info("Compactor " + compactionWorkload.getCompactorId() + " running, Compacting " + operations + " files");
     return jsc.parallelize(operations, operations.size())
         .map(s -> compact(hoodieTable, config, s, compactionCommitTime))
         .flatMap(writeStatusesItr -> writeStatusesItr.iterator());
@@ -135,7 +140,7 @@ public class HoodieRealtimeTableCompactor implements HoodieCompactor {
           s.getStat().setTotalLogFilesCompacted(scanner.getTotalLogFiles());
           s.getStat().setTotalLogRecords(scanner.getTotalLogRecords());
           s.getStat().setPartitionPath(operation.getPartitionPath());
-          s.getStat().setTotalLogSizeCompacted((long) operation.getMetrics().get(
+          s.getStat().setTotalLogSizeCompacted(operation.getMetrics().get(
               CompactionStrategy.TOTAL_LOG_FILE_SIZE));
           s.getStat().setTotalLogBlocks(scanner.getTotalLogBlocks());
           s.getStat().setTotalCorruptLogBlock(scanner.getTotalCorruptBlocks());
@@ -147,7 +152,8 @@ public class HoodieRealtimeTableCompactor implements HoodieCompactor {
         }).collect(toList());
   }
 
-  private List<CompactionOperation> getCompactionWorkload(JavaSparkContext jsc,
+  @Override
+  public HoodieCompactionWorkload generateCompactionWorkload(JavaSparkContext jsc,
       HoodieTable hoodieTable, HoodieWriteConfig config, String compactionCommitTime)
       throws IOException {
 
@@ -167,7 +173,7 @@ public class HoodieRealtimeTableCompactor implements HoodieCompactor {
 
     TableFileSystemView.RealtimeView fileSystemView = hoodieTable.getRTFileSystemView();
     log.info("Compaction looking for files to compact in " + partitionPaths + " partitions");
-    List<CompactionOperation> operations =
+    List<HoodieCompactionOperation> operations =
         jsc.parallelize(partitionPaths, partitionPaths.size())
             .flatMap((FlatMapFunction<String, CompactionOperation>) partitionPath -> fileSystemView
                 .getLatestFileSlices(partitionPath).map(
@@ -176,10 +182,21 @@ public class HoodieRealtimeTableCompactor implements HoodieCompactor {
                           .getBaseInstantAndLogVersionComparator().reversed()).collect(Collectors.toList());
                       totalLogFiles.add((long) logFiles.size());
                       totalFileSlices.add(1L);
+                      // Avro generated classes are not inheriting Serializable. Using CompactionOperation POJO
+                      // for spark Map operations and collecting them finally in Avro generated classes for storing
+                      // into meta files.
                       return new CompactionOperation(s.getDataFile().get(), partitionPath, logFiles, config);
                     })
                 .filter(c -> !c.getDeltaFilePaths().isEmpty())
-                .collect(toList()).iterator()).collect();
+                .collect(toList()).iterator()).collect().stream().map(r -> {
+                  return HoodieCompactionOperation.newBuilder().setFileId(r.getFileId())
+                      .setDataFileCommitTime(r.getDataFileCommitTime())
+                      .setDataFileSize(r.getDataFileSize())
+                      .setPartitionPath(r.getPartitionPath())
+                      .setDataFilePath(r.getDataFilePath())
+                      .setDeltaFilePaths(r.getDeltaFilePaths())
+                      .setMetrics(r.getMetrics()).build();
+                }).collect(toList());
     log.info("Total of " + operations.size() + " compactions are retrieved");
     log.info("Total number of latest files slices " + totalFileSlices.value());
     log.info("Total number of log files " + totalLogFiles.value());
@@ -187,12 +204,10 @@ public class HoodieRealtimeTableCompactor implements HoodieCompactor {
 
     // Filter the compactions with the passed in filter. This lets us choose most effective
     // compactions only
-    operations = config.getCompactionStrategy().orderAndFilter(config, operations);
-    if (operations.isEmpty()) {
+    HoodieCompactionWorkload workload = config.getCompactionStrategy().generateCompactionWorkload(config, operations);
+    if (workload.getOperations().isEmpty()) {
       log.warn("After filtering, Nothing to compact for " + metaClient.getBasePath());
-      return null;
     }
-    return operations;
+    return workload;
   }
-
 }

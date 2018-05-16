@@ -233,6 +233,10 @@ public class HoodieWriteConfig extends DefaultHoodieConfig {
         props.getProperty(HoodieCompactionConfig.COMPACTION_REVERSE_LOG_READ_ENABLED_PROP));
   }
 
+  public String getCompactorId() {
+    return props.getProperty(HoodieCompactionConfig.COMPACTOR_ID);
+  }
+
   public String getPayloadClass() {
     return props.getProperty(HoodieCompactionConfig.PAYLOAD_CLASS_PROP);
   }
