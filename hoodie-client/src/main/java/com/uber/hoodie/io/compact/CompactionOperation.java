@@ -16,11 +16,14 @@
 
 package com.uber.hoodie.io.compact;
 
+import com.uber.hoodie.avro.model.HoodieCompactionOperation;
 import com.uber.hoodie.common.model.HoodieDataFile;
 import com.uber.hoodie.common.model.HoodieLogFile;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.io.compact.strategy.CompactionStrategy;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -39,7 +42,7 @@ public class CompactionOperation implements Serializable {
   private String dataFilePath;
   private String fileId;
   private String partitionPath;
-  private Map<String, Object> metrics;
+  private Map<String, Long> metrics;
 
   //Only for serialization/de-serialization
   @Deprecated
@@ -83,7 +86,24 @@ public class CompactionOperation implements Serializable {
     return partitionPath;
   }
 
-  public Map<String, Object> getMetrics() {
+  public Map<String, Long> getMetrics() {
     return metrics;
+  }
+
+  /**
+   * Convert Avro generated Compaction operation to POJO for Spark RDD operation
+   * @param operation Hoodie Compaction Operation
+   * @return
+   */
+  public static CompactionOperation fromHoodieCompactionOperation(HoodieCompactionOperation operation) {
+    CompactionOperation op = new CompactionOperation();
+    op.dataFileSize = operation.getDataFileSize();
+    op.dataFileCommitTime = operation.getDataFileCommitTime();
+    op.dataFilePath = operation.getDataFilePath();
+    op.deltaFilePaths = new ArrayList<>(operation.getDeltaFilePaths());
+    op.fileId = operation.getFileId();
+    op.metrics = new HashMap<>(operation.getMetrics());
+    op.partitionPath = operation.getPartitionPath();
+    return op;
   }
 }

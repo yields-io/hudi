@@ -17,9 +17,9 @@
 
 package com.uber.hoodie.io.compact.strategy;
 
+import com.uber.hoodie.avro.model.HoodieCompactionOperation;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.exception.HoodieException;
-import com.uber.hoodie.io.compact.CompactionOperation;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Comparator;
@@ -37,8 +37,8 @@ public class DayBasedCompactionStrategy extends BoundedIOCompactionStrategy {
   // For now, use SimpleDateFormat as default partition format
   private static String datePartitionFormat = "yyyy/MM/dd";
   // Sorts compaction in LastInFirstCompacted order
-  private static Comparator<CompactionOperation> comparator = (CompactionOperation leftC,
-      CompactionOperation rightC) -> {
+  private static Comparator<HoodieCompactionOperation> comparator = (HoodieCompactionOperation leftC,
+      HoodieCompactionOperation rightC) -> {
     try {
       Date left = new SimpleDateFormat(datePartitionFormat, Locale.ENGLISH)
           .parse(leftC.getPartitionPath());
@@ -50,13 +50,13 @@ public class DayBasedCompactionStrategy extends BoundedIOCompactionStrategy {
     }
   };
 
-  public Comparator<CompactionOperation> getComparator() {
+  public Comparator<HoodieCompactionOperation> getComparator() {
     return comparator;
   }
 
   @Override
-  public List<CompactionOperation> orderAndFilter(HoodieWriteConfig writeConfig,
-      List<CompactionOperation> operations) {
+  public List<HoodieCompactionOperation> orderAndFilter(HoodieWriteConfig writeConfig,
+      List<HoodieCompactionOperation> operations) {
     // Iterate through the operations and accept operations as long as we are within the IO limit
     return super.orderAndFilter(writeConfig,
         operations.stream().sorted(comparator).collect(Collectors.toList()));
