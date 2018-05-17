@@ -71,13 +71,6 @@ public class HoodieInstant implements Serializable {
     }
   }
 
-  public HoodieInstant(boolean isInflight, String action, String timestamp) {
-    //TODO: vb - Preserving for avoiding cascading changes. This constructor will be updated in subsequent PR
-    this.state = isInflight ? State.INFLIGHT : State.COMPLETED;
-    this.action = action;
-    this.timestamp = timestamp;
-  }
-
   public HoodieInstant(State state, String action, String timestamp) {
     this.state = state;
     this.action = action;

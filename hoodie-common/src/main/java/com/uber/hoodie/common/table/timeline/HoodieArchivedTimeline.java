@@ -18,6 +18,7 @@ package com.uber.hoodie.common.table.timeline;
 
 import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.exception.HoodieIOException;
 import java.io.IOException;
 import java.io.Serializable;
@@ -62,7 +63,7 @@ public class HoodieArchivedTimeline extends HoodieDefaultTimeline {
         readCommits.put(key.toString(), Arrays.copyOf(val.getBytes(), val.getLength()));
       }
       this.instants = readCommits.keySet().stream().map(
-          s -> new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, s)).collect(
+          s -> new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, s)).collect(
           Collectors.toList());
     } catch (IOException e) {
       throw new HoodieIOException(

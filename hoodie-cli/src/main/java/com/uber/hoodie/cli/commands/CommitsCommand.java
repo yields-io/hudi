@@ -27,6 +27,7 @@ import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.util.NumericUtils;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -123,7 +124,7 @@ public class CommitsCommand implements CommandMarker {
       throws Exception {
     HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
     HoodieTimeline timeline = activeTimeline.getCommitsTimeline().filterCompletedInstants();
-    HoodieInstant commitInstant = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, commitTime);
+    HoodieInstant commitInstant = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, commitTime);
 
     if (!timeline.containsInstant(commitInstant)) {
       return "Commit " + commitTime + " not found in Commits " + timeline;
@@ -155,7 +156,7 @@ public class CommitsCommand implements CommandMarker {
 
     HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
     HoodieTimeline timeline = activeTimeline.getCommitsTimeline().filterCompletedInstants();
-    HoodieInstant commitInstant = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, commitTime);
+    HoodieInstant commitInstant = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, commitTime);
 
     if (!timeline.containsInstant(commitInstant)) {
       return "Commit " + commitTime + " not found in Commits " + timeline;
@@ -216,7 +217,7 @@ public class CommitsCommand implements CommandMarker {
 
     HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
     HoodieTimeline timeline = activeTimeline.getCommitsTimeline().filterCompletedInstants();
-    HoodieInstant commitInstant = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, commitTime);
+    HoodieInstant commitInstant = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, commitTime);
 
     if (!timeline.containsInstant(commitInstant)) {
       return "Commit " + commitTime + " not found in Commits " + timeline;

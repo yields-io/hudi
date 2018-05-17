@@ -27,6 +27,7 @@ import com.uber.hoodie.common.model.HoodieRecordLocation;
 import com.uber.hoodie.common.model.HoodieRecordPayload;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.exception.HoodieDependentSystemUnavailableException;
 import com.uber.hoodie.exception.HoodieIndexException;
@@ -124,7 +125,7 @@ public class HBaseIndex<T extends HoodieRecordPayload> extends HoodieIndex<T> {
     // Check if the last commit ts for this row is 1) present in the timeline or
     // 2) is less than the first commit ts in the timeline
     return !commitTimeline.empty() && (commitTimeline
-        .containsInstant(new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, commitTs))
+        .containsInstant(new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, commitTs))
         || HoodieTimeline
         .compareTimestamps(commitTimeline.firstInstant().get().getTimestamp(), commitTs,
             HoodieTimeline.GREATER));

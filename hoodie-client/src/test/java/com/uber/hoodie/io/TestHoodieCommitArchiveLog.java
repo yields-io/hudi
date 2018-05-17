@@ -30,6 +30,7 @@ import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.log.HoodieLogFormat;
 import com.uber.hoodie.common.table.log.block.HoodieAvroDataBlock;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.config.HoodieCompactionConfig;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import java.io.IOException;
@@ -256,11 +257,11 @@ public class TestHoodieCommitArchiveLog {
         "Since we have a savepoint at 101, we should never archive any commit after 101 (we only " + "archive 100)", 5,
         timeline.countInstants());
     assertTrue("Archived commits should always be safe",
-        timeline.containsInstant(new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, "101")));
+        timeline.containsInstant(new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, "101")));
     assertTrue("Archived commits should always be safe",
-        timeline.containsInstant(new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, "102")));
+        timeline.containsInstant(new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, "102")));
     assertTrue("Archived commits should always be safe",
-        timeline.containsInstant(new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, "103")));
+        timeline.containsInstant(new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, "103")));
   }
 
   private void verifyInflightInstants(HoodieTableMetaClient metaClient, int expectedTotalInstants) {

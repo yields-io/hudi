@@ -34,6 +34,7 @@ import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.TableFileSystemView;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.util.AvroUtils;
 import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.config.HoodieCompactionConfig;
@@ -497,7 +498,7 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
     CommitUtils.finalizeWrite(jsc, table, metrics, stats);
 
     try {
-      activeTimeline.saveAsComplete(new HoodieInstant(true, actionType, commitTime),
+      activeTimeline.saveAsComplete(new HoodieInstant(State.INFLIGHT, actionType, commitTime),
           Optional.of(metadata.toJsonString().getBytes(StandardCharsets.UTF_8)));
       // Save was a success
       // Do a inline compaction if enabled
@@ -585,7 +586,7 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
         new HoodieTableMetaClient(jsc.hadoopConfiguration(), config.getBasePath(), true), config);
     Optional<HoodieInstant> cleanInstant = table.getCompletedCleanTimeline().lastInstant();
 
-    HoodieInstant commitInstant = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION,
+    HoodieInstant commitInstant = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION,
         commitTime);
     if (!table.getCompletedCommitTimeline().containsInstant(commitInstant)) {
       throw new HoodieSavepointException(
@@ -625,7 +626,7 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
           .convertSavepointMetadata(user, comment, latestFilesMap);
       // Nothing to save in the savepoint
       table.getActiveTimeline()
-          .saveAsComplete(new HoodieInstant(true, HoodieTimeline.SAVEPOINT_ACTION, commitTime),
+          .saveAsComplete(new HoodieInstant(State.INFLIGHT, HoodieTimeline.SAVEPOINT_ACTION, commitTime),
               AvroUtils.serializeSavepointMetadata(metadata));
       logger.info("Savepoint " + commitTime + " created");
       return true;
@@ -646,7 +647,7 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
         new HoodieTableMetaClient(jsc.hadoopConfiguration(), config.getBasePath(), true), config);
     HoodieActiveTimeline activeTimeline = table.getActiveTimeline();
 
-    HoodieInstant savePoint = new HoodieInstant(false, HoodieTimeline.SAVEPOINT_ACTION,
+    HoodieInstant savePoint = new HoodieInstant(State.COMPLETED, HoodieTimeline.SAVEPOINT_ACTION,
         savepointTime);
     boolean isSavepointPresent = table.getCompletedSavepointTimeline().containsInstant(savePoint);
     if (!isSavepointPresent) {
@@ -656,7 +657,7 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
 
     activeTimeline.revertToInflight(savePoint);
     activeTimeline
-        .deleteInflight(new HoodieInstant(true, HoodieTimeline.SAVEPOINT_ACTION, savepointTime));
+        .deleteInflight(new HoodieInstant(State.INFLIGHT, HoodieTimeline.SAVEPOINT_ACTION, savepointTime));
     logger.info("Savepoint " + savepointTime + " deleted");
   }
 
@@ -673,7 +674,7 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
     HoodieActiveTimeline activeTimeline = table.getActiveTimeline();
     HoodieTimeline commitTimeline = table.getCommitsTimeline();
 
-    HoodieInstant savePoint = new HoodieInstant(false, HoodieTimeline.SAVEPOINT_ACTION,
+    HoodieInstant savePoint = new HoodieInstant(State.COMPLETED, HoodieTimeline.SAVEPOINT_ACTION,
         savepointTime);
     boolean isSavepointPresent = table.getCompletedSavepointTimeline().containsInstant(savePoint);
     if (!isSavepointPresent) {
@@ -758,7 +759,7 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
           .updateCleanMetrics(durationInMs.orElseGet(() -> -1L), metadata.getTotalFilesDeleted());
 
       table.getActiveTimeline()
-          .saveAsComplete(new HoodieInstant(true, HoodieTimeline.CLEAN_ACTION, startCleanTime),
+          .saveAsComplete(new HoodieInstant(State.INFLIGHT, HoodieTimeline.CLEAN_ACTION, startCleanTime),
               AvroUtils.serializeCleanMetadata(metadata));
       logger.info("Marked clean started on " + startCleanTime + " as complete");
 
@@ -788,7 +789,7 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
         new HoodieTableMetaClient(jsc.hadoopConfiguration(), config.getBasePath(), true), config);
     HoodieActiveTimeline activeTimeline = table.getActiveTimeline();
     String commitActionType = table.getCommitActionType();
-    activeTimeline.createInflight(new HoodieInstant(true, commitActionType, commitTime));
+    activeTimeline.createInflight(new HoodieInstant(State.INFLIGHT, commitActionType, commitTime));
   }
 
   /**

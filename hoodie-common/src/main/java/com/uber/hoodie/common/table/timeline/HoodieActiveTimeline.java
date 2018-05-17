@@ -297,6 +297,7 @@ public class HoodieActiveTimeline extends HoodieDefaultTimeline {
 
   protected void createFileInMetaPath(String filename, Optional<byte[]> content) {
     Path fullPath = new Path(metaClient.getMetaPath(), filename);
+    log.info("Creating Meta File :" + fullPath);
     try {
       if (!content.isPresent()) {
         if (metaClient.getFs().createNewFile(fullPath)) {

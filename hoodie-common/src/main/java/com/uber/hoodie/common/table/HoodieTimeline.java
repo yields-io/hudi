@@ -161,7 +161,7 @@ public interface HoodieTimeline extends Serializable {
   }
 
   static HoodieInstant getCompletedInstant(final HoodieInstant instant) {
-    return new HoodieInstant(false, instant.getAction(), instant.getTimestamp());
+    return new HoodieInstant(State.COMPLETED, instant.getAction(), instant.getTimestamp());
   }
 
   static HoodieInstant getCompactionRequestedInstant(final String timestamp) {
@@ -173,7 +173,7 @@ public interface HoodieTimeline extends Serializable {
   }
 
   static HoodieInstant getInflightInstant(final HoodieInstant instant) {
-    return new HoodieInstant(true, instant.getAction(), instant.getTimestamp());
+    return new HoodieInstant(State.INFLIGHT, instant.getAction(), instant.getTimestamp());
   }
 
   static String makeCommitFileName(String commitTime) {

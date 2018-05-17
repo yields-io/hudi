@@ -25,6 +25,7 @@ import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.util.AvroUtils;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -106,7 +107,7 @@ public class CleansCommand implements CommandMarker {
 
     HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
     HoodieTimeline timeline = activeTimeline.getCleanerTimeline().filterCompletedInstants();
-    HoodieInstant cleanInstant = new HoodieInstant(false, HoodieTimeline.CLEAN_ACTION, commitTime);
+    HoodieInstant cleanInstant = new HoodieInstant(State.COMPLETED, HoodieTimeline.CLEAN_ACTION, commitTime);
 
     if (!timeline.containsInstant(cleanInstant)) {
       return "Clean " + commitTime + " not found in metadata " + timeline;

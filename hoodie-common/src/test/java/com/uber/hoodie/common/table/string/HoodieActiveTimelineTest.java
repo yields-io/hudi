@@ -25,6 +25,7 @@ import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -54,16 +55,16 @@ public class HoodieActiveTimelineTest {
 
   @Test
   public void testLoadingInstantsFromFiles() throws IOException {
-    HoodieInstant instant1 = new HoodieInstant(true, HoodieTimeline.COMMIT_ACTION, "1");
-    HoodieInstant instant2 = new HoodieInstant(true, HoodieTimeline.COMMIT_ACTION, "3");
-    HoodieInstant instant3 = new HoodieInstant(true, HoodieTimeline.COMMIT_ACTION, "5");
-    HoodieInstant instant4 = new HoodieInstant(true, HoodieTimeline.COMMIT_ACTION, "8");
-    HoodieInstant instant1Complete = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, "1");
-    HoodieInstant instant2Complete = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, "3");
-    HoodieInstant instant3Complete = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, "5");
-    HoodieInstant instant4Complete = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, "8");
+    HoodieInstant instant1 = new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMMIT_ACTION, "1");
+    HoodieInstant instant2 = new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMMIT_ACTION, "3");
+    HoodieInstant instant3 = new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMMIT_ACTION, "5");
+    HoodieInstant instant4 = new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMMIT_ACTION, "8");
+    HoodieInstant instant1Complete = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, "1");
+    HoodieInstant instant2Complete = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, "3");
+    HoodieInstant instant3Complete = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, "5");
+    HoodieInstant instant4Complete = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, "8");
 
-    HoodieInstant instant5 = new HoodieInstant(true, HoodieTimeline.COMMIT_ACTION, "9");
+    HoodieInstant instant5 = new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMMIT_ACTION, "9");
 
     timeline = new HoodieActiveTimeline(metaClient);
     timeline.saveAsComplete(instant1, Optional.empty());
@@ -96,7 +97,8 @@ public class HoodieActiveTimelineTest {
     assertEquals("", Optional.empty(), timeline.nthInstant(5));
     assertEquals("", Optional.empty(), timeline.nthInstant(-1));
     assertEquals("", Optional.empty(), timeline.lastInstant());
-    assertFalse("", timeline.containsInstant(new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, "01")));
+    assertFalse("", timeline.containsInstant(
+        new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, "01")));
   }
 
   @Test
@@ -119,7 +121,8 @@ public class HoodieActiveTimelineTest {
     assertEquals("", "11", activeCommitTimeline.nthInstant(5).get().getTimestamp());
     assertEquals("", "19", activeCommitTimeline.lastInstant().get().getTimestamp());
     assertEquals("", "09", activeCommitTimeline.nthFromLastInstant(5).get().getTimestamp());
-    assertTrue("", activeCommitTimeline.containsInstant(new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, "09")));
+    assertTrue("", activeCommitTimeline.containsInstant(
+        new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, "09")));
     assertFalse("", activeCommitTimeline.isBeforeTimelineStarts("02"));
     assertTrue("", activeCommitTimeline.isBeforeTimelineStarts("00"));
   }

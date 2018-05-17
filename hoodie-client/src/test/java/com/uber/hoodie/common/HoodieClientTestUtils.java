@@ -25,6 +25,7 @@ import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.TableFileSystemView;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.table.view.HoodieTableFileSystemView;
 import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.exception.HoodieException;
@@ -117,7 +118,7 @@ public class HoodieClientTestUtils {
 
   public static Dataset<Row> readCommit(String basePath, SQLContext sqlContext, HoodieTimeline commitTimeline,
       String commitTime) {
-    HoodieInstant commitInstant = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, commitTime);
+    HoodieInstant commitInstant = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, commitTime);
     if (!commitTimeline.containsInstant(commitInstant)) {
       new HoodieException("No commit exists at " + commitTime);
     }

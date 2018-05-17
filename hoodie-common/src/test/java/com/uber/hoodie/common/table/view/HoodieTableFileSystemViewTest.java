@@ -98,9 +98,11 @@ public class HoodieTableFileSystemViewTest {
     new File(basePath + "/" + partitionPath + "/" + fileName1).createNewFile();
     new File(basePath + "/" + partitionPath + "/" + fileName2).createNewFile();
     HoodieActiveTimeline commitTimeline = metaClient.getActiveTimeline();
-    HoodieInstant instant1 = new HoodieInstant(true, HoodieTimeline.COMMIT_ACTION, instantTime1);
-    HoodieInstant deltaInstant2 = new HoodieInstant(true, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime1);
-    HoodieInstant deltaInstant3 = new HoodieInstant(true, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime2);
+    HoodieInstant instant1 = new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMMIT_ACTION, instantTime1);
+    HoodieInstant deltaInstant2 =
+        new HoodieInstant(State.INFLIGHT, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime1);
+    HoodieInstant deltaInstant3 =
+        new HoodieInstant(State.INFLIGHT, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime2);
 
     commitTimeline.saveAsComplete(instant1, Optional.empty());
     commitTimeline.saveAsComplete(deltaInstant2, Optional.empty());
@@ -174,9 +176,11 @@ public class HoodieTableFileSystemViewTest {
     new File(basePath + "/" + partitionPath + "/" + fileName1).createNewFile();
     new File(basePath + "/" + partitionPath + "/" + fileName2).createNewFile();
     HoodieActiveTimeline commitTimeline = metaClient.getActiveTimeline();
-    HoodieInstant instant1 = new HoodieInstant(true, HoodieTimeline.COMMIT_ACTION, instantTime1);
-    HoodieInstant deltaInstant2 = new HoodieInstant(true, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime1);
-    HoodieInstant deltaInstant3 = new HoodieInstant(true, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime2);
+    HoodieInstant instant1 = new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMMIT_ACTION, instantTime1);
+    HoodieInstant deltaInstant2 =
+        new HoodieInstant(State.INFLIGHT, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime1);
+    HoodieInstant deltaInstant3 =
+        new HoodieInstant(State.INFLIGHT, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime2);
 
     commitTimeline.saveAsComplete(instant1, Optional.empty());
     commitTimeline.saveAsComplete(deltaInstant2, Optional.empty());
@@ -201,8 +205,10 @@ public class HoodieTableFileSystemViewTest {
     String fileName4 = FSUtils.makeLogFileName(fileId, HoodieLogFile.DELTA_EXTENSION, compactionRequestedTime, 1);
     new File(basePath + "/" + partitionPath + "/" + fileName3).createNewFile();
     new File(basePath + "/" + partitionPath + "/" + fileName4).createNewFile();
-    HoodieInstant deltaInstant4 = new HoodieInstant(true, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime4);
-    HoodieInstant deltaInstant5 = new HoodieInstant(true, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime5);
+    HoodieInstant deltaInstant4 =
+        new HoodieInstant(State.INFLIGHT, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime4);
+    HoodieInstant deltaInstant5 =
+        new HoodieInstant(State.INFLIGHT, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime5);
     commitTimeline.saveAsComplete(deltaInstant4, Optional.empty());
     commitTimeline.saveAsComplete(deltaInstant5, Optional.empty());
     refreshFsView(null);
@@ -294,7 +300,7 @@ public class HoodieTableFileSystemViewTest {
 
     // Make this commit safe
     HoodieActiveTimeline commitTimeline = metaClient.getActiveTimeline();
-    HoodieInstant instant1 = new HoodieInstant(true, HoodieTimeline.COMMIT_ACTION, commitTime1);
+    HoodieInstant instant1 = new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMMIT_ACTION, commitTime1);
     commitTimeline.saveAsComplete(instant1, Optional.empty());
     refreshFsView(null);
     assertEquals("", fileName1,
@@ -311,7 +317,7 @@ public class HoodieTableFileSystemViewTest {
             .getFileName());
 
     // Make it safe
-    HoodieInstant instant2 = new HoodieInstant(true, HoodieTimeline.COMMIT_ACTION, commitTime2);
+    HoodieInstant instant2 = new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMMIT_ACTION, commitTime2);
     commitTimeline.saveAsComplete(instant2, Optional.empty());
     refreshFsView(null);
     assertEquals("", fileName2,
