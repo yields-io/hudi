@@ -27,6 +27,7 @@ import com.uber.hoodie.common.model.HoodieTestUtils;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieArchivedTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -63,7 +64,7 @@ public class HoodieTableMetaClientTest {
         .serializeDeserialize(metaClient, HoodieTableMetaClient.class);
     assertNotNull(deseralizedMetaClient);
     HoodieActiveTimeline commitTimeline = deseralizedMetaClient.getActiveTimeline();
-    HoodieInstant instant = new HoodieInstant(true, HoodieTimeline.COMMIT_ACTION, "1");
+    HoodieInstant instant = new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMMIT_ACTION, "1");
     commitTimeline.createInflight(instant);
     commitTimeline.saveAsComplete(instant, Optional.of("test-detail".getBytes()));
     commitTimeline = commitTimeline.reload();
@@ -79,7 +80,7 @@ public class HoodieTableMetaClientTest {
     HoodieTimeline activeCommitTimeline = activeTimeline.getCommitTimeline();
     assertTrue("Should be empty commit timeline", activeCommitTimeline.empty());
 
-    HoodieInstant instant = new HoodieInstant(true, HoodieTimeline.COMMIT_ACTION, "1");
+    HoodieInstant instant = new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMMIT_ACTION, "1");
     activeTimeline.createInflight(instant);
     activeTimeline.saveAsComplete(instant, Optional.of("test-detail".getBytes()));
 
@@ -113,9 +114,9 @@ public class HoodieTableMetaClientTest {
 
     HoodieArchivedTimeline archivedTimeline = metaClient.getArchivedTimeline();
 
-    HoodieInstant instant1 = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, "1");
-    HoodieInstant instant2 = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, "2");
-    HoodieInstant instant3 = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, "3");
+    HoodieInstant instant1 = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, "1");
+    HoodieInstant instant2 = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, "2");
+    HoodieInstant instant3 = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, "3");
 
     assertEquals(Lists.newArrayList(instant1, instant2, instant3),
         archivedTimeline.getInstants().collect(Collectors.toList()));

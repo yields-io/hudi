@@ -28,6 +28,7 @@ import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.TableFileSystemView;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.table.view.HoodieTableFileSystemView;
 import com.uber.hoodie.common.util.AvroUtils;
 import com.uber.hoodie.config.HoodieWriteConfig;
@@ -171,7 +172,7 @@ public abstract class HoodieTable<T extends HoodieRecordPayload> implements Seri
       throw new HoodieSavepointException(
           "Could not get data files for savepoint " + savepointTime + ". No such savepoint.");
     }
-    HoodieInstant instant = new HoodieInstant(false, HoodieTimeline.SAVEPOINT_ACTION,
+    HoodieInstant instant = new HoodieInstant(State.COMPLETED, HoodieTimeline.SAVEPOINT_ACTION,
         savepointTime);
     HoodieSavepointMetadata metadata = null;
     try {

@@ -33,6 +33,7 @@ import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.TableFileSystemView;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.common.util.ParquetUtils;
 import com.uber.hoodie.config.HoodieCompactionConfig;
@@ -560,7 +561,7 @@ public class TestHoodieClientOnCopyOnWriteStorage extends TestHoodieClientBase {
 
     // Get parquet file paths from commit metadata
     String actionType = table.getCommitActionType();
-    HoodieInstant commitInstant = new HoodieInstant(false, actionType, commitTime);
+    HoodieInstant commitInstant = new HoodieInstant(State.COMPLETED, actionType, commitTime);
     HoodieTimeline commitTimeline = table.getCommitTimeline().filterCompletedInstants();
     HoodieCommitMetadata commitMetadata = HoodieCommitMetadata
         .fromBytes(commitTimeline.getInstantDetails(commitInstant).get());

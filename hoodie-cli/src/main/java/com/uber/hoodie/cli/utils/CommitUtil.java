@@ -20,6 +20,7 @@ import com.uber.hoodie.common.model.HoodieCommitMetadata;
 import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import java.io.IOException;
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class CommitUtil {
     HoodieTimeline timeline = target.getActiveTimeline().reload().getCommitTimeline().filterCompletedInstants();
     for (String commit : commitsToCatchup) {
       HoodieCommitMetadata c = HoodieCommitMetadata.fromBytes(
-          timeline.getInstantDetails(new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, commit)).get());
+          timeline.getInstantDetails(new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, commit)).get());
       totalNew += c.fetchTotalRecordsWritten() - c.fetchTotalUpdateRecordsWritten();
     }
     return totalNew;

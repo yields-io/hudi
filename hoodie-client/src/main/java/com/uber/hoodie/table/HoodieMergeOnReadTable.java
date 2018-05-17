@@ -34,6 +34,7 @@ import com.uber.hoodie.common.table.log.block.HoodieCommandBlock;
 import com.uber.hoodie.common.table.log.block.HoodieLogBlock;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.exception.HoodieCompactionException;
@@ -181,7 +182,7 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
                 try {
                   HoodieCommitMetadata commitMetadata = HoodieCommitMetadata.fromBytes(
                       this.getCommitTimeline().getInstantDetails(
-                          new HoodieInstant(true, instant.getAction(), instant.getTimestamp()))
+                          new HoodieInstant(State.INFLIGHT, instant.getAction(), instant.getTimestamp()))
                           .get());
 
                   // read commit file and (either append delete blocks or delete file)
@@ -261,7 +262,7 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
         }).flatMap(x -> x.iterator()).filter(x -> x != null).collect();
 
     commitsAndCompactions.entrySet().stream().map(
-        entry -> new HoodieInstant(true, entry.getValue().getAction(),
+        entry -> new HoodieInstant(State.INFLIGHT, entry.getValue().getAction(),
             entry.getValue().getTimestamp())).forEach(this.getActiveTimeline()::deleteInflight);
 
     logger

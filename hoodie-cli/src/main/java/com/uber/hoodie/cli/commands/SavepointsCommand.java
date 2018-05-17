@@ -25,6 +25,7 @@ import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.config.HoodieIndexConfig;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.index.HoodieIndex;
@@ -86,7 +87,7 @@ public class SavepointsCommand implements CommandMarker {
       throws Exception {
     HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
     HoodieTimeline timeline = activeTimeline.getCommitTimeline().filterCompletedInstants();
-    HoodieInstant commitInstant = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, commitTime);
+    HoodieInstant commitInstant = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, commitTime);
 
     if (!timeline.containsInstant(commitInstant)) {
       return "Commit " + commitTime + " not found in Commits " + timeline;
@@ -108,7 +109,7 @@ public class SavepointsCommand implements CommandMarker {
       throws Exception {
     HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
     HoodieTimeline timeline = activeTimeline.getCommitTimeline().filterCompletedInstants();
-    HoodieInstant commitInstant = new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, commitTime);
+    HoodieInstant commitInstant = new HoodieInstant(State.COMPLETED, HoodieTimeline.COMMIT_ACTION, commitTime);
 
     if (!timeline.containsInstant(commitInstant)) {
       return "Commit " + commitTime + " not found in Commits " + timeline;

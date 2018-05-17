@@ -19,6 +19,7 @@ package com.uber.hoodie.common.table.string;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.function.Function;
@@ -29,8 +30,9 @@ public class MockHoodieTimeline extends HoodieActiveTimeline {
 
   public MockHoodieTimeline(Stream<String> completed, Stream<String> inflights) throws IOException {
     super();
-    this.instants = Stream.concat(completed.map(s -> new HoodieInstant(false, HoodieTimeline.COMMIT_ACTION, s)),
-        inflights.map(s -> new HoodieInstant(true, HoodieTimeline.COMMIT_ACTION, s)))
+    this.instants = Stream.concat(completed.map(s -> new HoodieInstant(State.COMPLETED,
+            HoodieTimeline.COMMIT_ACTION, s)),
+        inflights.map(s -> new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMMIT_ACTION, s)))
         .sorted(Comparator.comparing(new Function<HoodieInstant, String>() {
           @Override
           public String apply(HoodieInstant hoodieInstant) {

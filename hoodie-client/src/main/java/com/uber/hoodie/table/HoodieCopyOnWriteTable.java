@@ -32,6 +32,7 @@ import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.common.util.queue.BoundedInMemoryExecutor;
 import com.uber.hoodie.common.util.queue.BoundedInMemoryQueueConsumer;
@@ -318,7 +319,7 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
 
     // Atomically unpublish all the commits
     commits.stream().filter(s -> !inflights.contains(s))
-        .map(s -> new HoodieInstant(false, actionType, s))
+        .map(s -> new HoodieInstant(State.COMPLETED, actionType, s))
         .forEach(activeTimeline::revertToInflight);
     logger.info("Unpublished " + commits);
 
@@ -338,7 +339,7 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
     cleanTemporaryDataFiles(jsc);
 
     // Remove the rolled back inflight commits
-    commits.stream().map(s -> new HoodieInstant(true, actionType, s))
+    commits.stream().map(s -> new HoodieInstant(State.INFLIGHT, actionType, s))
         .forEach(activeTimeline::deleteInflight);
     logger.info("Deleted inflight commits " + commits);
     return stats;

@@ -24,6 +24,7 @@ import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.exception.HoodieCommitException;
@@ -86,7 +87,7 @@ class CompactionClientHandler<T extends HoodieRecordPayload> implements Serializ
         new HoodieTableMetaClient(jsc.hadoopConfiguration(), config.getBasePath(), true), config);
     HoodieActiveTimeline activeTimeline = table.getActiveTimeline();
     String commitActionType = HoodieTimeline.COMMIT_ACTION;
-    activeTimeline.createInflight(new HoodieInstant(true, commitActionType, commitTime));
+    activeTimeline.createInflight(new HoodieInstant(State.INFLIGHT, commitActionType, commitTime));
   }
 
   /**
@@ -205,7 +206,7 @@ class CompactionClientHandler<T extends HoodieRecordPayload> implements Serializ
 
     try {
       activeTimeline.saveAsComplete(
-          new HoodieInstant(true, HoodieTimeline.COMMIT_ACTION, compactionCommitTime),
+          new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMMIT_ACTION, compactionCommitTime),
           Optional.of(metadata.toJsonString().getBytes(StandardCharsets.UTF_8)));
     } catch (IOException e) {
       throw new HoodieCompactionException(
