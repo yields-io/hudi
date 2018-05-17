@@ -200,8 +200,8 @@ public class TestMergeOnReadTable {
     commit = metaClient.getActiveTimeline().getCommitTimeline().firstInstant();
     assertFalse(commit.isPresent());
 
-    String compactionCommitTime = client.startCompaction();
-    client.compact(compactionCommitTime);
+    String compactionCommitTime = client.scheduleCompaction(Optional.empty());
+    client.runCompaction(compactionCommitTime);
 
     allFiles = HoodieTestUtils.listAllDataFilesInPath(dfs, cfg.getBasePath());
     roView = new HoodieTableFileSystemView(metaClient, hoodieTable.getCompletedCommitTimeline(), allFiles);
@@ -477,8 +477,8 @@ public class TestMergeOnReadTable {
 
     metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), cfg.getBasePath());
 
-    String compactionCommit = client.startCompaction();
-    client.compact(compactionCommit);
+    String compactionCommit = client.scheduleCompaction(Optional.empty());
+    client.runCompaction(compactionCommit);
 
     allFiles = HoodieTestUtils.listAllDataFilesInPath(metaClient.getFs(), cfg.getBasePath());
     metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), cfg.getBasePath());
@@ -636,8 +636,8 @@ public class TestMergeOnReadTable {
     metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), basePath);
     table = HoodieTable.getHoodieTable(metaClient, config);
 
-    String commitTime = writeClient.startCompaction();
-    JavaRDD<WriteStatus> result = writeClient.compact(commitTime);
+    String commitTime = writeClient.scheduleCompaction(Optional.empty());
+    JavaRDD<WriteStatus> result = writeClient.runCompaction(commitTime);
 
     // Verify that recently written compacted data file has no log file
     metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), basePath);
@@ -694,8 +694,8 @@ public class TestMergeOnReadTable {
     Assert.assertTrue(totalUpsertTime > 0);
 
     // Do a compaction
-    String commitTime = writeClient.startCompaction();
-    statuses = writeClient.compact(commitTime);
+    String commitTime = writeClient.scheduleCompaction(Optional.empty());
+    statuses = writeClient.runCompaction(commitTime);
     writeClient.commitCompaction(commitTime, statuses, Optional.empty());
     // total time taken for scanning log files should be greater than 0
     long timeTakenForScanner = statuses.map(writeStatus -> writeStatus.getStat().getRuntimeStats().getTotalScanTime())

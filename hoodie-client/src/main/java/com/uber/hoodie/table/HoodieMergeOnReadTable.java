@@ -19,6 +19,7 @@ package com.uber.hoodie.table;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.uber.hoodie.WriteStatus;
+import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
 import com.uber.hoodie.common.HoodieRollbackStat;
 import com.uber.hoodie.common.model.FileSlice;
 import com.uber.hoodie.common.model.HoodieCommitMetadata;
@@ -112,7 +113,7 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
   }
 
   @Override
-  public JavaRDD<WriteStatus> compact(JavaSparkContext jsc, String compactionCommitTime) {
+  public HoodieCompactionWorkload scheduleCompaction(JavaSparkContext jsc, String instantTime) {
     logger.info("Checking if compaction needs to be run on " + config.getBasePath());
     Optional<HoodieInstant> lastCompaction = getActiveTimeline().getCommitTimeline()
         .filterCompletedInstants().lastInstant();
@@ -127,13 +128,34 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
       logger.info("Not running compaction as only " + deltaCommitsSinceLastCompaction
           + " delta commits was found since last compaction " + deltaCommitsSinceTs
           + ". Waiting for " + config.getInlineCompactDeltaCommitMax());
-      return jsc.emptyRDD();
+      return new HoodieCompactionWorkload();
     }
 
     logger.info("Compacting merge on read table " + config.getBasePath());
     HoodieRealtimeTableCompactor compactor = new HoodieRealtimeTableCompactor();
     try {
+      return compactor.generateCompactionWorkload(jsc, this, config, instantTime);
+    } catch (IOException e) {
+      throw new HoodieCompactionException("Could not schedule compaction " + config.getBasePath(), e);
+    }
+  }
+
+  @Override
+  public JavaRDD<WriteStatus> compact(JavaSparkContext jsc, String compactionCommitTime) {
+    HoodieRealtimeTableCompactor compactor = new HoodieRealtimeTableCompactor();
+    try {
       return compactor.compact(jsc, config, this, compactionCommitTime);
+    } catch (IOException e) {
+      throw new HoodieCompactionException("Could not compact " + config.getBasePath(), e);
+    }
+  }
+
+  @Override
+  public JavaRDD<WriteStatus> compact(JavaSparkContext jsc, String compactionInstantTime,
+      HoodieCompactionWorkload workload) {
+    HoodieRealtimeTableCompactor compactor = new HoodieRealtimeTableCompactor();
+    try {
+      return compactor.executeCompaction(jsc, workload, this, config, compactionInstantTime);
     } catch (IOException e) {
       throw new HoodieCompactionException("Could not compact " + config.getBasePath(), e);
     }

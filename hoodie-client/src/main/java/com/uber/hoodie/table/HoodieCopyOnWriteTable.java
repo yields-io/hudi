@@ -19,6 +19,7 @@ package com.uber.hoodie.table;
 import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
 import com.uber.hoodie.WriteStatus;
+import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
 import com.uber.hoodie.common.HoodieCleanStat;
 import com.uber.hoodie.common.HoodieRollbackStat;
 import com.uber.hoodie.common.model.HoodieCommitMetadata;
@@ -161,7 +162,18 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
   }
 
   @Override
+  public HoodieCompactionWorkload scheduleCompaction(JavaSparkContext jsc, String commitTime) {
+    throw new HoodieNotSupportedException("Compaction is not supported from a CopyOnWrite table");
+  }
+
+  @Override
   public JavaRDD<WriteStatus> compact(JavaSparkContext jsc, String commitTime) {
+    throw new HoodieNotSupportedException("Compaction is not supported from a CopyOnWrite table");
+  }
+
+  @Override
+  public JavaRDD<WriteStatus> compact(JavaSparkContext jsc, String compactionInstantTime,
+      HoodieCompactionWorkload workload) {
     throw new HoodieNotSupportedException("Compaction is not supported from a CopyOnWrite table");
   }
 

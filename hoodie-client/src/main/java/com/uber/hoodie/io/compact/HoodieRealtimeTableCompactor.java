@@ -72,11 +72,6 @@ public class HoodieRealtimeTableCompactor implements HoodieCompactor {
   public JavaRDD<WriteStatus> compact(JavaSparkContext jsc, HoodieWriteConfig config,
       HoodieTable hoodieTable, String compactionCommitTime) throws IOException {
 
-    totalLogFiles = new LongAccumulator();
-    totalFileSlices = new LongAccumulator();
-    jsc.sc().register(totalLogFiles);
-    jsc.sc().register(totalFileSlices);
-
     HoodieCompactionWorkload compactionWorkload = generateCompactionWorkload(jsc, hoodieTable, config,
         compactionCommitTime);
     List<HoodieCompactionOperation> operations = compactionWorkload.getOperations();
@@ -156,6 +151,11 @@ public class HoodieRealtimeTableCompactor implements HoodieCompactor {
   public HoodieCompactionWorkload generateCompactionWorkload(JavaSparkContext jsc,
       HoodieTable hoodieTable, HoodieWriteConfig config, String compactionCommitTime)
       throws IOException {
+    //TODO: vb: These accumulators are only used in logging - Is this really needed ?
+    totalLogFiles = new LongAccumulator();
+    totalFileSlices = new LongAccumulator();
+    jsc.sc().register(totalLogFiles);
+    jsc.sc().register(totalFileSlices);
 
     Preconditions
         .checkArgument(hoodieTable.getMetaClient().getTableType() == HoodieTableType.MERGE_ON_READ,

@@ -208,7 +208,7 @@ public class HoodieActiveTimeline extends HoodieDefaultTimeline {
     log.info("Marking instant complete " + instant);
     Preconditions.checkArgument(instant.isInflight(),
         "Could not mark an already completed instant as complete again " + instant);
-    moveInflightToComplete(instant, HoodieTimeline.getCompletedInstant(instant), data);
+    transitionState(instant, HoodieTimeline.getCompletedInstant(instant), data);
     log.info("Completed " + instant);
   }
 
@@ -251,15 +251,17 @@ public class HoodieActiveTimeline extends HoodieDefaultTimeline {
     return readDataFromPath(detailPath);
   }
 
-  protected void moveRequestedToInflight(HoodieInstant requestedInstant, HoodieInstant inflightInstant,
+  public void revertFromInflightToRequested(HoodieInstant inflightInstant, HoodieInstant requestedInstant,
+      Optional<byte[]> data) {
+    Preconditions.checkArgument(inflightInstant.getAction().equals(HoodieTimeline.COMPACTION_ACTION));
+    Preconditions.checkArgument(requestedInstant.getAction().equals(HoodieTimeline.COMPACTION_ACTION));
+    transitionState(inflightInstant, requestedInstant, data);
+  }
+
+  public void transitionFromRequestedToInflight(HoodieInstant requestedInstant, HoodieInstant inflightInstant,
       Optional<byte[]> data) {
     Preconditions.checkArgument(requestedInstant.getAction().equals(HoodieTimeline.COMPACTION_ACTION));
     transitionState(requestedInstant, inflightInstant, data);
-  }
-
-  protected void moveInflightToComplete(HoodieInstant inflightInstant, HoodieInstant commitInstant,
-      Optional<byte[]> data) {
-    transitionState(inflightInstant, commitInstant, data);
   }
 
   private void transitionState(HoodieInstant fromInstant, HoodieInstant toInstant,

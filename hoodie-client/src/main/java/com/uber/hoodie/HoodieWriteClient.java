@@ -120,8 +120,8 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
     this.config = clientConfig;
     this.index = index;
     this.metrics = new HoodieMetrics(config, config.getTableName());
-    this.compactionHandler = new CompactionClientHandler<>(jsc, clientConfig, metrics);
     this.rollbackHandler = new RollbackHandler<>(jsc, index, clientConfig, metrics);
+    this.compactionHandler = new CompactionClientHandler<>(jsc, clientConfig, rollbackHandler, metrics);
 
     if (rollbackInFlight) {
       rollbackInflightCommits();
@@ -505,7 +505,10 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
       if (config.isInlineCompaction()) {
         metadata.addMetadata(HoodieCompactionConfig.INLINE_COMPACT_PROP, "true");
         writeTimerContext = metrics.getCommitCtx();
-        compactionHandler.forceCompact();
+        // For a data-set, if we have inline compaction enabled, make sure the compactor Id is set differently
+        // for async compactor to not interfere.
+        String compactionInstantTime = compactionHandler.scheduleCompaction(extraMetadata);
+        compactionHandler.runCompaction(table, compactionInstantTime, true);
       } else {
         metadata.addMetadata(HoodieCompactionConfig.INLINE_COMPACT_PROP, "false");
       }
@@ -795,29 +798,29 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
   /**
    * Provides a new commit time for a compaction (commit) operation
    */
-  public String startCompaction() {
-    return compactionHandler.startCompaction();
+  public String scheduleCompaction(Optional<Map<String, String>> extraMetadata) throws IOException {
+    return compactionHandler.scheduleCompaction(extraMetadata);
   }
 
   /**
    * Since MOR tableType default to {@link HoodieTimeline#DELTA_COMMIT_ACTION}, we need to
    * explicitly set to {@link HoodieTimeline#COMMIT_ACTION} for compaction
    */
-  public void startCompactionWithTime(String commitTime) {
-    compactionHandler.startCompactionWithTime(commitTime);
+  public void startCompactionWithTime(String instantTime, Optional<Map<String, String>> extraMetadata)
+      throws IOException {
+    compactionHandler.scheduleCompactionWithInstant(instantTime, extraMetadata);
   }
 
   /**
    * Performs a compaction operation on a dataset. WARNING: Compaction operation cannot be executed
    * asynchronously. Please always use this serially before or after an insert/upsert action.
    */
-  public JavaRDD<WriteStatus> compact(String commitTime) throws IOException {
+  public JavaRDD<WriteStatus> runCompaction(String instantTime) throws IOException {
     // Create a Hoodie table which encapsulated the commits and files visible
     HoodieTable<T> table = HoodieTable.getHoodieTable(
         new HoodieTableMetaClient(jsc.hadoopConfiguration(), config.getBasePath(), true), config);
     writeTimerContext = metrics.getCommitCtx();
-    JavaRDD<WriteStatus> statuses = compactionHandler.compact(table, commitTime, config.shouldAutoCommit(),
-        Optional.empty());
+    JavaRDD<WriteStatus> statuses = compactionHandler.runCompaction(table, instantTime, config.shouldAutoCommit());
     return statuses;
   }
 
