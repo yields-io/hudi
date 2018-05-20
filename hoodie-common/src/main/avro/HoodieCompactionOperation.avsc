@@ -21,18 +21,21 @@
                   },
                   {
                      "name":"dataFileSize",
-                     "type":["null","long"]
+                     "type":["null","long"],
+                     "default": null
                   },
                   {
                      "name":"deltaFilePaths",
                      "type":["null", {
                         "type":"array",
                         "items":"string"
-                     }]
+                     }],
+                     "default": null
                   },
                   {
                      "name":"dataFilePath",
-                     "type":["null","string"]
+                     "type":["null","string"],
+                     "default": null
                   },
                   {
                      "name":"fileId",
@@ -40,14 +43,16 @@
                   },
                   {
                      "name":"partitionPath",
-                     "type":["null","string"]
+                     "type":["null","string"],
+                     "default": null
                   },
                   {
                      "name":"metrics",
                      "type":["null", {
                         "type":"map",
                         "values":"long"
-                     }]
+                     }],
+                     "default": null
                   }
                ]
             }

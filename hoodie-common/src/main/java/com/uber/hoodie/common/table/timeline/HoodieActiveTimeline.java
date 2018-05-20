@@ -170,14 +170,6 @@ public class HoodieActiveTimeline extends HoodieDefaultTimeline {
   }
 
   /**
-   * Get only pending compaction action (inflight and requested) in the active timeline
-   */
-  public HoodieTimeline getPendingCompactionTimeline() {
-    return new HoodieDefaultTimeline(filterInstantsByAction(COMPACTION_ACTION),
-        (Function<HoodieInstant, Optional<byte[]>> & Serializable) this::getInstantDetails);
-  }
-
-  /**
    * Get only the rollback action (inflight and completed) in the active timeline
    */
   public HoodieTimeline getRollbackTimeline() {

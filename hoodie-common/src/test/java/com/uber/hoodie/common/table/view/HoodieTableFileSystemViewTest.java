@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
 import com.uber.hoodie.common.model.FileSlice;
 import com.uber.hoodie.common.model.HoodieDataFile;
 import com.uber.hoodie.common.model.HoodieFileGroup;
@@ -33,9 +34,12 @@ import com.uber.hoodie.common.table.TableFileSystemView;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
 import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
+import com.uber.hoodie.common.util.AvroUtils;
+import com.uber.hoodie.common.util.CompactionUtils;
 import com.uber.hoodie.common.util.FSUtils;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,6 +47,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javafx.util.Pair;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.junit.Before;
@@ -129,23 +134,43 @@ public class HoodieTableFileSystemViewTest {
   }
 
   @Test
-  public void testViewForFileSlicesWithNoBaseFileAndRequestedCompaction() throws Exception {
-    testViewForFileSlicesWithAsyncCompaction(true, false);
+  public void testViewForFileSlicesWithNoBaseFileAndDeltaCommitsAfterRequestedCompaction() throws Exception {
+    testViewForFileSlicesWithAsyncCompaction(true, false, true);
   }
 
   @Test
-  public void testViewForFileSlicesWithBaseFileAndRequestedCompaction() throws Exception {
-    testViewForFileSlicesWithAsyncCompaction(false, false);
+  public void testViewForFileSlicesWithBaseFileAndDeltaCommitsAfterRequestedCompaction() throws Exception {
+    testViewForFileSlicesWithAsyncCompaction(false, false, true);
   }
 
   @Test
-  public void testViewForFileSlicesWithNoBaseFileAndInflightCompaction() throws Exception {
-    testViewForFileSlicesWithAsyncCompaction(true, true);
+  public void testViewForFileSlicesWithNoBaseFileAndDeltaCommitsAfterInflightCompaction() throws Exception {
+    testViewForFileSlicesWithAsyncCompaction(true, true, true);
   }
 
   @Test
-  public void testViewForFileSlicesWithBaseFileAndInflightCompaction() throws Exception {
-    testViewForFileSlicesWithAsyncCompaction(false, true);
+  public void testViewForFileSlicesWithBaseFileAndDeltaCommitsAfterInflightCompaction() throws Exception {
+    testViewForFileSlicesWithAsyncCompaction(false, true, true);
+  }
+
+  @Test
+  public void testViewForFileSlicesWithNoBaseFileAndNoDeltaCommitsAfterRequestedCompaction() throws Exception {
+    testViewForFileSlicesWithAsyncCompaction(true, false, false);
+  }
+
+  @Test
+  public void testViewForFileSlicesWithBaseFileAndNoDeltaCommitsAfterRequestedCompaction() throws Exception {
+    testViewForFileSlicesWithAsyncCompaction(false, false, false);
+  }
+
+  @Test
+  public void testViewForFileSlicesWithNoBaseFileAndNoDeltaCommitsAfterInflightCompaction() throws Exception {
+    testViewForFileSlicesWithAsyncCompaction(true, true, false);
+  }
+
+  @Test
+  public void testViewForFileSlicesWithBaseFileAndNoDeltaCommitsAfterInflightCompaction() throws Exception {
+    testViewForFileSlicesWithAsyncCompaction(false, true, false);
   }
 
   /**
@@ -180,7 +205,7 @@ public class HoodieTableFileSystemViewTest {
    * @throws Exception
    */
   private void testViewForFileSlicesWithAsyncCompaction(boolean skipCreatingDataFile,
-      boolean isCompactionInFlight) throws Exception {
+      boolean isCompactionInFlight, boolean deltaCommitsAfterCompactionRequest) throws Exception {
     String partitionPath = "2016/05/01";
     new File(basePath + "/" + partitionPath).mkdirs();
     String fileId = UUID.randomUUID().toString();
@@ -210,31 +235,41 @@ public class HoodieTableFileSystemViewTest {
     commitTimeline.saveAsComplete(deltaInstant2, Optional.empty());
     commitTimeline.saveAsComplete(deltaInstant3, Optional.empty());
 
-    // Fake delta-ingestion after compaction-requested
+    refreshFsView(null);
+    List<FileSlice> fileSlices = rtView.getLatestFileSlices(partitionPath).collect(Collectors.toList());
     String compactionRequestedTime = "4";
     String compactDataFileName = FSUtils.makeDataFileName(compactionRequestedTime, 1, fileId);
+    List<Pair<String, FileSlice>> partitionFileSlicesPairs = new ArrayList<>();
+    partitionFileSlicesPairs.add(new Pair(partitionPath, fileSlices.get(0)));
+    HoodieCompactionWorkload workload = CompactionUtils.buildFromFileSlices("default", partitionFileSlicesPairs,
+        Optional.empty(), Optional.empty());
     HoodieInstant compactionInstant = null;
     if (isCompactionInFlight) {
       // Create a Data-file but this should be skipped by view
       new File(basePath + "/" + partitionPath + "/" + compactDataFileName).createNewFile();
       compactionInstant = new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMPACTION_ACTION, compactionRequestedTime);
-      commitTimeline.saveToInflight(compactionInstant, Optional.empty());
+      commitTimeline.saveToInflight(compactionInstant, AvroUtils.serializeCompactionWorkload(workload));
     } else {
       compactionInstant = new HoodieInstant(State.REQUESTED, HoodieTimeline.COMPACTION_ACTION, compactionRequestedTime);
-      commitTimeline.saveToRequested(compactionInstant, Optional.empty());
+      commitTimeline.saveToRequested(compactionInstant, AvroUtils.serializeCompactionWorkload(workload));
     }
+
+    // Fake delta-ingestion after compaction-requested
     String deltaInstantTime4 = "5";
     String deltaInstantTime5 = "6";
     String fileName3 = FSUtils.makeLogFileName(fileId, HoodieLogFile.DELTA_EXTENSION, compactionRequestedTime, 0);
     String fileName4 = FSUtils.makeLogFileName(fileId, HoodieLogFile.DELTA_EXTENSION, compactionRequestedTime, 1);
-    new File(basePath + "/" + partitionPath + "/" + fileName3).createNewFile();
-    new File(basePath + "/" + partitionPath + "/" + fileName4).createNewFile();
     HoodieInstant deltaInstant4 =
         new HoodieInstant(State.INFLIGHT, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime4);
     HoodieInstant deltaInstant5 =
         new HoodieInstant(State.INFLIGHT, HoodieTimeline.DELTA_COMMIT_ACTION, deltaInstantTime5);
-    commitTimeline.saveAsComplete(deltaInstant4, Optional.empty());
-    commitTimeline.saveAsComplete(deltaInstant5, Optional.empty());
+    if (deltaCommitsAfterCompactionRequest) {
+      new File(basePath + "/" + partitionPath + "/" + fileName3).createNewFile();
+      new File(basePath + "/" + partitionPath + "/" + fileName4).createNewFile();
+      commitTimeline.saveAsComplete(deltaInstant4, Optional.empty());
+      commitTimeline.saveAsComplete(deltaInstant5, Optional.empty());
+    }
+
     refreshFsView(null);
 
     List<HoodieDataFile> dataFiles = roView.getAllDataFiles(partitionPath).collect(Collectors.toList());
@@ -262,11 +297,16 @@ public class HoodieTableFileSystemViewTest {
     assertEquals("Valid Compaction Instant set",
         compactionRequestedTime, fileSlice.getOutstandingCompactionInstant().get());
     List<HoodieLogFile> logFiles = fileSlice.getLogFiles().collect(Collectors.toList());
-    assertEquals("Log files must include those after compaction request", 4, logFiles.size());
-    assertEquals("Log File Order check", fileName4, logFiles.get(0).getFileName());
-    assertEquals("Log File Order check", fileName3, logFiles.get(1).getFileName());
-    assertEquals("Log File Order check", fileName2, logFiles.get(2).getFileName());
-    assertEquals("Log File Order check", fileName1, logFiles.get(3).getFileName());
+    int idx = 0;
+    if (deltaCommitsAfterCompactionRequest) {
+      assertEquals("Log files must include those after compaction request", 4, logFiles.size());
+      assertEquals("Log File Order check", fileName4, logFiles.get(idx++).getFileName());
+      assertEquals("Log File Order check", fileName3, logFiles.get(idx++).getFileName());
+    } else {
+      assertEquals("Log files must contain only log files before compaction", 2, logFiles.size());
+    }
+    assertEquals("Log File Order check", fileName2, logFiles.get(idx++).getFileName());
+    assertEquals("Log File Order check", fileName1, logFiles.get(idx++).getFileName());
 
     /** Inflight/Orphan File-groups needs to be in the view **/
 
@@ -392,9 +432,13 @@ public class HoodieTableFileSystemViewTest {
         compactionRequestedTime, fileSlice.getBaseInstantForLogAppend());
     assertFalse("No outstanding compaction", fileSlice.getOutstandingCompactionInstant().isPresent());
     logFiles = fileSlice.getLogFiles().collect(Collectors.toList());
-    assertEquals("Only log-files after compaction request shows up", 2, logFiles.size());
-    assertEquals("Log File Order check", fileName4, logFiles.get(0).getFileName());
-    assertEquals("Log File Order check", fileName3, logFiles.get(1).getFileName());
+    if (deltaCommitsAfterCompactionRequest) {
+      assertEquals("Only log-files after compaction request shows up", 2, logFiles.size());
+      assertEquals("Log File Order check", fileName4, logFiles.get(0).getFileName());
+      assertEquals("Log File Order check", fileName3, logFiles.get(1).getFileName());
+    } else {
+      assertTrue("No log files yet for this file-slice", logFiles.isEmpty());
+    }
   }
 
   @Test
@@ -593,7 +637,8 @@ public class HoodieTableFileSystemViewTest {
   @Test
   public void streamLatestVersionInRange() throws IOException {
     // Put some files in the partition
-    String fullPartitionPath = basePath + "/2016/05/01/";
+    String partitionPath = "2016/05/01/";
+    String fullPartitionPath = basePath + "/" + partitionPath;
     new File(fullPartitionPath).mkdirs();
     String commitTime1 = "1";
     String commitTime2 = "2";
@@ -622,7 +667,20 @@ public class HoodieTableFileSystemViewTest {
     new File(basePath + "/.hoodie/" + commitTime1 + ".commit").createNewFile();
     new File(basePath + "/.hoodie/" + commitTime2 + ".commit").createNewFile();
     new File(basePath + "/.hoodie/" + commitTime3 + ".commit").createNewFile();
-    new File(basePath + "/.hoodie/" + compactionRequestedTime + ".compaction.requested").createNewFile();
+
+    // Setup Compaction Requested file
+    refreshFsView(null);
+    List<FileSlice> fileSlices = rtView.getLatestFileSlices(partitionPath).collect(Collectors.toList());
+    List<Pair<String, FileSlice>> partitionFileSlicesPairs = new ArrayList<>();
+    partitionFileSlicesPairs.add(new Pair(partitionPath,
+        fileSlices.stream().filter(f -> f.getFileId().equals(fileId2)).findFirst().get()));
+    HoodieCompactionWorkload workload = CompactionUtils.buildFromFileSlices("default", partitionFileSlicesPairs,
+        Optional.empty(), Optional.empty());
+    HoodieInstant compactionInstant =
+        new HoodieInstant(State.REQUESTED, HoodieTimeline.COMPACTION_ACTION, compactionRequestedTime);
+    metaClient.getActiveTimeline().saveToRequested(compactionInstant, AvroUtils.serializeCompactionWorkload(workload));
+    //new File(basePath + "/.hoodie/" + compactionRequestedTime + ".compaction.requested").createNewFile();
+
     new File(basePath + "/.hoodie/" + commitTime4 + ".commit").createNewFile();
 
     // Now we list the entire partition

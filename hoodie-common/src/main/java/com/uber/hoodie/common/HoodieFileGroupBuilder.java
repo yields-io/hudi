@@ -17,6 +17,7 @@
 package com.uber.hoodie.common;
 
 import com.google.common.base.Preconditions;
+import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
 import com.uber.hoodie.common.model.FileSlice;
 import com.uber.hoodie.common.model.HoodieDataFile;
 import com.uber.hoodie.common.model.HoodieFileGroup;
@@ -24,12 +25,18 @@ import com.uber.hoodie.common.model.HoodieLogFile;
 import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.util.AvroUtils;
+import com.uber.hoodie.exception.HoodieException;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import javafx.util.Pair;
 import org.apache.commons.lang3.builder.Builder;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -50,8 +57,10 @@ import org.apache.log4j.Logger;
  * 5. The latest file-slice in a file-group will include all of
  *    (a) the data-file corresponding to the last committed instant before a compaction request instant (if present)
  *    (b) the set of log-files due to delta-instants after the instant (a) but before compaction request instant
- *    (c) the set of log-files written after compaction request instant
+ *    (c) the set of log-files written after compaction request instant (if present)
  *
+ * FileGroupBuilder uses compaction workload meta-data to figure out which file-slices are due to outstanding
+ * compaction and makes adjustment accordingly to satisfy above constraints
  */
 public class HoodieFileGroupBuilder implements Builder<HoodieFileGroup> {
 
@@ -79,31 +88,53 @@ public class HoodieFileGroupBuilder implements Builder<HoodieFileGroup> {
    */
   private final Set<String> pendingCompactionInstantTimes;
 
+  /**
+   * For file-Ids that are marked for compaction, track their compaction time so
+   * that it can be set in file-slices
+   */
+  private final Map<String, String> fileIdToPendingCompactionInstantTimes;
+
   public HoodieFileGroupBuilder(String partitionPath, String id, HoodieTableMetaClient metaClient,
       HoodieTimeline timeline) {
     this.partitionPath = partitionPath;
     this.id = id;
     this.timeline = timeline;
-    this.pendingCompactionInstantTimes = metaClient.getActiveTimeline().filterPendingCompactionTimeline().getInstants()
+    List<HoodieInstant> pendingCompactionInstants =
+        metaClient.getActiveTimeline().filterPendingCompactionTimeline().getInstants().collect(Collectors.toList());
+    this.pendingCompactionInstantTimes = pendingCompactionInstants.stream()
         .map(HoodieInstant::getTimestamp).collect(Collectors.toSet());
+    this.fileIdToPendingCompactionInstantTimes = new HashMap<>();
+    // Pending Compaction Instants
+    pendingCompactionInstants.stream().flatMap(instant -> {
+      try {
+        HoodieCompactionWorkload workload =
+            AvroUtils.deserializeHoodieCompactionWorkload(timeline.getInstantDetails(instant).get());
+        return workload.getOperations().stream().map(op -> {
+          return new Pair<String, String>(op.getFileId(), instant.getTimestamp());
+        });
+      } catch (IOException e) {
+        throw new HoodieException(e);
+      }
+    }).forEach(pair -> {
+      // Defensive check to ensure a single-fileId does not have more than one pending compaction
+      if (fileIdToPendingCompactionInstantTimes.containsKey(pair.getKey())) {
+        String msg = "Hoodie File Id (" + pair.getKey() + ") has more thant 1 pending compactions. Instants: "
+            + pair.getValue() + ", " + fileIdToPendingCompactionInstantTimes.get(pair.getKey());
+        log.error(msg);
+        throw new IllegalStateException(msg);
+      }
+      fileIdToPendingCompactionInstantTimes.put(pair.getKey(), pair.getValue());
+    });
   }
 
   /**
    * Add a new datafile into the file group
    */
   public HoodieFileGroupBuilder withDataFile(HoodieDataFile dataFile) {
-    // skip the data file if it is from a pending compaction. Concurrent
-    // compaction could be running and there could be partial/complete data-files
-    // without the compaction instant marked complete. We should skip these till the compaction
-    // instant is marked committed.
-    if (!pendingCompactionInstantTimes.contains(dataFile.getCommitTime())) {
-      if (!fileSlices.containsKey(dataFile.getCommitTime())) {
-        fileSlices.put(dataFile.getCommitTime(), new FileSlice(dataFile.getCommitTime(), id));
-      }
-      fileSlices.get(dataFile.getCommitTime()).setDataFile(dataFile);
-    } else {
-      log.warn("Skipping data file " + dataFile + " when building file-group as its instant time is not valid");
+    if (!fileSlices.containsKey(dataFile.getCommitTime())) {
+      fileSlices.put(dataFile.getCommitTime(), new FileSlice(dataFile.getCommitTime(), id));
     }
+    fileSlices.get(dataFile.getCommitTime()).setDataFile(dataFile);
     return this;
   }
 
@@ -122,6 +153,36 @@ public class HoodieFileGroupBuilder implements Builder<HoodieFileGroup> {
     return this;
   }
 
+  /**
+   * Helper to transform fake file-slices due to pending compaction.
+   * If there were file-slices whose base-commit is from pending compaction, un-set any data-files and
+   * set outstandingCompactionInstant
+   * @return
+   */
+  private NavigableMap<String, FileSlice> transformFileSlicesForPendingCompactionInstants() {
+    NavigableMap<String, FileSlice> newFileSlices = new TreeMap<>(HoodieFileGroup.getCommitTimeComparator());
+    fileSlices.entrySet().stream().map(entry -> {
+      // this is a pending compaction, ensure outstandingCompactionInstant is set.
+      if (fileIdToPendingCompactionInstantTimes.containsKey(entry.getValue().getFileId())) {
+        FileSlice fakeFileSlice = new FileSlice(entry.getValue().getBaseCommitTime(), entry.getValue().getFileId());
+        fakeFileSlice.setOutstandingCompactionInstant(
+            fileIdToPendingCompactionInstantTimes.get(entry.getValue().getFileId()));
+        entry.getValue().getLogFiles().forEach(fakeFileSlice::addLogFile);
+        if (!pendingCompactionInstantTimes.contains(entry.getValue().getBaseCommitTime())) {
+          // Data File is not from inflight compaction. So add the data-file if present
+          if (entry.getValue().getDataFile().isPresent()) {
+            fakeFileSlice.setDataFile(entry.getValue().getDataFile().get());
+          }
+        }
+        return new Pair<>(entry.getKey(), fakeFileSlice);
+      }
+      return new Pair<>(entry.getKey(), entry.getValue());
+    }).forEach(p -> {
+      newFileSlices.put(p.getKey(), p.getValue());
+    });
+    return newFileSlices;
+  }
+
   @Override
   public HoodieFileGroup build() {
     Preconditions.checkNotNull(id, "File Id must not be null");
@@ -131,14 +192,16 @@ public class HoodieFileGroupBuilder implements Builder<HoodieFileGroup> {
     // has been set for a file-group first time. In this case, the file group may not even have a data file
     // (in the case of log files supporting inserts).
     Preconditions.checkArgument(fileSlices.values().stream().filter(f -> !f.getDataFile().isPresent()).count() <= 2);
-    Map<String, FileSlice> mergedFileSlices = fileSlices;
-    if (!fileSlices.isEmpty()) {
-      FileSlice lastSlice = fileSlices.lastEntry().getValue();
+
+    NavigableMap<String, FileSlice> newFileSlices = transformFileSlicesForPendingCompactionInstants();
+    Map<String, FileSlice> mergedFileSlices = newFileSlices;
+    if (!newFileSlices.isEmpty()) {
+      FileSlice lastSlice = newFileSlices.lastEntry().getValue();
       // When file-group has more than one file-slice and the last file-slice does not have data-file, then
       // it is the pending compaction case
       if (!lastSlice.getDataFile().isPresent() && (fileSlices.size() > 1)) {
         // last file slice is due to compaction (fake)
-        mergedFileSlices = adjustFileGroupSlices(fileSlices, lastSlice);
+        mergedFileSlices = mergeFileGroupSlices(newFileSlices, lastSlice);
       }
     }
     return new HoodieFileGroup(partitionPath, id, timeline, mergedFileSlices);
@@ -151,7 +214,7 @@ public class HoodieFileGroupBuilder implements Builder<HoodieFileGroup> {
    * @param rawFileSlices File Slices including fake file slices
    * @param fakeFileSlice Fake file slice
    */
-  private static Map<String, FileSlice> adjustFileGroupSlices(NavigableMap<String, FileSlice> rawFileSlices,
+  private static Map<String, FileSlice> mergeFileGroupSlices(NavigableMap<String, FileSlice> rawFileSlices,
       FileSlice fakeFileSlice) {
     final Map<String, FileSlice> mergedFileSlices = new TreeMap<>(HoodieFileGroup.getReverseCommitTimeComparator());
     // case where last file-slice is due to compaction request.

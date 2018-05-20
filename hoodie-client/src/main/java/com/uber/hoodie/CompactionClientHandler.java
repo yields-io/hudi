@@ -116,7 +116,7 @@ class CompactionClientHandler<T extends HoodieRecordPayload> implements Serializ
       throws IOException {
     // Refresh timeline as it possible clients could have called scheduleCompaction and runCompaction without refresh
     HoodieActiveTimeline timeline = table.getActiveTimeline().reload();
-    HoodieTimeline pendingCompactionTimeline = timeline.getPendingCompactionTimeline();
+    HoodieTimeline pendingCompactionTimeline = timeline.filterPendingCompactionTimeline();
 
     HoodieInstant inflightInstant = HoodieTimeline.getCompactionInflightInstant(compactionInstantTime);
     if (pendingCompactionTimeline.containsInstant(inflightInstant)) {
