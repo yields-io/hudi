@@ -20,15 +20,20 @@ import com.uber.hoodie.avro.model.HoodieCompactionOperation;
 import com.uber.hoodie.avro.model.HoodieCompactionPlan;
 import com.uber.hoodie.common.model.CompactionOperation;
 import com.uber.hoodie.common.model.FileSlice;
+import com.uber.hoodie.common.table.HoodieTableMetaClient;
+import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.exception.HoodieException;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javafx.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
- * Helper class to generate compaction workload from FileGroup/FileSlice abstraction
+ * Helper class to generate compaction plan from FileGroup/FileSlice abstraction
  */
 public class CompactionUtils {
 
@@ -41,7 +46,7 @@ public class CompactionUtils {
    * @return Compaction Operation
    */
   public static  HoodieCompactionOperation buildFromFileSlice(String partitionPath, FileSlice fileSlice,
-      Optional<Function<Pair<String, FileSlice>, Map<String, Long>>> metricsCaptureFunction) {
+      Optional<Function<Pair<String, FileSlice>, Map<String, Double>>> metricsCaptureFunction) {
     HoodieCompactionOperation.Builder builder = HoodieCompactionOperation.newBuilder();
     builder.setPartitionPath(partitionPath);
     builder.setFileId(fileSlice.getFileId());
@@ -52,13 +57,13 @@ public class CompactionUtils {
     }
 
     if (metricsCaptureFunction.isPresent()) {
-      builder.setMetrics(metricsCaptureFunction.get().apply(new Pair(partitionPath, fileSlice)));
+      builder.setMetrics(metricsCaptureFunction.get().apply(Pair.of(partitionPath, fileSlice)));
     }
     return builder.build();
   }
 
   /**
-   * Generate compaction workload from file-slices
+   * Generate compaction plan from file-slices
    *
    * @param compactorId             Compactor Id to set
    * @param partitionFileSlicePairs list of partition file-slice pairs
@@ -68,7 +73,7 @@ public class CompactionUtils {
   public static HoodieCompactionPlan buildFromFileSlices(String compactorId,
       List<Pair<String, FileSlice>> partitionFileSlicePairs,
       Optional<Map<String, String>> extraMetadata,
-      Optional<Function<Pair<String, FileSlice>, Map<String, Long>>> metricsCaptureFunction) {
+      Optional<Function<Pair<String, FileSlice>, Map<String, Double>>> metricsCaptureFunction) {
     HoodieCompactionPlan.Builder builder = HoodieCompactionPlan.newBuilder();
     builder.setCompactorId(compactorId);
     extraMetadata.ifPresent(m -> builder.setExtraMetadata(m));
@@ -96,5 +101,54 @@ public class CompactionUtils {
    */
   public static CompactionOperation buildCompactionOperation(HoodieCompactionOperation hc) {
     return CompactionOperation.convertFromAvroRecordInstance(hc);
+  }
+
+  /**
+   * Get all pending compaction plans along with their instants
+   *
+   * @param metaClient Hoodie Meta Client
+   */
+  public static List<Pair<HoodieInstant, HoodieCompactionPlan>> getAllPendingCompactionPlans(
+      HoodieTableMetaClient metaClient) {
+    List<HoodieInstant> pendingCompactionInstants =
+        metaClient.getActiveTimeline().filterPendingCompactionTimeline().getInstants().collect(Collectors.toList());
+    return pendingCompactionInstants.stream().map(instant -> {
+      try {
+        HoodieCompactionPlan compactionPlan = AvroUtils.deserializeCompactionPlan(
+            metaClient.getActiveTimeline().getInstantDetails(instant).get());
+        return Pair.of(instant, compactionPlan);
+      } catch (IOException e) {
+        throw new HoodieException(e);
+      }
+    }).collect(Collectors.toList());
+  }
+
+  /**
+   * Get all file-ids with pending Compaction operations and their target compaction instant time
+   *
+   * @param metaClient Hoodie Table Meta Client
+   */
+  public static Map<String, Pair<String, HoodieCompactionOperation>> getAllPendingCompactionOperations(
+      HoodieTableMetaClient metaClient) {
+    List<Pair<HoodieInstant, HoodieCompactionPlan>> pendingCompactionPlanWithInstants =
+        getAllPendingCompactionPlans(metaClient);
+
+    Map<String, Pair<String, HoodieCompactionOperation>> fileIdToPendingCompactionWithInstantMap = new HashMap<>();
+    pendingCompactionPlanWithInstants.stream().flatMap(instantPlanPair -> {
+      HoodieInstant instant = instantPlanPair.getKey();
+      HoodieCompactionPlan compactionPlan = instantPlanPair.getValue();
+      return compactionPlan.getOperations().stream().map(op -> {
+        return Pair.of(op.getFileId(), Pair.of(instant.getTimestamp(), op));
+      });
+    }).forEach(pair -> {
+      // Defensive check to ensure a single-fileId does not have more than one pending compaction
+      if (fileIdToPendingCompactionWithInstantMap.containsKey(pair.getKey())) {
+        String msg = "Hoodie File Id (" + pair.getKey() + ") has more thant 1 pending compactions. Instants: "
+            + pair.getValue() + ", " + fileIdToPendingCompactionWithInstantMap.get(pair.getKey());
+        throw new IllegalStateException(msg);
+      }
+      fileIdToPendingCompactionWithInstantMap.put(pair.getKey(), pair.getValue());
+    });
+    return fileIdToPendingCompactionWithInstantMap;
   }
 }
