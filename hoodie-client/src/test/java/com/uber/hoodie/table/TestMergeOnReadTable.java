@@ -41,6 +41,7 @@ import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.TableFileSystemView;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.table.view.HoodieTableFileSystemView;
 import com.uber.hoodie.config.HoodieCompactionConfig;
 import com.uber.hoodie.config.HoodieIndexConfig;
@@ -200,7 +201,7 @@ public class TestMergeOnReadTable {
     commit = metaClient.getActiveTimeline().getCommitTimeline().firstInstant();
     assertFalse(commit.isPresent());
 
-    String compactionCommitTime = client.startCompaction();
+    String compactionCommitTime = client.scheduleCompaction(Optional.empty());
     client.compact(compactionCommitTime);
 
     allFiles = HoodieTestUtils.listAllDataFilesInPath(dfs, cfg.getBasePath());
@@ -476,13 +477,15 @@ public class TestMergeOnReadTable {
 
     metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), cfg.getBasePath());
 
-    String compactionCommit = client.startCompaction();
-    client.compact(compactionCommit);
+    String compactionInstantTime = client.scheduleCompaction(Optional.empty());
+    List<WriteStatus> statuses1 = client.compact(compactionInstantTime).collect();
+
 
     allFiles = HoodieTestUtils.listAllDataFilesInPath(metaClient.getFs(), cfg.getBasePath());
     metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), cfg.getBasePath());
     hoodieTable = HoodieTable.getHoodieTable(metaClient, cfg, jsc);
     roView = new HoodieTableFileSystemView(metaClient, metaClient.getCommitsTimeline(), allFiles);
+    List<HoodieDataFile> dataFiles2 = roView.getLatestDataFiles().collect(Collectors.toList());
 
     final String compactedCommitTime = metaClient.getActiveTimeline().reload().getCommitsTimeline().lastInstant().get()
         .getTimestamp();
@@ -632,12 +635,13 @@ public class TestMergeOnReadTable {
       }
     }
 
-    // Do a compaction
-    metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), basePath);
-    table = HoodieTable.getHoodieTable(metaClient, config, jsc);
+    // Mark 2nd delta-instant as completed
+    metaClient.getActiveTimeline().saveAsComplete(
+        new HoodieInstant(State.INFLIGHT, HoodieTimeline.DELTA_COMMIT_ACTION, newCommitTime), Optional.empty());
 
-    String commitTime = writeClient.startCompaction();
-    JavaRDD<WriteStatus> result = writeClient.compact(commitTime);
+    // Do a compaction
+    String compactionInstantTime = writeClient.scheduleCompaction(Optional.empty());
+    JavaRDD<WriteStatus> result = writeClient.compact(compactionInstantTime);
 
     // Verify that recently written compacted data file has no log file
     metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), basePath);
@@ -694,9 +698,9 @@ public class TestMergeOnReadTable {
     Assert.assertTrue(totalUpsertTime > 0);
 
     // Do a compaction
-    String commitTime = writeClient.startCompaction();
-    statuses = writeClient.compact(commitTime);
-    writeClient.commitCompaction(commitTime, statuses);
+    String compactionInstantTime = writeClient.scheduleCompaction(Optional.empty());
+    statuses = writeClient.compact(compactionInstantTime);
+    writeClient.commitCompaction(compactionInstantTime, statuses, Optional.empty());
     // total time taken for scanning log files should be greater than 0
     long timeTakenForScanner = statuses.map(writeStatus -> writeStatus.getStat().getRuntimeStats().getTotalScanTime())
         .reduce((a, b) -> a + b).longValue();
@@ -735,11 +739,11 @@ public class TestMergeOnReadTable {
 
     Assert.assertTrue(numLogFiles > 0);
     // Do a compaction
-    String commitTime = writeClient.startCompaction();
+    String commitTime = writeClient.scheduleCompaction(Optional.empty());
     statuses = writeClient.compact(commitTime);
     Assert.assertTrue(statuses.map(status -> status.getStat().getPath().contains("parquet")).count() == numLogFiles);
     Assert.assertEquals(statuses.count(), numLogFiles);
-    writeClient.commitCompaction(commitTime, statuses);
+    writeClient.commitCompaction(commitTime, statuses, Optional.empty());
   }
 
   @Test
@@ -828,12 +832,12 @@ public class TestMergeOnReadTable {
 
     Assert.assertTrue(numLogFiles > 0);
     // Do a compaction
-    newCommitTime = writeClient.startCompaction();
+    newCommitTime = writeClient.scheduleCompaction(Optional.empty());
     statuses = writeClient.compact(newCommitTime);
     // Ensure all log files have been compacted into parquet files
     Assert.assertTrue(statuses.map(status -> status.getStat().getPath().contains("parquet")).count() == numLogFiles);
     Assert.assertEquals(statuses.count(), numLogFiles);
-    writeClient.commitCompaction(newCommitTime, statuses);
+    writeClient.commitCompaction(newCommitTime, statuses, Optional.empty());
     // Trigger a rollback of compaction
     writeClient.rollback(newCommitTime);
     for (String partitionPath : dataGen.getPartitionPaths()) {
