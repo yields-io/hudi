@@ -416,4 +416,8 @@ public class HoodieTableFileSystemView implements TableFileSystemView,
           "Failed to list data files in partition " + partitionPathStr, e);
     }
   }
+
+  public Map<String, String> getFileIdToPendingCompactionInstantTimeMap() {
+    return fileIdToPendingCompactionInstantTime;
+  }
 }
