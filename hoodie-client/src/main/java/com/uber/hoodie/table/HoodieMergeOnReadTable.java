@@ -36,7 +36,7 @@ import com.uber.hoodie.common.table.log.block.HoodieCommandBlock.HoodieCommandBl
 import com.uber.hoodie.common.table.log.block.HoodieLogBlock.HeaderMetadataType;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
-import com.uber.hoodie.common.table.view.HoodieTableFileSystemView;
+import com.uber.hoodie.common.util.CompactionUtils;
 import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.exception.HoodieCompactionException;
@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -149,7 +150,7 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
     HoodieRealtimeTableCompactor compactor = new HoodieRealtimeTableCompactor();
     try {
       return compactor.generateCompactionPlan(jsc, this, config, instantTime,
-          ((HoodieTableFileSystemView)getRTFileSystemView()).getFileIdToPendingCompactionInstantTimeMap().keySet());
+          new HashSet<>(CompactionUtils.getAllPendingCompactionOperations(metaClient).keySet()));
     } catch (IOException e) {
       throw new HoodieCompactionException("Could not schedule compaction " + config.getBasePath(), e);
     }
