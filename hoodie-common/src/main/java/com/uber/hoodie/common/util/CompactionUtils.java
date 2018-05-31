@@ -114,7 +114,8 @@ public class CompactionUtils {
     return pendingCompactionInstants.stream().map(instant -> {
       try {
         HoodieCompactionPlan compactionPlan = AvroUtils.deserializeCompactionPlan(
-            metaClient.getActiveTimeline().getInstantDetails(instant).get());
+            metaClient.getActiveTimeline().getInstantAuxiliaryDetails(
+                HoodieTimeline.getCompactionRequestedInstant(instant.getTimestamp())).get());
         return Pair.of(instant, compactionPlan);
       } catch (IOException e) {
         throw new HoodieException(e);
