@@ -24,6 +24,8 @@ import com.uber.hoodie.config.HoodieIndexConfig;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.index.HoodieIndex;
 import com.uber.hoodie.utilities.HDFSParquetImporter;
+import com.uber.hoodie.utilities.HDFSParquetUpserter;
+import com.uber.hoodie.utilities.HoodieCompactor;
 import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SQLContext;
@@ -37,7 +39,7 @@ public class SparkMain {
    * Commands
    */
   enum SparkCommand {
-    ROLLBACK, DEDUPLICATE, ROLLBACK_TO_SAVEPOINT, SAVEPOINT, IMPORT
+    ROLLBACK, DEDUPLICATE, ROLLBACK_TO_SAVEPOINT, SAVEPOINT, IMPORT, UPSERT, COMPACT_SCHEDULE, COMPACT_RUN,
   }
 
   public static void main(String[] args) throws Exception {
@@ -66,6 +68,21 @@ public class SparkMain {
         returnCode = dataImport(jsc, args[1], args[2], args[3], args[4], args[5], args[6], Integer.parseInt(args[7]),
             args[8], SparkUtil.DEFUALT_SPARK_MASTER, args[9], Integer.parseInt(args[10]));
         break;
+      case UPSERT:
+        assert (args.length == 11);
+        returnCode = dataUpsert(jsc, args[1], args[2], args[3], args[4], args[5], args[6], Integer.parseInt(args[7]),
+            args[8], args[9], Integer.parseInt(args[10]));
+        break;
+      case COMPACT_RUN:
+        assert (args.length == 9);
+        returnCode = compact(jsc, args[1], args[2], args[3], args[4], args[5], Integer.parseInt(args[6]),
+            args[7], args[8], Integer.parseInt(args[9]), false);
+        break;
+      case COMPACT_SCHEDULE:
+        assert (args.length == 10);
+        returnCode = compact(jsc, args[1], args[2], args[3], args[4], args[5], Integer.parseInt(args[6]),
+            args[7], args[8], Integer.parseInt(args[9]), true);
+        break;
       default:
         break;
     }
@@ -87,6 +104,38 @@ public class SparkMain {
     cfg.schemaFile = schemaFile;
     jsc.getConf().set("spark.executor.memory", sparkMemory);
     return new HDFSParquetImporter(cfg).dataImport(jsc, retry);
+  }
+
+  private static int dataUpsert(JavaSparkContext jsc, String srcPath, String targetPath, String tableName,
+      String tableType, String rowKey, String partitionKey, int parallelism, String schemaFile,
+      String sparkMemory, int retry) throws Exception {
+    HDFSParquetImporter.Config cfg = new HDFSParquetImporter.Config();
+    cfg.srcPath = srcPath;
+    cfg.targetPath = targetPath;
+    cfg.tableName = tableName;
+    cfg.tableType = tableType;
+    cfg.rowKey = rowKey;
+    cfg.partitionKey = partitionKey;
+    cfg.parallelism = parallelism;
+    cfg.schemaFile = schemaFile;
+    jsc.getConf().set("spark.executor.memory", sparkMemory);
+    return new HDFSParquetUpserter(cfg).dataImport(jsc, retry);
+  }
+
+  private static int compact(JavaSparkContext jsc, String basePath, String tableName, String compactionInstant,
+      String rowKey, String partitionKey, int parallelism, String schemaFile,
+      String sparkMemory, int retry, boolean schedule) throws Exception {
+    HoodieCompactor.Config cfg = new HoodieCompactor.Config();
+    cfg.basePath = basePath;
+    cfg.tableName = tableName;
+    cfg.compactionInstantTime = compactionInstant;
+    cfg.rowKey = rowKey;
+    cfg.partitionKey = partitionKey;
+    cfg.parallelism = parallelism;
+    cfg.schemaFile = schemaFile;
+    cfg.runSchedule = schedule;
+    jsc.getConf().set("spark.executor.memory", sparkMemory);
+    return new HoodieCompactor(cfg).compact(jsc, retry);
   }
 
   private static int deduplicatePartitionPath(JavaSparkContext jsc, String duplicatedPartitionPath,

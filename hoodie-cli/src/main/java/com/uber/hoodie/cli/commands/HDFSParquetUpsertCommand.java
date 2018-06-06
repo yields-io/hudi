@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Uber Technologies, Inc. (hoodie-dev-group@uber.com)
+ * Copyright (c) 2016 Uber Technologies, Inc. (hoodie-dev-group@uber.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,13 @@ import org.springframework.shell.core.CommandMarker;
 import org.springframework.shell.core.annotation.CliCommand;
 import org.springframework.shell.core.annotation.CliOption;
 import org.springframework.stereotype.Component;
-import scala.collection.JavaConverters;
 
 @Component
-public class HDFSParquetImportCommand implements CommandMarker {
+public class HDFSParquetUpsertCommand implements CommandMarker {
 
   private static Logger log = LogManager.getLogger(HDFSParquetImportCommand.class);
 
-  @CliCommand(value = "hdfsparquetimport", help = "Imports hdfs dataset to a hoodie dataset")
+  @CliCommand(value = "hdfsparquetupsert", help = "Upsert hdfs dataset to a hoodie dataset")
   public String convert(
       @CliOption(key = "srcPath", mandatory = true, help = "Base path for the input dataset") final String srcPath,
       @CliOption(key = "srcType", mandatory = true, help = "Source type for the input dataset") final String srcType,
@@ -60,19 +59,18 @@ public class HDFSParquetImportCommand implements CommandMarker {
     boolean initialized = HoodieCLI.initConf();
     HoodieCLI.initFS(initialized);
     String sparkPropertiesPath = Utils.getDefaultPropertiesFile(
-        JavaConverters.mapAsScalaMapConverter(System.getenv()).asScala());
-
+        scala.collection.JavaConversions.propertiesAsScalaMap(System.getProperties()));
     SparkLauncher sparkLauncher = SparkUtil.initLauncher(sparkPropertiesPath);
 
-    sparkLauncher.addAppArgs(SparkCommand.IMPORT.toString(), srcPath, targetPath, tableName, tableType, rowKeyField,
+    sparkLauncher.addAppArgs(SparkCommand.UPSERT.toString(), srcPath, targetPath, tableName, tableType, rowKeyField,
         partitionPathField, parallelism, schemaFilePath, sparkMemory, retry);
     Process process = sparkLauncher.launch();
     InputStreamConsumer.captureOutput(process);
     int exitCode = process.waitFor();
     if (exitCode != 0) {
-      return "Failed to import dataset to hoodie format";
+      return "Failed to upsert dataset to hoodie format";
     }
-    return "Dataset imported to hoodie format";
+    return "Dataset upserted to hoodie format";
   }
 
   private void validate(String format, String srcType) {
