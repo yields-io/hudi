@@ -17,6 +17,7 @@
 package com.uber.hoodie.table;
 
 import com.uber.hoodie.WriteStatus;
+import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
 import com.uber.hoodie.avro.model.HoodieSavepointMetadata;
 import com.uber.hoodie.common.HoodieCleanStat;
 import com.uber.hoodie.common.HoodieRollbackStat;
@@ -117,7 +118,8 @@ public abstract class HoodieTable<T extends HoodieRecordPayload> implements Seri
    * Get the real time view of the file system for this table
    */
   public TableFileSystemView.RealtimeView getRTFileSystemView() {
-    return new HoodieTableFileSystemView(metaClient, getCompletedCommitTimeline());
+    return new HoodieTableFileSystemView(metaClient,
+        getCommitsAndCompactionTimeline().filterCompletedAndCompactionInstants());
   }
 
   /**
@@ -138,7 +140,7 @@ public abstract class HoodieTable<T extends HoodieRecordPayload> implements Seri
    * Get only the inflights (no-completed) commit timeline
    */
   public HoodieTimeline getInflightCommitTimeline() {
-    return getCommitsTimeline().filterInflights();
+    return getCommitsTimeline().filterInflightsExcludingCompaction();
   }
 
   /**
@@ -207,6 +209,23 @@ public abstract class HoodieTable<T extends HoodieRecordPayload> implements Seri
   }
 
   /**
+   * Get the commit + pending-compaction timeline visible for this table.
+   * A RT filesystem view is constructed with this timeline so that file-slice after pending compaction-requested
+   * instant-time is also considered valid. A RT file-system view for reading must then merge the file-slices before
+   * and after pending compaction instant so that all delta-commits are read.
+   */
+  public HoodieTimeline getCommitsAndCompactionTimeline() {
+    switch (metaClient.getTableType()) {
+      case COPY_ON_WRITE:
+        return getActiveTimeline().getCommitTimeline();
+      case MERGE_ON_READ:
+        return getActiveTimeline().getCommitsAndCompactionTimeline();
+      default:
+        throw new HoodieException("Unsupported table type :" + metaClient.getTableType());
+    }
+  }
+
+  /**
    * Get the compacted commit timeline visible for this table
    */
   public HoodieTimeline getCommitTimeline() {
@@ -248,10 +267,23 @@ public abstract class HoodieTable<T extends HoodieRecordPayload> implements Seri
       Integer partition, Iterator<HoodieRecord<T>> recordIterator, Partitioner partitioner);
 
   /**
+   * Schedule compaction for the instant time
+   * @param jsc         Spark Context
+   * @param instantTime Instant Time for scheduling compaction
+   * @return
+   */
+  public abstract HoodieCompactionWorkload scheduleCompaction(JavaSparkContext jsc, String instantTime);
+
+  /**
    * Run Compaction on the table. Compaction arranges the data so that it is optimized for data
    * access
+   *
+   * @param jsc                   Spark Context
+   * @param compactionInstantTime Instant Time
+   * @param workload              Compaction Workload
    */
-  public abstract JavaRDD<WriteStatus> compact(JavaSparkContext jsc, String commitTime);
+  public abstract JavaRDD<WriteStatus> compact(JavaSparkContext jsc, String compactionInstantTime,
+      HoodieCompactionWorkload workload);
 
   /**
    * Clean partition paths according to cleaning policy and returns the number of files cleaned.

@@ -14,25 +14,29 @@
  *  limitations under the License.
  */
 
-package com.uber.hoodie.io.compact.strategy;
+package com.uber.hoodie.io.compact;
 
-import com.uber.hoodie.avro.model.HoodieCompactionOperation;
 import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
-import com.uber.hoodie.config.HoodieWriteConfig;
-import java.util.List;
 
 /**
- * UnBoundedCompactionStrategy will not change ordering or filter any compaction. It is a
- * pass-through and will compact all the base files which has a log file. This usually means
- * no-intelligence on compaction.
- *
- * @see CompactionStrategy
+ * Contains Hoodie Compaction instant along with workload
  */
-public class UnBoundedCompactionStrategy extends CompactionStrategy {
+public class HoodieCompactionInstantWithWorkload {
 
-  @Override
-  public List<HoodieCompactionOperation> orderAndFilter(HoodieWriteConfig config,
-      List<HoodieCompactionOperation> operations, List<HoodieCompactionWorkload> pendingCompactionWorkloads) {
-    return operations;
+  private final String compactionInstantTime;
+  private final HoodieCompactionWorkload compactionWorkload;
+
+  public HoodieCompactionInstantWithWorkload(String compactionInstantTime,
+      HoodieCompactionWorkload compactionWorkload) {
+    this.compactionInstantTime = compactionInstantTime;
+    this.compactionWorkload = compactionWorkload;
+  }
+
+  public String getCompactionInstantTime() {
+    return compactionInstantTime;
+  }
+
+  public HoodieCompactionWorkload getCompactionWorkload() {
+    return compactionWorkload;
   }
 }

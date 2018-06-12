@@ -19,6 +19,7 @@ package com.uber.hoodie.table;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.uber.hoodie.WriteStatus;
+import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
 import com.uber.hoodie.common.HoodieRollbackStat;
 import com.uber.hoodie.common.model.FileSlice;
 import com.uber.hoodie.common.model.HoodieCommitMetadata;
@@ -34,6 +35,7 @@ import com.uber.hoodie.common.table.log.block.HoodieCommandBlock;
 import com.uber.hoodie.common.table.log.block.HoodieLogBlock;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.util.CompactionUtils;
 import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.exception.HoodieCompactionException;
@@ -48,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +114,7 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
   }
 
   @Override
-  public JavaRDD<WriteStatus> compact(JavaSparkContext jsc, String compactionCommitTime) {
+  public HoodieCompactionWorkload scheduleCompaction(JavaSparkContext jsc, String instantTime) {
     logger.info("Checking if compaction needs to be run on " + config.getBasePath());
     Optional<HoodieInstant> lastCompaction = getActiveTimeline().getCommitTimeline()
         .filterCompletedInstants().lastInstant();
@@ -126,13 +129,25 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
       logger.info("Not running compaction as only " + deltaCommitsSinceLastCompaction
           + " delta commits was found since last compaction " + deltaCommitsSinceTs
           + ". Waiting for " + config.getInlineCompactDeltaCommitMax());
-      return jsc.emptyRDD();
+      return new HoodieCompactionWorkload();
     }
 
     logger.info("Compacting merge on read table " + config.getBasePath());
     HoodieRealtimeTableCompactor compactor = new HoodieRealtimeTableCompactor();
     try {
-      return compactor.compact(jsc, config, this, compactionCommitTime);
+      return compactor.generateCompactionWorkload(jsc, this, config, instantTime,
+          new HashSet<>(CompactionUtils.getAllPendingCompactionOperations(metaClient).keySet()));
+    } catch (IOException e) {
+      throw new HoodieCompactionException("Could not schedule compaction " + config.getBasePath(), e);
+    }
+  }
+
+  @Override
+  public JavaRDD<WriteStatus> compact(JavaSparkContext jsc, String compactionInstantTime,
+      HoodieCompactionWorkload workload) {
+    HoodieRealtimeTableCompactor compactor = new HoodieRealtimeTableCompactor();
+    try {
+      return compactor.compact(jsc, workload, this, config, compactionInstantTime);
     } catch (IOException e) {
       throw new HoodieCompactionException("Could not compact " + config.getBasePath(), e);
     }
@@ -148,7 +163,7 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
     }
     Map<String, HoodieInstant> commitsAndCompactions = this.getActiveTimeline()
         .getTimelineOfActions(Sets.newHashSet(HoodieActiveTimeline.COMMIT_ACTION,
-            HoodieActiveTimeline.DELTA_COMMIT_ACTION)).getInstants()
+            HoodieActiveTimeline.DELTA_COMMIT_ACTION, HoodieActiveTimeline.COMPACTION_ACTION)).getInstants()
         .filter(i -> commits.contains(i.getTimestamp()))
         .collect(Collectors.toMap(i -> i.getTimestamp(), i -> i));
 
@@ -168,6 +183,7 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
             HoodieRollbackStat hoodieRollbackStats = null;
             switch (instant.getAction()) {
               case HoodieTimeline.COMMIT_ACTION:
+              case HoodieTimeline.COMPACTION_ACTION:
                 try {
                   Map<FileStatus, Boolean> results = super
                       .deleteCleanedFiles(partitionPath, Arrays.asList(commit));
@@ -198,7 +214,7 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
                     // This needs to be done since GlobalIndex at the moment does not store the latest commit time
                     Map<String, String> fileIdToLatestCommitTimeMap =
                         hoodieIndex.isGlobal() ? this.getRTFileSystemView().getLatestFileSlices(partitionPath)
-                            .collect(Collectors.toMap(FileSlice::getFileId, FileSlice::getBaseCommitTime)) : null;
+                            .collect(Collectors.toMap(FileSlice::getFileId, FileSlice::getBaseInstantTime)) : null;
                     commitMetadata.getPartitionToWriteStats().get(partitionPath).stream()
                         .filter(wStat -> {
                           return wStat != null && wStat.getPrevCommit() != HoodieWriteStat.NULL_COMMIT
@@ -299,8 +315,10 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
         HoodieInstant latestCommitTime = commitTimeline.lastInstant().get();
         // find smallest file in partition and append to it
         Optional<FileSlice> smallFileSlice = getRTFileSystemView()
-            .getLatestFileSlicesBeforeOrOn(partitionPath, latestCommitTime.getTimestamp()).filter(
+            // Use the merged file-slice for small file selection
+            .getLatestMergedFileSlicesBeforeOrOn(partitionPath, latestCommitTime.getTimestamp()).filter(
                 fileSlice -> fileSlice.getLogFiles().count() < 1
+                    // TODO: Fix the assumption about data-file. Will be fixed by Nishith's insert to log-files PR
                     && fileSlice.getDataFile().get().getFileSize() < config
                     .getParquetSmallFileLimit()).sorted((FileSlice left, FileSlice right) ->
                 left.getDataFile().get().getFileSize() < right.getDataFile().get().getFileSize()

@@ -200,7 +200,7 @@ public class TestMergeOnReadTable {
     commit = metaClient.getActiveTimeline().getCommitTimeline().firstInstant();
     assertFalse(commit.isPresent());
 
-    String compactionCommitTime = client.startCompaction();
+    String compactionCommitTime = client.scheduleCompaction(Optional.empty());
     client.compact(compactionCommitTime);
 
     allFiles = HoodieTestUtils.listAllDataFilesInPath(dfs, cfg.getBasePath());
@@ -477,13 +477,15 @@ public class TestMergeOnReadTable {
 
     metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), cfg.getBasePath());
 
-    String compactionCommit = client.startCompaction();
-    client.compact(compactionCommit);
+    String compactionInstantTime = client.scheduleCompaction(Optional.empty());
+    List<WriteStatus> statuses1 = client.compact(compactionInstantTime).collect();
+
 
     allFiles = HoodieTestUtils.listAllDataFilesInPath(metaClient.getFs(), cfg.getBasePath());
     metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), cfg.getBasePath());
     hoodieTable = HoodieTable.getHoodieTable(metaClient, cfg);
     roView = new HoodieTableFileSystemView(metaClient, hoodieTable.getCommitsTimeline(), allFiles);
+    List<HoodieDataFile> dataFiles2 = roView.getLatestDataFiles().collect(Collectors.toList());
 
     final String compactedCommitTime = metaClient.getActiveTimeline().reload().getCommitsTimeline().lastInstant().get()
         .getTimestamp();
@@ -549,8 +551,9 @@ public class TestMergeOnReadTable {
 
     roView = new HoodieTableFileSystemView(metaClient, hoodieTable.getCompletedCommitTimeline(), allFiles);
     dataFilesToRead = roView.getLatestDataFiles();
+    List<HoodieDataFile> dataFilesList = dataFilesToRead.collect(Collectors.toList());
     assertTrue("RealtimeTableView should list the parquet files we wrote in the delta commit",
-        dataFilesToRead.findAny().isPresent());
+        dataFilesList.size() > 0);
 
     /**
      * Write 2 (only updates + inserts, written to .log file + correction of existing parquet
@@ -578,7 +581,8 @@ public class TestMergeOnReadTable {
     roView = new HoodieTableFileSystemView(metaClient,
         hoodieTable.getActiveTimeline().reload().getCommitsTimeline().filterCompletedInstants(), allFiles);
     dataFilesToRead = roView.getLatestDataFiles();
-    Map<String, Long> parquetFileIdToNewSize = dataFilesToRead.collect(
+    List<HoodieDataFile> newDataFilesList = dataFilesToRead.collect(Collectors.toList());
+    Map<String, Long> parquetFileIdToNewSize = newDataFilesList.stream().collect(
         Collectors.toMap(HoodieDataFile::getFileId, HoodieDataFile::getFileSize));
 
     assertTrue(parquetFileIdToNewSize.entrySet().stream()
@@ -636,8 +640,8 @@ public class TestMergeOnReadTable {
     metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), basePath);
     table = HoodieTable.getHoodieTable(metaClient, config);
 
-    String commitTime = writeClient.startCompaction();
-    JavaRDD<WriteStatus> result = writeClient.compact(commitTime);
+    String compactionInstantTime = writeClient.scheduleCompaction(Optional.empty());
+    JavaRDD<WriteStatus> result = writeClient.compact(compactionInstantTime);
 
     // Verify that recently written compacted data file has no log file
     metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), basePath);
@@ -694,9 +698,9 @@ public class TestMergeOnReadTable {
     Assert.assertTrue(totalUpsertTime > 0);
 
     // Do a compaction
-    String commitTime = writeClient.startCompaction();
-    statuses = writeClient.compact(commitTime);
-    writeClient.commitCompaction(commitTime, statuses);
+    String compactionInstantTime = writeClient.scheduleCompaction(Optional.empty());
+    statuses = writeClient.compact(compactionInstantTime);
+    writeClient.commitCompaction(compactionInstantTime, statuses, Optional.empty());
     // total time taken for scanning log files should be greater than 0
     long timeTakenForScanner = statuses.map(writeStatus -> writeStatus.getStat().getRuntimeStats().getTotalScanTime())
         .reduce((a,b) -> a + b).longValue();

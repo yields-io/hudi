@@ -14,13 +14,12 @@
  *  limitations under the License.
  */
 
-package com.uber.hoodie.io.compact;
+package com.uber.hoodie.common.model;
 
-import com.uber.hoodie.common.model.HoodieDataFile;
-import com.uber.hoodie.common.model.HoodieLogFile;
-import com.uber.hoodie.config.HoodieWriteConfig;
-import com.uber.hoodie.io.compact.strategy.CompactionStrategy;
+import com.uber.hoodie.avro.model.HoodieCompactionOperation;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,17 +28,15 @@ import java.util.stream.Collectors;
  * Encapsulates all the needed information about a compaction and make a decision whether this
  * compaction is effective or not
  *
- * @see CompactionStrategy
  */
 public class CompactionOperation implements Serializable {
 
-  private String dataFileCommitTime;
-  private long dataFileSize;
+  private String baseInstantTime;
   private List<String> deltaFilePaths;
   private String dataFilePath;
   private String fileId;
   private String partitionPath;
-  private Map<String, Object> metrics;
+  private Map<String, Long> metrics;
 
   //Only for serialization/de-serialization
   @Deprecated
@@ -47,24 +44,18 @@ public class CompactionOperation implements Serializable {
   }
 
   public CompactionOperation(HoodieDataFile dataFile, String partitionPath,
-      List<HoodieLogFile> logFiles, HoodieWriteConfig writeConfig) {
+      List<HoodieLogFile> logFiles, Map<String, Long> metrics) {
     this.dataFilePath = dataFile.getPath();
     this.fileId = dataFile.getFileId();
     this.partitionPath = partitionPath;
-    this.dataFileCommitTime = dataFile.getCommitTime();
-    this.dataFileSize = dataFile.getFileSize();
+    this.baseInstantTime = dataFile.getCommitTime();
     this.deltaFilePaths = logFiles.stream().map(s -> s.getPath().toString())
         .collect(Collectors.toList());
-    this.metrics = writeConfig.getCompactionStrategy()
-        .captureMetrics(dataFile, partitionPath, logFiles);
+    this.metrics = metrics;
   }
 
-  public String getDataFileCommitTime() {
-    return dataFileCommitTime;
-  }
-
-  public long getDataFileSize() {
-    return dataFileSize;
+  public String getBaseInstantTime() {
+    return baseInstantTime;
   }
 
   public List<String> getDeltaFilePaths() {
@@ -83,7 +74,23 @@ public class CompactionOperation implements Serializable {
     return partitionPath;
   }
 
-  public Map<String, Object> getMetrics() {
+  public Map<String, Long> getMetrics() {
     return metrics;
+  }
+
+  /**
+   * Convert Avro generated Compaction operation to POJO for Spark RDD operation
+   * @param operation Hoodie Compaction Operation
+   * @return
+   */
+  public static CompactionOperation convertFromAvroRecordInstance(HoodieCompactionOperation operation) {
+    CompactionOperation op = new CompactionOperation();
+    op.baseInstantTime = operation.getBaseInstantTime();
+    op.dataFilePath = operation.getDataFilePath();
+    op.deltaFilePaths = new ArrayList<>(operation.getDeltaFilePaths());
+    op.fileId = operation.getFileId();
+    op.metrics = new HashMap<>(operation.getMetrics());
+    op.partitionPath = operation.getPartitionPath();
+    return op;
   }
 }

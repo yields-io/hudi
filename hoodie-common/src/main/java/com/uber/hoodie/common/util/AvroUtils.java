@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.uber.hoodie.avro.model.HoodieCleanMetadata;
 import com.uber.hoodie.avro.model.HoodieCleanPartitionMetadata;
+import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
 import com.uber.hoodie.avro.model.HoodieRollbackMetadata;
 import com.uber.hoodie.avro.model.HoodieRollbackPartitionMetadata;
 import com.uber.hoodie.avro.model.HoodieSavepointMetadata;
@@ -142,6 +143,10 @@ public class AvroUtils {
         partitionMetadataBuilder.build());
   }
 
+  public static Optional<byte[]> serializeCompactionWorkload(HoodieCompactionWorkload compactionWorkload)
+      throws IOException {
+    return serializeAvroMetadata(compactionWorkload, HoodieCompactionWorkload.class);
+  }
 
   public static Optional<byte[]> serializeCleanMetadata(HoodieCleanMetadata metadata)
       throws IOException {
@@ -167,6 +172,11 @@ public class AvroUtils {
     fileWriter.append(metadata);
     fileWriter.flush();
     return Optional.of(baos.toByteArray());
+  }
+
+  public static HoodieCompactionWorkload deserializeCompactionWorkload(byte[] bytes)
+      throws IOException {
+    return deserializeAvroMetadata(bytes, HoodieCompactionWorkload.class);
   }
 
   public static HoodieCleanMetadata deserializeHoodieCleanMetadata(byte[] bytes)

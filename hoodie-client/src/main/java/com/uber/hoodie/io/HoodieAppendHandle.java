@@ -90,12 +90,11 @@ public class HoodieAppendHandle<T extends HoodieRecordPayload> extends HoodieIOH
   private void init(String partitionPath) {
 
     // extract some information from the first record
+    // For file-Id under compaction, this file-slice will be the one after compaction instant
     FileSlice fileSlice = fileSystemView.getLatestFileSlices(partitionPath)
-        .filter(fileSlice1 -> fileSlice1.getDataFile().get().getFileId().equals(fileId)).findFirst()
+        .filter(fileSlice1 -> fileSlice1.getFileId().equals(fileId)).findFirst()
         .get();
-    // HACK(vc) This also assumes a base file. It will break, if appending without one.
-    String latestValidFilePath = fileSlice.getDataFile().get().getFileName();
-    String baseCommitTime = FSUtils.getCommitTime(latestValidFilePath);
+    String baseCommitTime = fileSlice.getBaseInstantTime();
     writeStatus.getStat().setPrevCommit(baseCommitTime);
     writeStatus.setFileId(fileId);
     writeStatus.setPartitionPath(partitionPath);

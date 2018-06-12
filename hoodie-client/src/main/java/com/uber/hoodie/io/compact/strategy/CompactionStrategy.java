@@ -17,11 +17,13 @@
 package com.uber.hoodie.io.compact.strategy;
 
 import com.google.common.collect.Maps;
+import com.uber.hoodie.avro.model.HoodieCompactionOperation;
+import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
 import com.uber.hoodie.common.model.HoodieDataFile;
 import com.uber.hoodie.common.model.HoodieLogFile;
 import com.uber.hoodie.common.util.FSUtils;
+import com.uber.hoodie.config.HoodieCompactionConfig;
 import com.uber.hoodie.config.HoodieWriteConfig;
-import com.uber.hoodie.io.compact.CompactionOperation;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +37,6 @@ import java.util.Optional;
  * passed in every time
  *
  * @see com.uber.hoodie.io.compact.HoodieRealtimeTableCompactor
- * @see CompactionOperation
  */
 public abstract class CompactionStrategy implements Serializable {
 
@@ -46,7 +47,7 @@ public abstract class CompactionStrategy implements Serializable {
   public static final String TOTAL_LOG_FILES = "TOTAL_LOG_FILES";
 
   /**
-   * Callback hook when a CompactionOperation is created. Individual strategies can capture the
+   * Callback hook when a HoodieCompactionOperation is created. Individual strategies can capture the
    * metrics they need to decide on the priority.
    *
    * @param dataFile - Base file to compact
@@ -54,9 +55,9 @@ public abstract class CompactionStrategy implements Serializable {
    * @param logFiles - List of log files to compact with the base file
    * @return Map[String, Object] - metrics captured
    */
-  public Map<String, Object> captureMetrics(HoodieDataFile dataFile, String partitionPath,
+  public Map<String, Long> captureMetrics(HoodieDataFile dataFile, String partitionPath,
       List<HoodieLogFile> logFiles) {
-    Map<String, Object> metrics = Maps.newHashMap();
+    Map<String, Long> metrics = Maps.newHashMap();
     // Total size of all the log files
     Long totalLogFileSize = logFiles.stream().map(HoodieLogFile::getFileSize).filter(Optional::isPresent)
         .map(Optional::get).reduce((size1, size2) -> size1 + size2).orElse(0L);
@@ -71,21 +72,41 @@ public abstract class CompactionStrategy implements Serializable {
     metrics.put(TOTAL_IO_WRITE_MB, totalIOWrite);
     metrics.put(TOTAL_IO_MB, totalIO);
     metrics.put(TOTAL_LOG_FILE_SIZE, totalLogFileSize);
-    metrics.put(TOTAL_LOG_FILES, logFiles.size());
+    metrics.put(TOTAL_LOG_FILES, Long.valueOf(logFiles.size()));
     return metrics;
 
   }
 
   /**
-   * Order and Filter the list of compactions. Use the metrics captured with the captureMetrics to
-   * order and filter out compactions
+   * Generate Compaction workload. Allows clients to order and filter the list of compactions to be set. The default
+   * implementation takes care of setting compactor Id from configuration allowing subclasses to only worry about
+   * ordering and filtering compaction operations
    *
-   * @param writeConfig - HoodieWriteConfig - config for this compaction is passed in
-   * @param operations - list of compactions collected
+   * @param writeConfig                Hoodie Write Config
+   * @param operations                 Compaction Operations to be ordered and filtered
+   * @param pendingCompactionWorkloads Pending Compaction Workloads for strategy to schedule next compaction workload
+   * @return Compaction workload to be scheduled.
+   */
+  public HoodieCompactionWorkload generateCompactionWorkload(HoodieWriteConfig writeConfig,
+      List<HoodieCompactionOperation> operations, List<HoodieCompactionWorkload> pendingCompactionWorkloads) {
+    // Strategy implementation can overload this method to set specific compactor-id
+    return HoodieCompactionWorkload.newBuilder().setCompactorId(HoodieCompactionConfig.DEFAULT_COMPACTOR_ID)
+        .setOperations(orderAndFilter(writeConfig, operations, pendingCompactionWorkloads))
+        .build();
+  }
+
+  /**
+   * Order and Filter the list of compactions. Use the metrics captured with the captureMetrics to order and filter out
+   * compactions
+   *
+   * @param writeConfig                config for this compaction is passed in
+   * @param operations                 list of compactions collected
+   * @param pendingCompactionWorkloads Pending Compaction Workloads for strategy to schedule next compaction workload
    * @return list of compactions to perform in this run
    */
-  public List<CompactionOperation> orderAndFilter(HoodieWriteConfig writeConfig,
-      List<CompactionOperation> operations) {
+  protected List<HoodieCompactionOperation> orderAndFilter(HoodieWriteConfig writeConfig,
+      List<HoodieCompactionOperation> operations,
+      List<HoodieCompactionWorkload> pendingCompactionWorkloads) {
     return operations;
   }
 }

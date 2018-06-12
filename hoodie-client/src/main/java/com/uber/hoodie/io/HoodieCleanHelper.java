@@ -16,6 +16,9 @@
 
 package com.uber.hoodie.io;
 
+import static com.uber.hoodie.common.table.HoodieTimeline.COMPACTION_ACTION;
+
+import com.uber.hoodie.avro.model.HoodieCompactionOperation;
 import com.uber.hoodie.common.model.FileSlice;
 import com.uber.hoodie.common.model.HoodieCleaningPolicy;
 import com.uber.hoodie.common.model.HoodieDataFile;
@@ -25,14 +28,18 @@ import com.uber.hoodie.common.model.HoodieTableType;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.TableFileSystemView;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
+import com.uber.hoodie.common.util.CompactionUtils;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.table.HoodieTable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -48,6 +55,7 @@ public class HoodieCleanHelper<T extends HoodieRecordPayload<T>> {
 
   private final TableFileSystemView fileSystemView;
   private final HoodieTimeline commitTimeline;
+  private final Map<String, HoodieCompactionOperation> fileIdToPendingCompactionOperations;
   private HoodieTable<T> hoodieTable;
   private HoodieWriteConfig config;
 
@@ -56,6 +64,10 @@ public class HoodieCleanHelper<T extends HoodieRecordPayload<T>> {
     this.fileSystemView = hoodieTable.getCompletedFileSystemView();
     this.commitTimeline = hoodieTable.getCompletedCommitTimeline();
     this.config = config;
+    this.fileIdToPendingCompactionOperations =
+        CompactionUtils.getAllPendingCompactionOperations(hoodieTable.getMetaClient()).entrySet().stream()
+            .map(entry -> Pair.of(entry.getKey(), entry.getValue().getValue()))
+            .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
   }
 
 
@@ -91,12 +103,14 @@ public class HoodieCleanHelper<T extends HoodieRecordPayload<T>> {
       // Delete the remaining files
       while (fileSliceIterator.hasNext()) {
         FileSlice nextSlice = fileSliceIterator.next();
-        HoodieDataFile dataFile = nextSlice.getDataFile().get();
-        deletePaths.add(dataFile.getFileStatus().getPath().toString());
-        if (hoodieTable.getMetaClient().getTableType() == HoodieTableType.MERGE_ON_READ) {
-          // If merge on read, then clean the log files for the commits as well
-          deletePaths.addAll(nextSlice.getLogFiles().map(file -> file.getPath().toString())
-              .collect(Collectors.toList()));
+        if (!isFileSliceNeededForPendingCompaction(nextSlice)) {
+          HoodieDataFile dataFile = nextSlice.getDataFile().get();
+          deletePaths.add(dataFile.getFileStatus().getPath().toString());
+          if (hoodieTable.getMetaClient().getTableType() == HoodieTableType.MERGE_ON_READ) {
+            // If merge on read, then clean the log files for the commits as well
+            deletePaths.addAll(nextSlice.getLogFiles().map(file -> file.getPath().toString())
+                .collect(Collectors.toList()));
+          }
         }
       }
     }
@@ -224,6 +238,34 @@ public class HoodieCleanHelper<T extends HoodieRecordPayload<T>> {
       earliestCommitToRetain = commitTimeline
           .nthInstant(commitTimeline.countInstants() - commitsRetained);
     }
-    return earliestCommitToRetain;
+
+    // ensure oldest commit time needed for pending compaction is retained
+    final Optional<HoodieInstant> oldestCommitNeededForCompaction =
+        fileIdToPendingCompactionOperations.values().stream()
+        .map(HoodieCompactionOperation::getBaseInstantTime).sorted().findFirst().map(oldestTs -> {
+          return new HoodieInstant(State.REQUESTED, COMPACTION_ACTION, oldestTs);
+        });
+
+    return earliestCommitToRetain.map(earliest -> {
+      return Optional.of(oldestCommitNeededForCompaction.map(oldestForCompaction -> {
+        return HoodieTimeline.compareTimestamps(oldestForCompaction.getTimestamp(), earliest.getTimestamp(),
+            HoodieTimeline.LESSER_OR_EQUAL) ? oldestForCompaction : earliest;
+      }).orElse(earliest));
+    }).orElse(oldestCommitNeededForCompaction);
+  }
+
+  /**
+   * Determine if file slice needed to be preserved for pending compaction
+   * @param fileSlice File Slice
+   * @return true if file slice needs to be preserved, false otherwise.
+   */
+  private boolean isFileSliceNeededForPendingCompaction(FileSlice fileSlice) {
+    HoodieCompactionOperation op = fileIdToPendingCompactionOperations.get(fileSlice.getFileId());
+    if (null != op) {
+      // If file slice's instant time is newer or same as that of operation, do not clean
+      return HoodieTimeline.compareTimestamps(fileSlice.getBaseInstantTime(), op.getBaseInstantTime(),
+          HoodieTimeline.GREATER_OR_EQUAL);
+    }
+    return false;
   }
 }
