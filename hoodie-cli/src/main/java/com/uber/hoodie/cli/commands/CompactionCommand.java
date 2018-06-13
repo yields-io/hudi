@@ -17,7 +17,7 @@
 package com.uber.hoodie.cli.commands;
 
 import com.uber.hoodie.avro.model.HoodieCompactionOperation;
-import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
+import com.uber.hoodie.avro.model.HoodieCompactionPlan;
 import com.uber.hoodie.cli.HoodieCLI;
 import com.uber.hoodie.cli.HoodiePrintHelper;
 import com.uber.hoodie.cli.TableHeader;
@@ -72,18 +72,18 @@ public class CompactionCommand implements CommandMarker {
     Collections.reverse(instants);
     for (int i = 0; i < instants.size(); i++) {
       HoodieInstant instant = instants.get(i);
-      HoodieCompactionWorkload workload = null;
+      HoodieCompactionPlan workload = null;
       if (!instant.getAction().equals(HoodieTimeline.COMPACTION_ACTION)) {
         try {
           // This could be a completed compaction. Assume a compaction request file is present but skip if fails
-          workload = AvroUtils.deserializeCompactionWorkload(
+          workload = AvroUtils.deserializeCompactionPlan(
               activeTimeline.getInstantAuxiliaryDetails(
                   HoodieTimeline.getCompactionRequestedInstant(instant.getTimestamp())).get());
         } catch (IOException ioe) {
           // SKIP
         }
       } else {
-        workload = AvroUtils.deserializeCompactionWorkload(activeTimeline.getInstantAuxiliaryDetails(
+        workload = AvroUtils.deserializeCompactionPlan(activeTimeline.getInstantAuxiliaryDetails(
             HoodieTimeline.getCompactionRequestedInstant(instant.getTimestamp())).get());
       }
 
@@ -122,7 +122,7 @@ public class CompactionCommand implements CommandMarker {
           "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
       throws Exception {
     HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
-    HoodieCompactionWorkload workload = AvroUtils.deserializeCompactionWorkload(
+    HoodieCompactionPlan workload = AvroUtils.deserializeCompactionPlan(
         activeTimeline.getInstantAuxiliaryDetails(
             HoodieTimeline.getCompactionRequestedInstant(compactionInstantTime)).get());
 
