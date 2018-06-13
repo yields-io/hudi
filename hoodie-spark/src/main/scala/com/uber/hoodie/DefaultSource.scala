@@ -200,48 +200,55 @@ class DefaultSource extends RelationProvider
     }
 
     // Create a HoodieWriteClient & issue the write.
-    val client = DataSourceUtils.createHoodieClient(new JavaSparkContext(sparkContext),
+    val jsc = new JavaSparkContext(sparkContext);
+    val client = DataSourceUtils.createHoodieClient(jsc,
       schema.toString,
       path.get,
       tblName.get,
       mapAsJavaMap(parameters)
     )
-    val commitTime = client.startCommit();
 
-    val writeStatuses = DataSourceUtils.doWriteOperation(client, hoodieRecords, commitTime, operation)
-    // Check for errors and commit the write.
-    val errorCount = writeStatuses.rdd.filter(ws => ws.hasErrors).count()
-    if (errorCount == 0) {
-      log.info("No errors. Proceeding to commit the write.");
-      val metaMap = parameters.filter(kv =>
-        kv._1.startsWith(parameters(COMMIT_METADATA_KEYPREFIX_OPT_KEY)))
-      val success = if (metaMap.isEmpty) {
-        client.commit(commitTime, writeStatuses)
-      } else {
-        client.commit(commitTime, writeStatuses,
-          Optional.of(new util.HashMap[String, String](mapAsJavaMap(metaMap))))
-      }
-
-      if (success) {
-        log.info("Commit " + commitTime + " successful!")
-      }
-      else {
-        log.info("Commit " + commitTime + " failed!")
-      }
-      client.close
+    val isCompaction : Boolean = DataSourceUtils.isCompactionOperation(operation)
+    if (isCompaction) {
+      DataSourceUtils.doWriteOperation(jsc, client, hoodieRecords, null, operation, parameters)
     } else {
-      log.error(s"Upsert failed with ${errorCount} errors :");
-      if (log.isTraceEnabled) {
-        log.trace("Printing out the top 100 errors")
-        writeStatuses.rdd.filter(ws => ws.hasErrors)
-          .take(100)
-          .foreach(ws => {
-            log.trace("Global error :", ws.getGlobalError)
-            if (ws.getErrors.size() > 0) {
-              ws.getErrors.foreach(kt =>
-                log.trace(s"Error for key: ${kt._1}", kt._2))
-            }
-          })
+      val commitTime = client.startCommit();
+
+      val writeStatuses = DataSourceUtils.doWriteOperation(jsc, client, hoodieRecords, commitTime, operation, parameters)
+      // Check for errors and commit the write.
+      val errorCount = writeStatuses.rdd.filter(ws => ws.hasErrors).count()
+      if (errorCount == 0) {
+        log.info("No errors. Proceeding to commit the write.");
+        val metaMap = parameters.filter(kv =>
+          kv._1.startsWith(parameters(COMMIT_METADATA_KEYPREFIX_OPT_KEY)))
+        val success = if (metaMap.isEmpty) {
+          client.commit(commitTime, writeStatuses)
+        } else {
+          client.commit(commitTime, writeStatuses,
+            Optional.of(new util.HashMap[String, String](mapAsJavaMap(metaMap))))
+        }
+
+        if (success) {
+          log.info("Commit " + commitTime + " successful!")
+        }
+        else {
+          log.info("Commit " + commitTime + " failed!")
+        }
+        client.close
+      } else {
+        log.error(s"Upsert failed with ${errorCount} errors :");
+        if (log.isTraceEnabled) {
+          log.trace("Printing out the top 100 errors")
+          writeStatuses.rdd.filter(ws => ws.hasErrors)
+            .take(100)
+            .foreach(ws => {
+              log.trace("Global error :", ws.getGlobalError)
+              if (ws.getErrors.size() > 0) {
+                ws.getErrors.foreach(kt =>
+                  log.trace(s"Error for key: ${kt._1}", kt._2))
+              }
+            })
+        }
       }
     }
     createRelation(sqlContext, parameters, df.schema)

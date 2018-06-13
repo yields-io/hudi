@@ -78,7 +78,11 @@ object DataSourceWriteOptions {
   val BULK_INSERT_OPERATION_OPT_VAL = "bulk_insert"
   val INSERT_OPERATION_OPT_VAL = "insert"
   val UPSERT_OPERATION_OPT_VAL = "upsert"
+  val SCHEDULE_COMPACTION_OPT_VAL = "schedule_compaction"
+  val RUN_NEXT_COMPACTION_OPT_VAL = "compact"
   val DEFAULT_OPERATION_OPT_VAL = UPSERT_OPERATION_OPT_VAL;
+
+  val COMPACTION_OPERATION_OPT_KEY = "hoodie.datasource.compact.instantId"
 
   /**
     * The storage type for the underlying data, for this write.

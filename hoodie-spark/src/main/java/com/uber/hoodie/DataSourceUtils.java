@@ -27,9 +27,11 @@ import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.exception.HoodieException;
 import com.uber.hoodie.exception.HoodieNotSupportedException;
 import com.uber.hoodie.index.HoodieIndex;
+import com.uber.hoodie.io.compact.HoodieCompactionInstantWithPlan;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang3.reflect.ConstructorUtils;
@@ -120,13 +122,47 @@ public class DataSourceUtils {
     return new HoodieWriteClient<>(jssc, writeConfig);
   }
 
+  public static boolean isCompactionOperation(String operation) {
+    if (operation.equals(DataSourceWriteOptions.SCHEDULE_COMPACTION_OPT_VAL())) {
+      return true;
+    } else if (operation.equals(DataSourceWriteOptions.RUN_NEXT_COMPACTION_OPT_VAL())) {
+      return true;
+    }
+    return false;
+  }
 
-  public static JavaRDD<WriteStatus> doWriteOperation(HoodieWriteClient client,
-      JavaRDD<HoodieRecord> hoodieRecords, String commitTime, String operation) {
+  public static JavaRDD<WriteStatus> doWriteOperation(JavaSparkContext jsc, HoodieWriteClient client,
+      JavaRDD<HoodieRecord> hoodieRecords, String commitTime, String operation, Map<String, String> parameters) {
     if (operation.equals(DataSourceWriteOptions.BULK_INSERT_OPERATION_OPT_VAL())) {
       return client.bulkInsert(hoodieRecords, commitTime);
     } else if (operation.equals(DataSourceWriteOptions.INSERT_OPERATION_OPT_VAL())) {
       return client.insert(hoodieRecords, commitTime);
+    } else if (operation.equals(DataSourceWriteOptions.SCHEDULE_COMPACTION_OPT_VAL())) {
+      try {
+        client.scheduleCompaction(Optional.empty());
+      } catch (IOException ioe) {
+        throw new HoodieException(ioe);
+      }
+      return jsc.emptyRDD();
+    } else if (operation.equals(DataSourceWriteOptions.RUN_NEXT_COMPACTION_OPT_VAL())) {
+      Optional<String> compactionInstantId = null;
+      if (parameters.containsKey(DataSourceWriteOptions.COMPACTION_OPERATION_OPT_KEY())) {
+        compactionInstantId = Optional.of(parameters.get(DataSourceWriteOptions.COMPACTION_OPERATION_OPT_KEY()));
+      } else {
+        List<HoodieCompactionInstantWithPlan> plans = client.getPendingCompactions();
+        compactionInstantId = plans.stream().map(p -> p.getCompactionInstantTime()).findFirst();
+      }
+
+      if (compactionInstantId.isPresent()) {
+        try {
+          JavaRDD<WriteStatus> res =  client.compact(compactionInstantId.get());
+          client.commitCompaction(compactionInstantId.get(), res, Optional.empty());
+          return res;
+        } catch (IOException ioe) {
+          throw new HoodieException(ioe);
+        }
+      }
+      return jsc.emptyRDD();
     } else {
       //default is upsert
       return client.upsert(hoodieRecords, commitTime);
