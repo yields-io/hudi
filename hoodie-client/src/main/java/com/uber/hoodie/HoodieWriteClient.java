@@ -1180,7 +1180,7 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
    */
   protected void commitCompaction(JavaRDD<WriteStatus> compactedStatuses, HoodieTable<T> table,
       String compactionCommitTime, boolean autoCommit, Optional<Map<String, String>> extraMetadata) {
-    if (!compactedStatuses.isEmpty() && autoCommit) {
+    if (autoCommit) {
       HoodieCommitMetadata metadata =
           commitForceCompaction(compactedStatuses, table.getMetaClient(), compactionCommitTime, extraMetadata);
       if (compactionTimer != null) {
