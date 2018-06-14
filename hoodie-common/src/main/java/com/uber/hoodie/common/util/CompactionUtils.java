@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**
@@ -139,9 +140,14 @@ public class CompactionUtils {
     pendingCompactionPlanWithInstants.stream().flatMap(instantPlanPair -> {
       HoodieInstant instant = instantPlanPair.getKey();
       HoodieCompactionPlan compactionPlan = instantPlanPair.getValue();
-      return compactionPlan.getOperations().stream().map(op -> {
-        return Pair.of(op.getFileId(), Pair.of(instant.getTimestamp(), op));
-      });
+      List<HoodieCompactionOperation> ops = compactionPlan.getOperations();
+      if (null != ops) {
+        return ops.stream().map(op -> {
+          return Pair.of(op.getFileId(), Pair.of(instant.getTimestamp(), op));
+        });
+      } else {
+        return Stream.empty();
+      }
     }).forEach(pair -> {
       // Defensive check to ensure a single-fileId does not have more than one pending compaction
       if (fileIdToPendingCompactionWithInstantMap.containsKey(pair.getKey())) {
