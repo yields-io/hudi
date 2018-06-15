@@ -30,6 +30,7 @@ import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
 import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.util.AvroUtils;
+import com.uber.hoodie.exception.HoodieIOException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,7 +80,7 @@ public class CompactionCommand implements CommandMarker {
           workload = AvroUtils.deserializeCompactionPlan(
               activeTimeline.getInstantAuxiliaryDetails(
                   HoodieTimeline.getCompactionRequestedInstant(instant.getTimestamp())).get());
-        } catch (IOException ioe) {
+        } catch (HoodieIOException ioe) {
           // SKIP
         }
       } else {
