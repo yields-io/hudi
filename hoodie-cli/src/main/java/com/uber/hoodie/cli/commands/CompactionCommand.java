@@ -96,7 +96,7 @@ public class CompactionCommand implements CommandMarker {
         rows.add(new Comparable[]{instant.getTimestamp(),
             state.toString(),
             workload.getCompactorId(),
-            workload.getOperations().size(),
+            workload.getOperations() == null ? 0 : workload.getOperations().size(),
             workload.getExtraMetadata().toString()});
       }
     }
@@ -128,7 +128,7 @@ public class CompactionCommand implements CommandMarker {
             HoodieTimeline.getCompactionRequestedInstant(compactionInstantTime)).get());
 
     List<Comparable[]> rows = new ArrayList<>();
-    if (null != workload) {
+    if ((null != workload) && (null != workload.getOperations())) {
       for (HoodieCompactionOperation op : workload.getOperations()) {
         rows.add(new Comparable[]{op.getPartitionPath(),
             op.getFileId(),
