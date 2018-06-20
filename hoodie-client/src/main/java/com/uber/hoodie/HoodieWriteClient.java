@@ -975,11 +975,11 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
    * @param extraMetadata
    * @return
    */
-  public String scheduleCompaction(Optional<Map<String, String>> extraMetadata) throws IOException {
+  public Optional<String> scheduleCompaction(Optional<Map<String, String>> extraMetadata) throws IOException {
     String instantTime = HoodieActiveTimeline.createNewCommitTime();
     logger.info("Generate a new instant time " + instantTime);
-    scheduleCompactionWithTime(instantTime, extraMetadata);
-    return instantTime;
+    boolean notEmpty = scheduleCompactionWithTime(instantTime, extraMetadata);
+    return notEmpty ? Optional.of(instantTime) : Optional.empty();
   }
 
   /**
@@ -987,7 +987,7 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
    * @param instantTime     Compaction Instant Time
    * @param extraMetadata   Extra Metadata to be stored
    */
-  public void scheduleCompactionWithTime(String instantTime, Optional<Map<String, String>> extraMetadata)
+  public boolean scheduleCompactionWithTime(String instantTime, Optional<Map<String, String>> extraMetadata)
       throws IOException {
     HoodieTableMetaClient metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(),
         config.getBasePath(), true);
@@ -1000,11 +1000,15 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
     });
     HoodieTable<T> table = HoodieTable.getHoodieTable(metaClient, config, jsc);
     HoodieCompactionPlan workload = table.scheduleCompaction(jsc, instantTime);
-    extraMetadata.ifPresent(workload::setExtraMetadata);
-    HoodieInstant compactionInstant =
-        new HoodieInstant(State.REQUESTED, HoodieTimeline.COMPACTION_ACTION, instantTime);
-    metaClient.getActiveTimeline().saveToCompactionRequested(compactionInstant,
-        AvroUtils.serializeCompactionPlan(workload));
+    if (workload != null && (workload.getOperations() != null) && (!workload.getOperations().isEmpty())) {
+      extraMetadata.ifPresent(workload::setExtraMetadata);
+      HoodieInstant compactionInstant =
+          new HoodieInstant(State.REQUESTED, HoodieTimeline.COMPACTION_ACTION, instantTime);
+      metaClient.getActiveTimeline().saveToCompactionRequested(compactionInstant,
+          AvroUtils.serializeCompactionPlan(workload));
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -1248,9 +1252,15 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
    * Performs a compaction operation on a dataset. WARNING: Compaction operation cannot be executed
    * asynchronously. Please always use this serially before or after an insert/upsert action.
    */
-  private String forceCompact(Optional<Map<String, String>> extraMetadata) throws IOException {
-    String compactionCommitTime = scheduleCompaction(extraMetadata);
-    compact(compactionCommitTime);
-    return compactionCommitTime;
+  private Optional<String> forceCompact(Optional<Map<String, String>> extraMetadata) throws IOException {
+    Optional<String> compactionInstantTimeOpt = scheduleCompaction(extraMetadata);
+    compactionInstantTimeOpt.ifPresent(compactionInstantTime -> {
+      try {
+        compact(compactionInstantTime);
+      } catch (IOException ioe) {
+        throw new HoodieIOException(ioe.getMessage(), ioe);
+      }
+    });
+    return compactionInstantTimeOpt;
   }
 }
