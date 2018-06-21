@@ -174,7 +174,8 @@ public class HoodieCleanHelper<T extends HoodieRecordPayload<T>> {
           }
 
           // Always keep the last commit
-          if (HoodieTimeline
+          if (!isFileSliceNeededForPendingCompaction(aSlice)
+              && HoodieTimeline
               .compareTimestamps(earliestCommitToRetain.getTimestamp(), fileCommitTime,
                   HoodieTimeline.GREATER)) {
             // this is a commit, that should be cleaned.
@@ -241,20 +242,7 @@ public class HoodieCleanHelper<T extends HoodieRecordPayload<T>> {
       earliestCommitToRetain = commitTimeline
           .nthInstant(commitTimeline.countInstants() - commitsRetained);
     }
-
-    // ensure oldest commit time needed for pending compaction is retained
-    final Optional<HoodieInstant> oldestCommitNeededForCompaction =
-        fileIdToPendingCompactionOperations.values().stream()
-        .map(HoodieCompactionOperation::getBaseInstantTime).sorted().findFirst().map(oldestTs -> {
-          return new HoodieInstant(State.REQUESTED, COMPACTION_ACTION, oldestTs);
-        });
-
-    return earliestCommitToRetain.map(earliest -> {
-      return Optional.of(oldestCommitNeededForCompaction.map(oldestForCompaction -> {
-        return HoodieTimeline.compareTimestamps(oldestForCompaction.getTimestamp(), earliest.getTimestamp(),
-            HoodieTimeline.LESSER_OR_EQUAL) ? oldestForCompaction : earliest;
-      }).orElse(earliest));
-    }).orElse(oldestCommitNeededForCompaction);
+    return earliestCommitToRetain;
   }
 
   /**
