@@ -43,11 +43,13 @@ import com.uber.hoodie.common.table.TableFileSystemView;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
 import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
+import com.uber.hoodie.common.table.view.HoodieTableFileSystemView;
 import com.uber.hoodie.common.util.AvroUtils;
 import com.uber.hoodie.common.util.CompactionUtils;
 import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.config.HoodieCompactionConfig;
 import com.uber.hoodie.config.HoodieWriteConfig;
+import com.uber.hoodie.exception.HoodieIOException;
 import com.uber.hoodie.index.HoodieIndex;
 import com.uber.hoodie.table.HoodieTable;
 import java.io.IOException;
@@ -301,7 +303,7 @@ public class TestCleaner extends TestHoodieClientBase {
    */
   @Test
   public void testInsertAndCleanByCommits() throws Exception {
-    testInsertAndCleanByCommits(HoodieWriteClient::insert, HoodieWriteClient::upsert, false, false);
+    testInsertAndCleanByCommits(HoodieWriteClient::insert, HoodieWriteClient::upsert, false);
   }
 
   /**
@@ -310,7 +312,7 @@ public class TestCleaner extends TestHoodieClientBase {
   @Test
   public void testInsertPreppedAndCleanByCommits() throws Exception {
     testInsertAndCleanByCommits(HoodieWriteClient::insertPreppedRecords,
-        HoodieWriteClient::upsertPreppedRecords, true, false);
+        HoodieWriteClient::upsertPreppedRecords, true);
   }
 
   /**
@@ -320,7 +322,7 @@ public class TestCleaner extends TestHoodieClientBase {
   public void testBulkInsertPreppedAndCleanByCommits() throws Exception {
     testInsertAndCleanByCommits(
         (client, recordRDD, commitTime) -> client.bulkInsertPreppedRecords(recordRDD, commitTime, Option.empty()),
-        HoodieWriteClient::upsertPreppedRecords, true, false);
+        HoodieWriteClient::upsertPreppedRecords, true);
   }
 
   /**
@@ -328,42 +330,7 @@ public class TestCleaner extends TestHoodieClientBase {
    */
   @Test
   public void testBulkInsertAndCleanByCommits() throws Exception {
-    testInsertAndCleanByCommits(HoodieWriteClient::bulkInsert, HoodieWriteClient::upsert, false, false);
-  }
-
-  /**
-   * Test Clean-By-Versions using insert/upsert API
-   */
-  @Test
-  public void testInsertAndCleanByCommitsWithAsyncCompaction() throws Exception {
-    testInsertAndCleanByCommits(HoodieWriteClient::insert, HoodieWriteClient::upsert, false, true);
-  }
-
-  /**
-   * Test Clean-By-Versions using prepped version of insert/upsert API
-   */
-  @Test
-  public void testInsertPreppedAndCleanByCommitsWithAsyncCompaction() throws Exception {
-    testInsertAndCleanByCommits(HoodieWriteClient::insertPreppedRecords,
-        HoodieWriteClient::upsertPreppedRecords, true, true);
-  }
-
-  /**
-   * Test Clean-By-Versions using prepped versions of bulk-insert/upsert API
-   */
-  @Test
-  public void testBulkInsertPreppedAndCleanByCommitsWithAsyncCompaction() throws Exception {
-    testInsertAndCleanByCommits(
-        (client, recordRDD, commitTime) -> client.bulkInsertPreppedRecords(recordRDD, commitTime, Option.empty()),
-        HoodieWriteClient::upsertPreppedRecords, true, true);
-  }
-
-  /**
-   * Test Clean-By-Versions using bulk-insert/upsert API
-   */
-  @Test
-  public void testBulkInsertAndCleanByCommitsWithAsyncCompaction() throws Exception {
-    testInsertAndCleanByCommits(HoodieWriteClient::bulkInsert, HoodieWriteClient::upsert, false, true);
+    testInsertAndCleanByCommits(HoodieWriteClient::bulkInsert, HoodieWriteClient::upsert, false);
   }
 
   /**
@@ -374,14 +341,12 @@ public class TestCleaner extends TestHoodieClientBase {
    * @param isPreppedAPI        Flag to indicate if a prepped-version is used. If true, a wrapper function will be used
    *                            during record generation to also tag the regards (de-dupe is implicit as we use uniq
    *                            record-gen APIs)
-   * @param withAsyncCompaction Assume some file-groups are under async compaction
    * @throws Exception in case of errors
    */
   private void testInsertAndCleanByCommits(
       Function3<JavaRDD<WriteStatus>, HoodieWriteClient, JavaRDD<HoodieRecord>, String> insertFn,
       Function3<JavaRDD<WriteStatus>, HoodieWriteClient, JavaRDD<HoodieRecord>, String> upsertFn,
-      boolean isPreppedAPI,
-      boolean withAsyncCompaction) throws Exception {
+      boolean isPreppedAPI) throws Exception {
     int maxCommits = 3; // keep upto 3 commits from the past
     HoodieWriteConfig cfg = getConfigBuilder().withCompactionConfig(
         HoodieCompactionConfig.newBuilder()
@@ -400,36 +365,7 @@ public class TestCleaner extends TestHoodieClientBase {
 
     List<String> instantTimes = HoodieTestUtils.monotonicIncreasingCommitTimestamps(9, 1);
     HoodieTableMetaClient metadata = new HoodieTableMetaClient(jsc.hadoopConfiguration(), basePath);
-    if (withAsyncCompaction) {
-      // Create Compaction workload containing only one fileId. With the retaining policy by commits, all file-groups
-      // must be retained.
-      Map<String, FileSlice> compactionFileIdToLatestFileSlice = new HashMap<>();
-      Map<String, String> selectedFileIdForCompaction = new HashMap<>();
-      HoodieTable table = HoodieTable.getHoodieTable(metadata, getConfig(), jsc);
-      for (String partitionPath : dataGen.getPartitionPaths()) {
-        TableFileSystemView fsView = table.getFileSystemView();
-        Optional<Boolean> added = fsView.getAllFileGroups(partitionPath).findFirst()
-            .map(fg -> {
-              selectedFileIdForCompaction.put(fg.getId(), partitionPath);
-              fg.getLatestFileSlice().map(fs -> compactionFileIdToLatestFileSlice.put(fg.getId(), fs));
-              return true;
-            });
-        if (added.isPresent()) {
-          // Select only one file-group for compaction
-          break;
-        }
-      }
-
-      // Create workload with selected file-slices
-      List<Pair<String, FileSlice>> partitionFileSlicePairs = compactionFileIdToLatestFileSlice.entrySet().stream()
-          .map(e -> Pair.of(selectedFileIdForCompaction.get(e.getKey()), e.getValue())).collect(Collectors.toList());
-      HoodieCompactionPlan compactionPlan =
-          CompactionUtils.buildFromFileSlices(partitionFileSlicePairs, Optional.empty(), Optional.empty());
-      String compactionTime = instantTimes.get(0);
-      table.getActiveTimeline().saveToCompactionRequested(
-          new HoodieInstant(State.REQUESTED, COMPACTION_ACTION, compactionTime),
-          AvroUtils.serializeCompactionPlan(compactionPlan));
-    }
+    String compactionInstantTime = instantTimes.get(0);
     instantTimes = instantTimes.subList(1, instantTimes.size());
 
     // Keep doing some writes and clean inline. Make sure we have expected number of files remaining.
@@ -445,12 +381,10 @@ public class TestCleaner extends TestHoodieClientBase {
 
         metadata = new HoodieTableMetaClient(jsc.hadoopConfiguration(), basePath);
         HoodieTable table1 = HoodieTable.getHoodieTable(metadata, cfg, jsc);
-        HoodieTimeline activeTimeline = table1.getCompletedCommitTimeline();
-        Optional<HoodieInstant> earliestRetainedCommit = activeTimeline.nthFromLastInstant(maxCommits);
-        if (withAsyncCompaction) {
-          // Earlies must the firstInstant time as we selected a file-slice with this instant time for compaction
-          earliestRetainedCommit = Optional.of(new HoodieInstant(State.COMPLETED, COMMIT_ACTION, firstInstantTime));
-        }
+        HoodieTimeline activeTimeline = table1.getActiveTimeline().getCommitsAndCompactionTimeline();
+        Optional<HoodieInstant> earliestRetainedCommit =
+            activeTimeline.filterCompletedInstants().nthFromLastInstant(maxCommits);
+
         Set<HoodieInstant> acceptableCommits = activeTimeline.getInstants().collect(Collectors.toSet());
         if (earliestRetainedCommit.isPresent()) {
           HoodieInstant earliest = earliestRetainedCommit.get();
@@ -459,18 +393,20 @@ public class TestCleaner extends TestHoodieClientBase {
               .collect(Collectors.toSet());
         }
 
-        TableFileSystemView fsView = table1.getFileSystemView();
+        TableFileSystemView fsView = new HoodieTableFileSystemView(metadata,
+            metadata.getCommitsAndCompactionTimeline().filterCompletedAndCompactionInstants());
+
         // Need to ensure the following
         for (String partitionPath : dataGen.getPartitionPaths()) {
           List<HoodieFileGroup> fileGroups = fsView.getAllFileGroups(partitionPath).collect(Collectors.toList());
           for (HoodieFileGroup fileGroup : fileGroups) {
             Set<String> commitTimes = new HashSet<>();
-            fileGroup.getAllDataFiles().forEach(value -> {
-              logger.debug("Data File - " + value);
-              commitTimes.add(value.getCommitTime());
+            fileGroup.getAllFileSlices().forEach(value -> {
+              commitTimes.add(value.getBaseInstantTime());
             });
-            assertEquals("Only contain acceptable versions of file should be present",
-                acceptableCommits.stream().map(HoodieInstant::getTimestamp).collect(Collectors.toSet()), commitTimes);
+            final Set<String> expCommits =
+                acceptableCommits.stream().map(HoodieInstant::getTimestamp).collect(Collectors.toSet());
+            assertEquals("Only contain acceptable versions of fileId", expCommits, commitTimes);
           }
         }
       } catch (IOException ioe) {
