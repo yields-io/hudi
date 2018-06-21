@@ -899,6 +899,124 @@ public class TestCleaner extends TestHoodieClientBase {
   }
 
   /**
+   * Test Clean-by-commits behavior in the presence of skewed partitions
+   */
+  @Test
+  public void testKeepLatestCommitsWithPendingCompactions() throws IOException {
+    HoodieWriteConfig config = HoodieWriteConfig.newBuilder().withPath(basePath).withAssumeDatePartitioning(true)
+        .withCompactionConfig(HoodieCompactionConfig.newBuilder().withCleanerPolicy(
+            HoodieCleaningPolicy.KEEP_LATEST_COMMITS).retainCommits(2).build()).build();
+
+    HoodieTableMetaClient metaClient = HoodieTestUtils.initTableType(jsc.hadoopConfiguration(), basePath,
+        HoodieTableType.MERGE_ON_READ);
+    HoodieTable table = HoodieTable.getHoodieTable(metaClient, config, jsc);
+    // Make 5 files, one base file and 2 log files associated with base file
+    String[] instants = new String[]{"000", "001", "003", "005", "007", "009", "011", "007"};
+    String[] compactionInstants = new String[]{"002", "004", "006", "008", "010"};
+    Map<String, String> expFileIdToPendingCompaction = new HashMap<>();
+    Map<String, String> fileIdToLatestIngestionInstantTime = new HashMap<>();
+    Map<String, List<FileSlice>> expFileIdToLastFileSlice = new HashMap<>();
+
+    for (int i=0; i<5; i++) {
+      String fileId = HoodieTestUtils.createNewDataFile(basePath, DEFAULT_FIRST_PARTITION_PATH, instants[0]);
+      String fileL0 = HoodieTestUtils
+          .createNewLogFile(fs, basePath, DEFAULT_FIRST_PARTITION_PATH, instants[0], fileId, Optional.empty());
+      String fileL1 = HoodieTestUtils
+          .createNewLogFile(fs, basePath, DEFAULT_FIRST_PARTITION_PATH, instants[0], fileId, Optional.of(2));
+      fileIdToLatestIngestionInstantTime.put(fileId, instants[0]);
+      for (int j=1; j<=i; j++) {
+        if (j == i) {
+          expFileIdToPendingCompaction.put(fileId, compactionInstants[j]);
+          table = HoodieTable.getHoodieTable(
+              new HoodieTableMetaClient(jsc.hadoopConfiguration(), config.getBasePath(), true), config,
+              jsc);
+          FileSlice slice = table.getRTFileSystemView().getLatestFileSlices(DEFAULT_FIRST_PARTITION_PATH)
+              .filter(fs -> fs.getFileId().equals(fileId)).findFirst().get();
+          List<FileSlice> slices = new ArrayList<>();
+          if (expFileIdToLastFileSlice.containsKey(compactionInstants[j])) {
+            slices = expFileIdToLastFileSlice.get(compactionInstants[j]);
+          }
+          slices.add(slice);
+          expFileIdToLastFileSlice.put(compactionInstants[j], slices);
+        } else {
+          HoodieTestUtils.createDataFile(basePath, DEFAULT_FIRST_PARTITION_PATH, instants[j], fileId);
+          HoodieTestUtils.createNewLogFile(fs, basePath, DEFAULT_FIRST_PARTITION_PATH, instants[j], fileId,
+              Optional.empty());
+          HoodieTestUtils.createNewLogFile(fs, basePath, DEFAULT_FIRST_PARTITION_PATH, instants[j], fileId,
+              Optional.of(2));
+        }
+      }
+    }
+
+    for (String instant : instants) {
+      HoodieTestUtils.createDeltaCommitFiles(basePath, instant);
+    }
+
+    for (String instant: compactionInstants) {
+      List<FileSlice> fileSliceList = expFileIdToLastFileSlice.get(instant);
+      HoodieTestUtils.createCompactionRequest(fs, basePath, instant, fileSliceList);
+    }
+  }
+  /**
+   * Test Clean-by-commits behavior in the presence of skewed partitions
+   */
+  @Test
+  public void testKeepLatestCommitsWithPendingCompactions() throws IOException {
+    HoodieWriteConfig config = HoodieWriteConfig.newBuilder().withPath(basePath).withAssumeDatePartitioning(true)
+        .withCompactionConfig(HoodieCompactionConfig.newBuilder().withCleanerPolicy(
+            HoodieCleaningPolicy.KEEP_LATEST_COMMITS).retainCommits(2).build()).build();
+
+    HoodieTableMetaClient metaClient = HoodieTestUtils.initTableType(jsc.hadoopConfiguration(), basePath,
+        HoodieTableType.MERGE_ON_READ);
+    HoodieTable table = HoodieTable.getHoodieTable(metaClient, config, jsc);
+    // Make 5 files, one base file and 2 log files associated with base file
+    String[] instants = new String[]{"000", "001", "003", "005", "007", "009", "011", "007"};
+    String[] compactionInstants = new String[]{"002", "004", "006", "008", "010"};
+    Map<String, String> expFileIdToPendingCompaction = new HashMap<>();
+    Map<String, String> fileIdToLatestIngestionInstantTime = new HashMap<>();
+    Map<String, List<FileSlice>> expFileIdToLastFileSlice = new HashMap<>();
+
+    for (int i=0; i<5; i++) {
+      String fileId = HoodieTestUtils.createNewDataFile(basePath, DEFAULT_FIRST_PARTITION_PATH, instants[0]);
+      String fileL0 = HoodieTestUtils
+          .createNewLogFile(fs, basePath, DEFAULT_FIRST_PARTITION_PATH, instants[0], fileId, Optional.empty());
+      String fileL1 = HoodieTestUtils
+          .createNewLogFile(fs, basePath, DEFAULT_FIRST_PARTITION_PATH, instants[0], fileId, Optional.of(2));
+      fileIdToLatestIngestionInstantTime.put(fileId, instants[0]);
+      for (int j=1; j<=i; j++) {
+        if (j == i) {
+          expFileIdToPendingCompaction.put(fileId, compactionInstants[j]);
+          table = HoodieTable.getHoodieTable(
+              new HoodieTableMetaClient(jsc.hadoopConfiguration(), config.getBasePath(), true), config,
+              jsc);
+          FileSlice slice = table.getRTFileSystemView().getLatestFileSlices(DEFAULT_FIRST_PARTITION_PATH)
+              .filter(fs -> fs.getFileId().equals(fileId)).findFirst().get();
+          List<FileSlice> slices = new ArrayList<>();
+          if (expFileIdToLastFileSlice.containsKey(compactionInstants[j])) {
+            slices = expFileIdToLastFileSlice.get(compactionInstants[j]);
+          }
+          slices.add(slice);
+          expFileIdToLastFileSlice.put(compactionInstants[j], slices);
+        } else {
+          HoodieTestUtils.createDataFile(basePath, DEFAULT_FIRST_PARTITION_PATH, instants[j], fileId);
+          HoodieTestUtils.createNewLogFile(fs, basePath, DEFAULT_FIRST_PARTITION_PATH, instants[j], fileId,
+              Optional.empty());
+          HoodieTestUtils.createNewLogFile(fs, basePath, DEFAULT_FIRST_PARTITION_PATH, instants[j], fileId,
+              Optional.of(2));
+        }
+      }
+    }
+
+    for (String instant : instants) {
+      HoodieTestUtils.createDeltaCommitFiles(basePath, instant);
+    }
+
+    for (String instant: compactionInstants) {
+      List<FileSlice> fileSliceList = expFileIdToLastFileSlice.get(instant);
+      HoodieTestUtils.createCompactionRequest(fs, basePath, instant, fileSliceList);
+    }
+  }
+  /**
    * Utility method to create temporary data files
    *
    * @param commitTime Commit Timestamp
