@@ -217,7 +217,7 @@ public class TestCleaner extends TestHoodieClientBase {
     List<Pair<String, FileSlice>> partitionFileSlicePairs = compactionFileIdToLatestFileSlice.entrySet().stream()
         .map(e -> Pair.of(selectedFileIdForCompaction.get(e.getKey()), e.getValue())).collect(Collectors.toList());
     HoodieCompactionPlan compactionPlan =
-        CompactionUtils.buildFromFileSlices("default", partitionFileSlicePairs, Optional.empty(), Optional.empty());
+        CompactionUtils.buildFromFileSlices(partitionFileSlicePairs, Optional.empty(), Optional.empty());
     List<String> instantTimes = HoodieTestUtils.monotonicIncreasingCommitTimestamps(9, 1);
     String compactionTime = instantTimes.get(0);
     table.getActiveTimeline().saveToCompactionRequested(
@@ -424,7 +424,7 @@ public class TestCleaner extends TestHoodieClientBase {
       List<Pair<String, FileSlice>> partitionFileSlicePairs = compactionFileIdToLatestFileSlice.entrySet().stream()
           .map(e -> Pair.of(selectedFileIdForCompaction.get(e.getKey()), e.getValue())).collect(Collectors.toList());
       HoodieCompactionPlan compactionPlan =
-          CompactionUtils.buildFromFileSlices("default", partitionFileSlicePairs, Optional.empty(), Optional.empty());
+          CompactionUtils.buildFromFileSlices(partitionFileSlicePairs, Optional.empty(), Optional.empty());
       String compactionTime = instantTimes.get(0);
       table.getActiveTimeline().saveToCompactionRequested(
           new HoodieInstant(State.REQUESTED, COMPACTION_ACTION, compactionTime),
