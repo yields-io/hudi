@@ -95,7 +95,7 @@ public class HoodieRealtimeTableCompactor implements HoodieCompactor {
     HoodieCopyOnWriteTable table = new HoodieCopyOnWriteTable(config, jsc);
     List<CompactionOperation> operations = compactionPlan.getOperations().stream()
         .map(CompactionOperation::convertFromAvroRecordInstance).collect(toList());
-    log.info("Compactor " + compactionPlan.getCompactorId() + " running, Compacting " + operations + " files");
+    log.info("Compactor compacting " + operations + " files");
     return jsc.parallelize(operations, operations.size())
         .map(s -> compact(table, metaClient, config, s, compactionCommitTime))
         .flatMap(writeStatusesItr -> writeStatusesItr.iterator());

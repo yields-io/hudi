@@ -65,17 +65,15 @@ public class CompactionUtils {
   /**
    * Generate compaction plan from file-slices
    *
-   * @param compactorId             Compactor Id to set
    * @param partitionFileSlicePairs list of partition file-slice pairs
    * @param extraMetadata           Extra Metadata
    * @param metricsCaptureFunction  Metrics Capture function
    */
-  public static HoodieCompactionPlan buildFromFileSlices(String compactorId,
+  public static HoodieCompactionPlan buildFromFileSlices(
       List<Pair<String, FileSlice>> partitionFileSlicePairs,
       Optional<Map<String, String>> extraMetadata,
       Optional<Function<Pair<String, FileSlice>, Map<String, Double>>> metricsCaptureFunction) {
     HoodieCompactionPlan.Builder builder = HoodieCompactionPlan.newBuilder();
-    builder.setCompactorId(compactorId);
     extraMetadata.ifPresent(m -> builder.setExtraMetadata(m));
     builder.setOperations(partitionFileSlicePairs.stream().map(pfPair ->
         buildFromFileSlice(pfPair.getKey(), pfPair.getValue(), metricsCaptureFunction)).collect(Collectors.toList()));

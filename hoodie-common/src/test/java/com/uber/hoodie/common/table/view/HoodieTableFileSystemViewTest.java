@@ -245,7 +245,7 @@ public class HoodieTableFileSystemViewTest {
     String compactDataFileName = FSUtils.makeDataFileName(compactionRequestedTime, 1, fileId);
     List<Pair<String, FileSlice>> partitionFileSlicesPairs = new ArrayList<>();
     partitionFileSlicesPairs.add(Pair.of(partitionPath, fileSlices.get(0)));
-    HoodieCompactionPlan compactionPlan = CompactionUtils.buildFromFileSlices("default", partitionFileSlicesPairs,
+    HoodieCompactionPlan compactionPlan = CompactionUtils.buildFromFileSlices(partitionFileSlicesPairs,
         Optional.empty(), Optional.empty());
     HoodieInstant compactionInstant = null;
     if (isCompactionInFlight) {
