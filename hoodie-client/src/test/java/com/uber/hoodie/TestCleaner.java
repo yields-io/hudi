@@ -25,7 +25,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.uber.hoodie.avro.model.HoodieCompactionPlan;
 import com.uber.hoodie.common.HoodieCleanStat;
@@ -806,7 +805,7 @@ public class TestCleaner extends TestHoodieClientBase {
     String[] fileIds = new String[]
         {"fileId1", "fileId2", "fileId3", "fileId4", "fileId5", "fileId6", "fileId7"};
     int maxNumFileIdsForCompaction = 4;
-    for (int i=0; i<maxNumFileIds; i++) {
+    for (int i = 0; i < maxNumFileIds; i++) {
       final String fileId = HoodieTestUtils.createDataFile(basePath, DEFAULT_FIRST_PARTITION_PATH, instants[0],
           fileIds[i]);
       HoodieTestUtils.createNewLogFile(fs, basePath, DEFAULT_FIRST_PARTITION_PATH, instants[0],
@@ -814,7 +813,7 @@ public class TestCleaner extends TestHoodieClientBase {
       HoodieTestUtils.createNewLogFile(fs, basePath, DEFAULT_FIRST_PARTITION_PATH, instants[0],
           fileId, Optional.of(2));
       fileIdToLatestInstantBeforeCompaction.put(fileId, instants[0]);
-      for (int j=1; j<=i; j++) {
+      for (int j = 1; j <= i; j++) {
         if (j == i && j <= maxNumFileIdsForCompaction) {
           expFileIdToPendingCompaction.put(fileId, compactionInstants[j]);
           HoodieTable table = HoodieTable.getHoodieTable(
@@ -845,9 +844,9 @@ public class TestCleaner extends TestHoodieClientBase {
     }
 
     // Setup pending compaction plans
-    for (String instant: compactionInstants) {
+    for (String instant : compactionInstants) {
       List<FileSlice> fileSliceList = compactionInstantsToFileSlices.get(instant);
-      if ( null != fileSliceList) {
+      if (null != fileSliceList) {
         HoodieTestUtils.createCompactionRequest(metaClient, instant,
             fileSliceList.stream().map(fs -> Pair.of(DEFAULT_FIRST_PARTITION_PATH, fs)).collect(Collectors.toList()));
       }
@@ -868,8 +867,8 @@ public class TestCleaner extends TestHoodieClientBase {
       String fileId = entry.getKey();
       String baseInstantForCompaction = fileIdToLatestInstantBeforeCompaction.get(fileId);
       Optional<FileSlice> fileSliceForCompaction =
-      hoodieTable.getRTFileSystemView().getLatestFileSlicesBeforeOrOn(DEFAULT_FIRST_PARTITION_PATH,
-          baseInstantForCompaction).filter(fs -> fs.getFileId().equals(fileId)).findFirst();
+          hoodieTable.getRTFileSystemView().getLatestFileSlicesBeforeOrOn(DEFAULT_FIRST_PARTITION_PATH,
+              baseInstantForCompaction).filter(fs -> fs.getFileId().equals(fileId)).findFirst();
       Assert.assertTrue("Base Instant for Compaction must be preserved", fileSliceForCompaction.isPresent());
       Assert.assertTrue("FileSlice has data-file", fileSliceForCompaction.get().getDataFile().isPresent());
       Assert.assertEquals("FileSlice has log-files", 2,
@@ -890,7 +889,7 @@ public class TestCleaner extends TestHoodieClientBase {
                 }
                 return false;
               });
-        }).filter(x->x).count();
+        }).filter(x -> x).count();
     long numDeleted = hoodieCleanStats.stream()
         .flatMap(cleanStat -> cleanStat.getDeletePathPatterns().stream()).count();
     // Tighter check for regression
