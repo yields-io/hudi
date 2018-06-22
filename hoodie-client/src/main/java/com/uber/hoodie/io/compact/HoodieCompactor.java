@@ -17,7 +17,7 @@
 package com.uber.hoodie.io.compact;
 
 import com.uber.hoodie.WriteStatus;
-import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
+import com.uber.hoodie.avro.model.HoodieCompactionPlan;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.table.HoodieTable;
 import java.io.IOException;
@@ -32,16 +32,16 @@ import org.apache.spark.api.java.JavaSparkContext;
 public interface HoodieCompactor extends Serializable {
 
   /**
-   * Generate workload for scheduling compaction
+   * Generate a new compaction plan for scheduling
    *
    * @param jsc                  Spark Context
    * @param hoodieTable          Hoodie Table
    * @param config               Hoodie Write Configuration
    * @param compactionCommitTime scheduled compaction commit time
-   * @return Compaction Workload
+   * @return Compaction Plan
    * @throws IOException when encountering errors
    */
-  HoodieCompactionWorkload generateCompactionWorkload(JavaSparkContext jsc,
+  HoodieCompactionPlan generateCompactionPlan(JavaSparkContext jsc,
       HoodieTable hoodieTable, HoodieWriteConfig config, String compactionCommitTime,
       Set<String> fileIdsWithPendingCompactions)
       throws IOException;
@@ -50,6 +50,6 @@ public interface HoodieCompactor extends Serializable {
    * Execute compaction operations and report back status
    */
   JavaRDD<WriteStatus> compact(JavaSparkContext jsc,
-      HoodieCompactionWorkload workload, HoodieTable hoodieTable, HoodieWriteConfig config,
+      HoodieCompactionPlan compactionPlan, HoodieTable hoodieTable, HoodieWriteConfig config,
       String compactionInstantTime) throws IOException;
 }

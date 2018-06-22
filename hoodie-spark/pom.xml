@@ -21,7 +21,7 @@
   <parent>
     <artifactId>hoodie</artifactId>
     <groupId>com.uber.hoodie</groupId>
-    <version>0.4.2-SNAPSHOT</version>
+    <version>0.4.3-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -142,7 +142,7 @@
     <dependency>
       <groupId>com.databricks</groupId>
       <artifactId>spark-avro_2.11</artifactId>
-      <version>3.2.0</version>
+      <version>4.0.0</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

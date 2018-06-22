@@ -104,7 +104,6 @@ public class HoodieCompactionConfig extends DefaultHoodieConfig {
   private static final String DEFAULT_CLEANER_COMMITS_RETAINED = "24";
   private static final String DEFAULT_MAX_COMMITS_TO_KEEP = String.valueOf(128);
   private static final String DEFAULT_MIN_COMMITS_TO_KEEP = String.valueOf(96);
-  public static final String DEFAULT_COMPACTOR_ID = "default";
 
   private HoodieCompactionConfig(Properties props) {
     super(props);

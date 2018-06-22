@@ -17,7 +17,7 @@
 package com.uber.hoodie.cli.commands;
 
 import com.uber.hoodie.avro.model.HoodieCompactionOperation;
-import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
+import com.uber.hoodie.avro.model.HoodieCompactionPlan;
 import com.uber.hoodie.cli.HoodieCLI;
 import com.uber.hoodie.cli.HoodiePrintHelper;
 import com.uber.hoodie.cli.TableHeader;
@@ -30,6 +30,7 @@ import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
 import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.util.AvroUtils;
+import com.uber.hoodie.exception.HoodieIOException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,6 +57,9 @@ public class CompactionCommand implements CommandMarker {
   @CliCommand(value = "compactions show all", help = "Shows all compactions that are in active timeline")
   public String compactionsAll(
       @CliOption(key = {
+          "includeExtraMetadata"}, help = "Include extra metadata", unspecifiedDefaultValue = "false") final
+      boolean includeExtraMetadata,
+      @CliOption(key = {
           "limit"}, mandatory = false, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
       @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
       @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
@@ -72,18 +76,18 @@ public class CompactionCommand implements CommandMarker {
     Collections.reverse(instants);
     for (int i = 0; i < instants.size(); i++) {
       HoodieInstant instant = instants.get(i);
-      HoodieCompactionWorkload workload = null;
+      HoodieCompactionPlan workload = null;
       if (!instant.getAction().equals(HoodieTimeline.COMPACTION_ACTION)) {
         try {
           // This could be a completed compaction. Assume a compaction request file is present but skip if fails
-          workload = AvroUtils.deserializeCompactionWorkload(
+          workload = AvroUtils.deserializeCompactionPlan(
               activeTimeline.getInstantAuxiliaryDetails(
                   HoodieTimeline.getCompactionRequestedInstant(instant.getTimestamp())).get());
-        } catch (IOException ioe) {
+        } catch (HoodieIOException ioe) {
           // SKIP
         }
       } else {
-        workload = AvroUtils.deserializeCompactionWorkload(activeTimeline.getInstantAuxiliaryDetails(
+        workload = AvroUtils.deserializeCompactionPlan(activeTimeline.getInstantAuxiliaryDetails(
             HoodieTimeline.getCompactionRequestedInstant(instant.getTimestamp())).get());
       }
 
@@ -92,11 +96,16 @@ public class CompactionCommand implements CommandMarker {
         if (committed.contains(instant.getTimestamp())) {
           state = State.COMPLETED;
         }
-        rows.add(new Comparable[]{instant.getTimestamp(),
-            state.toString(),
-            workload.getCompactorId(),
-            workload.getOperations().size(),
-            workload.getExtraMetadata().toString()});
+        if (includeExtraMetadata) {
+          rows.add(new Comparable[]{instant.getTimestamp(),
+              state.toString(),
+              workload.getOperations() == null ? 0 : workload.getOperations().size(),
+              workload.getExtraMetadata().toString()});
+        } else {
+          rows.add(new Comparable[]{instant.getTimestamp(),
+              state.toString(),
+              workload.getOperations() == null ? 0 : workload.getOperations().size()});
+        }
       }
     }
 
@@ -104,9 +113,10 @@ public class CompactionCommand implements CommandMarker {
     TableHeader header = new TableHeader()
         .addTableHeaderField("Compaction Instant Time")
         .addTableHeaderField("State")
-        .addTableHeaderField("Compactor Id")
-        .addTableHeaderField("Total FileIds to be Compacted")
-        .addTableHeaderField("Extra Metadata");
+        .addTableHeaderField("Total FileIds to be Compacted");
+    if (includeExtraMetadata) {
+      header = header.addTableHeaderField("Extra Metadata");
+    }
     return HoodiePrintHelper.print(header, fieldNameToConverterMap, sortByField, descending, limit, headerOnly, rows);
   }
 
@@ -122,12 +132,12 @@ public class CompactionCommand implements CommandMarker {
           "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
       throws Exception {
     HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
-    HoodieCompactionWorkload workload = AvroUtils.deserializeCompactionWorkload(
+    HoodieCompactionPlan workload = AvroUtils.deserializeCompactionPlan(
         activeTimeline.getInstantAuxiliaryDetails(
             HoodieTimeline.getCompactionRequestedInstant(compactionInstantTime)).get());
 
     List<Comparable[]> rows = new ArrayList<>();
-    if (null != workload) {
+    if ((null != workload) && (null != workload.getOperations())) {
       for (HoodieCompactionOperation op : workload.getOperations()) {
         rows.add(new Comparable[]{op.getPartitionPath(),
             op.getFileId(),

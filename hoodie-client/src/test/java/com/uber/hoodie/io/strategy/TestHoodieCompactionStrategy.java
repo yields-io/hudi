@@ -33,6 +33,7 @@ import com.uber.hoodie.io.compact.strategy.UnBoundedCompactionStrategy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 import org.junit.Test;
@@ -75,7 +76,7 @@ public class TestHoodieCompactionStrategy {
     assertEquals("BoundedIOCompaction should have resulted in 2 compactions being chosen", 2, returned.size());
     // Total size of all the log files
     Long returnedSize = returned.stream().map(s -> s.getMetrics().get(BoundedIOCompactionStrategy.TOTAL_IO_MB))
-        .map(s -> (Long) s).reduce((size1, size2) -> size1 + size2).orElse(0L);
+        .map(s -> s.longValue()).reduce((size1, size2) -> size1 + size2).orElse(0L);
     assertEquals("Should chose the first 2 compactions which should result in a total IO of 690 MB", 610,
         (long) returnedSize);
   }
@@ -99,7 +100,7 @@ public class TestHoodieCompactionStrategy {
     assertEquals("LogFileSizeBasedCompactionStrategy should have resulted in 1 compaction", 1, returned.size());
     // Total size of all the log files
     Long returnedSize = returned.stream().map(s -> s.getMetrics().get(BoundedIOCompactionStrategy.TOTAL_IO_MB))
-        .map(s -> (Long) s).reduce((size1, size2) -> size1 + size2).orElse(0L);
+        .map(s -> s.longValue()).reduce((size1, size2) -> size1 + size2).orElse(0L);
     assertEquals("Should chose the first 2 compactions which should result in a total IO of 690 MB", 1204,
         (long) returnedSize);
   }
@@ -138,7 +139,7 @@ public class TestHoodieCompactionStrategy {
           df.getPath(),
           df.getFileId(),
           partitionPath,
-          config.getCompactionStrategy().captureMetrics(df, partitionPath, logFiles)));
+          config.getCompactionStrategy().captureMetrics(config, Optional.of(df), partitionPath, logFiles)));
     });
     return operations;
   }

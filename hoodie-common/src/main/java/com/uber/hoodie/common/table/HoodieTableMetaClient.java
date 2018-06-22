@@ -16,6 +16,8 @@
 
 package com.uber.hoodie.common.table;
 
+import static com.uber.hoodie.common.model.HoodieTableType.MERGE_ON_READ;
+
 import com.uber.hoodie.common.SerializableConfiguration;
 import com.uber.hoodie.common.model.HoodieTableType;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
@@ -23,6 +25,7 @@ import com.uber.hoodie.common.table.timeline.HoodieArchivedTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
 import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.exception.DatasetNotFoundException;
+import com.uber.hoodie.exception.HoodieException;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -212,7 +215,7 @@ public class HoodieTableMetaClient implements Serializable {
     Properties properties = new Properties();
     properties.setProperty(HoodieTableConfig.HOODIE_TABLE_NAME_PROP_NAME, tableName);
     properties.setProperty(HoodieTableConfig.HOODIE_TABLE_TYPE_PROP_NAME, tableType.name());
-    if (tableType == HoodieTableType.MERGE_ON_READ) {
+    if (tableType == MERGE_ON_READ) {
       properties.setProperty(HoodieTableConfig.HOODIE_PAYLOAD_CLASS_PROP_NAME, payloadClassName);
     }
     return HoodieTableMetaClient.initializePathAsHoodieDataset(hadoopConf, basePath, properties);
@@ -274,6 +277,70 @@ public class HoodieTableMetaClient implements Serializable {
       throws IOException {
     return fs.listStatus(metaPath, nameFilter);
   }
+
+  /**
+   * Get the commit timeline visible for this table
+   */
+  public HoodieTimeline getCommitsTimeline() {
+    switch (this.getTableType()) {
+      case COPY_ON_WRITE:
+        return getActiveTimeline().getCommitTimeline();
+      case MERGE_ON_READ:
+        // We need to include the parquet files written out in delta commits
+        // Include commit action to be able to start doing a MOR over a COW dataset - no
+        // migration required
+        return getActiveTimeline().getCommitsTimeline();
+      default:
+        throw new HoodieException("Unsupported table type :" + this.getTableType());
+    }
+  }
+
+  /**
+   * Get the commit + pending-compaction timeline visible for this table.
+   * A RT filesystem view is constructed with this timeline so that file-slice after pending compaction-requested
+   * instant-time is also considered valid. A RT file-system view for reading must then merge the file-slices before
+   * and after pending compaction instant so that all delta-commits are read.
+   */
+  public HoodieTimeline getCommitsAndCompactionTimeline() {
+    switch (this.getTableType()) {
+      case COPY_ON_WRITE:
+        return getActiveTimeline().getCommitTimeline();
+      case MERGE_ON_READ:
+        return getActiveTimeline().getCommitsAndCompactionTimeline();
+      default:
+        throw new HoodieException("Unsupported table type :" + this.getTableType());
+    }
+  }
+
+  /**
+   * Get the compacted commit timeline visible for this table
+   */
+  public HoodieTimeline getCommitTimeline() {
+    switch (this.getTableType()) {
+      case COPY_ON_WRITE:
+      case MERGE_ON_READ:
+        // We need to include the parquet files written out in delta commits in tagging
+        return getActiveTimeline().getCommitTimeline();
+      default:
+        throw new HoodieException("Unsupported table type :" + this.getTableType());
+    }
+  }
+
+  /**
+   * Gets the commit action type
+   */
+  public String getCommitActionType() {
+    switch (this.getTableType()) {
+      case COPY_ON_WRITE:
+        return HoodieActiveTimeline.COMMIT_ACTION;
+      case MERGE_ON_READ:
+        return HoodieActiveTimeline.DELTA_COMMIT_ACTION;
+      default:
+        throw new HoodieException(
+            "Could not commit on unknown storage type " + this.getTableType());
+    }
+  }
+
 
   /**
    * Helper method to scan all hoodie-instant metafiles and construct HoodieInstant objects

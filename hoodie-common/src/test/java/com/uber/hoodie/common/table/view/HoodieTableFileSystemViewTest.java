@@ -22,7 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
+import com.uber.hoodie.avro.model.HoodieCompactionPlan;
 import com.uber.hoodie.common.model.FileSlice;
 import com.uber.hoodie.common.model.HoodieDataFile;
 import com.uber.hoodie.common.model.HoodieFileGroup;
@@ -52,7 +52,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class HoodieTableFileSystemViewTest {
@@ -62,10 +64,13 @@ public class HoodieTableFileSystemViewTest {
   private HoodieTableFileSystemView fsView;
   private TableFileSystemView.ReadOptimizedView roView;
   private TableFileSystemView.RealtimeView rtView;
+  
+  @Rule
+  public TemporaryFolder tmpFolder = new TemporaryFolder();
 
   @Before
   public void init() throws IOException {
-    metaClient = HoodieTestUtils.initOnTemp();
+    metaClient = HoodieTestUtils.init(tmpFolder.getRoot().getAbsolutePath());;
     basePath = metaClient.getBasePath();
     fsView = new HoodieTableFileSystemView(metaClient,
         metaClient.getActiveTimeline().getCommitTimeline().filterCompletedInstants());
@@ -240,7 +245,7 @@ public class HoodieTableFileSystemViewTest {
     String compactDataFileName = FSUtils.makeDataFileName(compactionRequestedTime, 1, fileId);
     List<Pair<String, FileSlice>> partitionFileSlicesPairs = new ArrayList<>();
     partitionFileSlicesPairs.add(Pair.of(partitionPath, fileSlices.get(0)));
-    HoodieCompactionWorkload workload = CompactionUtils.buildFromFileSlices("default", partitionFileSlicesPairs,
+    HoodieCompactionPlan compactionPlan = CompactionUtils.buildFromFileSlices(partitionFileSlicesPairs,
         Optional.empty(), Optional.empty());
     HoodieInstant compactionInstant = null;
     if (isCompactionInFlight) {
@@ -248,11 +253,11 @@ public class HoodieTableFileSystemViewTest {
       new File(basePath + "/" + partitionPath + "/" + compactDataFileName).createNewFile();
       compactionInstant = new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMPACTION_ACTION, compactionRequestedTime);
       HoodieInstant requested = HoodieTimeline.getCompactionRequestedInstant(compactionInstant.getTimestamp());
-      commitTimeline.saveToCompactionRequested(requested, AvroUtils.serializeCompactionWorkload(workload));
+      commitTimeline.saveToCompactionRequested(requested, AvroUtils.serializeCompactionPlan(compactionPlan));
       commitTimeline.transitionCompactionRequestedToInflight(requested);
     } else {
       compactionInstant = new HoodieInstant(State.REQUESTED, HoodieTimeline.COMPACTION_ACTION, compactionRequestedTime);
-      commitTimeline.saveToCompactionRequested(compactionInstant, AvroUtils.serializeCompactionWorkload(workload));
+      commitTimeline.saveToCompactionRequested(compactionInstant, AvroUtils.serializeCompactionPlan(compactionPlan));
     }
 
     // Fake delta-ingestion after compaction-requested

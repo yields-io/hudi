@@ -57,6 +57,7 @@ import org.apache.avro.generic.IndexedRecord;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.apache.spark.api.java.JavaSparkContext;
 
 /**
  * Archiver to bound the growth of <action>.commit files
@@ -104,9 +105,9 @@ public class HoodieCommitArchiveLog {
   /**
    * Check if commits need to be archived. If yes, archive commits.
    */
-  public boolean archiveIfRequired() throws IOException {
+  public boolean archiveIfRequired(final JavaSparkContext jsc) throws IOException {
     try {
-      List<HoodieInstant> instantsToArchive = getInstantsToArchive().collect(Collectors.toList());
+      List<HoodieInstant> instantsToArchive = getInstantsToArchive(jsc).collect(Collectors.toList());
       boolean success = true;
       if (instantsToArchive.iterator().hasNext()) {
         this.writer = openWriter();
@@ -122,13 +123,13 @@ public class HoodieCommitArchiveLog {
     }
   }
 
-  private Stream<HoodieInstant> getInstantsToArchive() {
+  private Stream<HoodieInstant> getInstantsToArchive(JavaSparkContext jsc) {
 
     // TODO : rename to max/minInstantsToKeep
     int maxCommitsToKeep = config.getMaxCommitsToKeep();
     int minCommitsToKeep = config.getMinCommitsToKeep();
 
-    HoodieTable table = HoodieTable.getHoodieTable(metaClient, config);
+    HoodieTable table = HoodieTable.getHoodieTable(metaClient, config, jsc);
 
     // GroupBy each action and limit each action timeline to maxCommitsToKeep
     // TODO: Handle ROLLBACK_ACTION in future

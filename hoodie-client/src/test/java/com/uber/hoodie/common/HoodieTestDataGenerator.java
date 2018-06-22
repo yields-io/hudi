@@ -16,7 +16,7 @@
 
 package com.uber.hoodie.common;
 
-import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
+import com.uber.hoodie.avro.model.HoodieCompactionPlan;
 import com.uber.hoodie.common.model.HoodieCommitMetadata;
 import com.uber.hoodie.common.model.HoodieKey;
 import com.uber.hoodie.common.model.HoodiePartitionMetadata;
@@ -153,11 +153,10 @@ public class HoodieTestDataGenerator {
         basePath + "/" + HoodieTableMetaClient.AUXILIARYFOLDER_NAME + "/" + instant.getFileName());
     FileSystem fs = FSUtils.getFs(basePath, configuration);
     FSDataOutputStream os = fs.create(commitFile, true);
-    HoodieCompactionWorkload workload = new HoodieCompactionWorkload();
-    workload.setCompactorId("dummy");
+    HoodieCompactionPlan workload = new HoodieCompactionPlan();
     try {
       // Write empty commit metadata
-      os.writeBytes(new String(AvroUtils.serializeCompactionWorkload(workload).get(), StandardCharsets.UTF_8));
+      os.writeBytes(new String(AvroUtils.serializeCompactionPlan(workload).get(), StandardCharsets.UTF_8));
     } finally {
       os.close();
     }
@@ -241,10 +240,10 @@ public class HoodieTestDataGenerator {
 
   /**
    * Generates new updates, randomly distributed across the keys above. There can be duplicates within the returned list
+   *
    * @param commitTime Commit Timestamp
    * @param n Number of updates (including dups)
    * @return list of hoodie record updates
-   * @throws IOException
    */
   public List<HoodieRecord> generateUpdates(String commitTime, Integer n) throws IOException {
     List<HoodieRecord> updates = new ArrayList<>();
@@ -258,10 +257,10 @@ public class HoodieTestDataGenerator {
 
   /**
    * Generates deduped updates of keys previously inserted, randomly distributed across the keys above.
+   *
    * @param commitTime Commit Timestamp
    * @param n Number of unique records
    * @return list of hoodie record updates
-   * @throws IOException
    */
   public List<HoodieRecord> generateUniqueUpdates(String commitTime, Integer n) throws IOException {
     List<HoodieRecord> updates = new ArrayList<>();

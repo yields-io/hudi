@@ -17,7 +17,7 @@
 package com.uber.hoodie.io.compact.strategy;
 
 import com.uber.hoodie.avro.model.HoodieCompactionOperation;
-import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
+import com.uber.hoodie.avro.model.HoodieCompactionPlan;
 import com.uber.hoodie.common.model.HoodieDataFile;
 import com.uber.hoodie.common.model.HoodieLogFile;
 import com.uber.hoodie.config.HoodieWriteConfig;
@@ -40,32 +40,32 @@ public class LogFileSizeBasedCompactionStrategy extends BoundedIOCompactionStrat
   private static final String TOTAL_LOG_FILE_SIZE = "TOTAL_LOG_FILE_SIZE";
 
   @Override
-  public Map<String, Long> captureMetrics(HoodieDataFile dataFile, String partitionPath,
-      List<HoodieLogFile> logFiles) {
+  public Map<String, Double> captureMetrics(HoodieWriteConfig config, Optional<HoodieDataFile> dataFile,
+      String partitionPath, List<HoodieLogFile> logFiles) {
+    Map<String, Double> metrics = super.captureMetrics(config, dataFile, partitionPath, logFiles);
 
-    Map<String, Long> metrics = super.captureMetrics(dataFile, partitionPath, logFiles);
     // Total size of all the log files
     Long totalLogFileSize = logFiles.stream().map(HoodieLogFile::getFileSize)
         .filter(Optional::isPresent).map(Optional::get).reduce((size1, size2) -> size1 + size2)
         .orElse(0L);
     // save the metrics needed during the order
-    metrics.put(TOTAL_LOG_FILE_SIZE, totalLogFileSize);
+    metrics.put(TOTAL_LOG_FILE_SIZE, totalLogFileSize.doubleValue());
     return metrics;
   }
 
   @Override
   public List<HoodieCompactionOperation> orderAndFilter(HoodieWriteConfig writeConfig,
-      List<HoodieCompactionOperation> operations, List<HoodieCompactionWorkload> pendingCompactionWorkloads) {
+      List<HoodieCompactionOperation> operations, List<HoodieCompactionPlan> pendingCompactionPlans) {
     // Order the operations based on the reverse size of the logs and limit them by the IO
     return super
         .orderAndFilter(writeConfig,
-            operations.stream().sorted(this).collect(Collectors.toList()), pendingCompactionWorkloads);
+            operations.stream().sorted(this).collect(Collectors.toList()), pendingCompactionPlans);
   }
 
   @Override
   public int compare(HoodieCompactionOperation op1, HoodieCompactionOperation op2) {
-    Long totalLogSize1 = op1.getMetrics().get(TOTAL_LOG_FILE_SIZE);
-    Long totalLogSize2 = op2.getMetrics().get(TOTAL_LOG_FILE_SIZE);
+    Long totalLogSize1 = op1.getMetrics().get(TOTAL_LOG_FILE_SIZE).longValue();
+    Long totalLogSize2 = op2.getMetrics().get(TOTAL_LOG_FILE_SIZE).longValue();
     // Reverse the comparison order - so that larger log file size is compacted first
     return totalLogSize2.compareTo(totalLogSize1);
   }

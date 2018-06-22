@@ -18,7 +18,7 @@
 package com.uber.hoodie.io.compact.strategy;
 
 import com.uber.hoodie.avro.model.HoodieCompactionOperation;
-import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
+import com.uber.hoodie.avro.model.HoodieCompactionPlan;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.exception.HoodieException;
 import java.text.ParseException;
@@ -57,9 +57,9 @@ public class DayBasedCompactionStrategy extends BoundedIOCompactionStrategy {
 
   @Override
   public List<HoodieCompactionOperation> orderAndFilter(HoodieWriteConfig writeConfig,
-      List<HoodieCompactionOperation> operations, List<HoodieCompactionWorkload> pendingCompactionWorkloads) {
+      List<HoodieCompactionOperation> operations, List<HoodieCompactionPlan> pendingCompactionPlans) {
     // Iterate through the operations and accept operations as long as we are within the IO limit
     return super.orderAndFilter(writeConfig,
-        operations.stream().sorted(comparator).collect(Collectors.toList()), pendingCompactionWorkloads);
+        operations.stream().sorted(comparator).collect(Collectors.toList()), pendingCompactionPlans);
   }
 }

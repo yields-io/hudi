@@ -18,7 +18,7 @@ package com.uber.hoodie.io.compact.strategy;
 
 import com.google.common.collect.Lists;
 import com.uber.hoodie.avro.model.HoodieCompactionOperation;
-import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
+import com.uber.hoodie.avro.model.HoodieCompactionPlan;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import java.util.List;
 
@@ -32,14 +32,14 @@ public class BoundedIOCompactionStrategy extends CompactionStrategy {
 
   @Override
   public List<HoodieCompactionOperation> orderAndFilter(HoodieWriteConfig writeConfig,
-      List<HoodieCompactionOperation> operations, List<HoodieCompactionWorkload> pendingCompactionWorkloads) {
+      List<HoodieCompactionOperation> operations, List<HoodieCompactionPlan> pendingCompactionPlans) {
     // Iterate through the operations in order and accept operations as long as we are within the
     // IO limit
     // Preserves the original ordering of compactions
     List<HoodieCompactionOperation> finalOperations = Lists.newArrayList();
     long targetIORemaining = writeConfig.getTargetIOPerCompactionInMB();
     for (HoodieCompactionOperation op : operations) {
-      long opIo = op.getMetrics().get(TOTAL_IO_MB);
+      long opIo = op.getMetrics().get(TOTAL_IO_MB).longValue();
       targetIORemaining -= opIo;
       finalOperations.add(op);
       if (targetIORemaining <= 0) {

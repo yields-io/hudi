@@ -17,11 +17,13 @@
 package com.uber.hoodie.common.model;
 
 import com.uber.hoodie.avro.model.HoodieCompactionOperation;
+import com.uber.hoodie.common.util.FSUtils;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -32,23 +34,34 @@ import java.util.stream.Collectors;
 public class CompactionOperation implements Serializable {
 
   private String baseInstantTime;
+  private Optional<String> dataFileCommitTime;
   private List<String> deltaFilePaths;
-  private String dataFilePath;
+  private Optional<String> dataFilePath;
   private String fileId;
   private String partitionPath;
-  private Map<String, Long> metrics;
+  private Map<String, Double> metrics;
 
   //Only for serialization/de-serialization
   @Deprecated
   public CompactionOperation() {
   }
 
-  public CompactionOperation(HoodieDataFile dataFile, String partitionPath,
-      List<HoodieLogFile> logFiles, Map<String, Long> metrics) {
-    this.dataFilePath = dataFile.getPath();
-    this.fileId = dataFile.getFileId();
+  public CompactionOperation(Optional<HoodieDataFile> dataFile, String partitionPath,
+      List<HoodieLogFile> logFiles, Map<String, Double> metrics) {
+    if (dataFile.isPresent()) {
+      this.baseInstantTime = dataFile.get().getCommitTime();
+      this.dataFilePath = Optional.of(dataFile.get().getPath());
+      this.fileId = dataFile.get().getFileId();
+      this.dataFileCommitTime = Optional.of(dataFile.get().getCommitTime());
+    } else {
+      assert logFiles.size() > 0;
+      this.dataFilePath = Optional.empty();
+      this.baseInstantTime = FSUtils.getBaseCommitTimeFromLogPath(logFiles.get(0).getPath());
+      this.fileId = FSUtils.getFileIdFromLogPath(logFiles.get(0).getPath());
+      this.dataFileCommitTime = Optional.empty();
+    }
+
     this.partitionPath = partitionPath;
-    this.baseInstantTime = dataFile.getCommitTime();
     this.deltaFilePaths = logFiles.stream().map(s -> s.getPath().toString())
         .collect(Collectors.toList());
     this.metrics = metrics;
@@ -58,11 +71,15 @@ public class CompactionOperation implements Serializable {
     return baseInstantTime;
   }
 
+  public Optional<String> getDataFileCommitTime() {
+    return dataFileCommitTime;
+  }
+
   public List<String> getDeltaFilePaths() {
     return deltaFilePaths;
   }
 
-  public String getDataFilePath() {
+  public Optional<String> getDataFilePath() {
     return dataFilePath;
   }
 
@@ -74,7 +91,7 @@ public class CompactionOperation implements Serializable {
     return partitionPath;
   }
 
-  public Map<String, Long> getMetrics() {
+  public Map<String, Double> getMetrics() {
     return metrics;
   }
 
@@ -86,7 +103,7 @@ public class CompactionOperation implements Serializable {
   public static CompactionOperation convertFromAvroRecordInstance(HoodieCompactionOperation operation) {
     CompactionOperation op = new CompactionOperation();
     op.baseInstantTime = operation.getBaseInstantTime();
-    op.dataFilePath = operation.getDataFilePath();
+    op.dataFilePath = Optional.ofNullable(operation.getDataFilePath());
     op.deltaFilePaths = new ArrayList<>(operation.getDeltaFilePaths());
     op.fileId = operation.getFileId();
     op.metrics = new HashMap<>(operation.getMetrics());

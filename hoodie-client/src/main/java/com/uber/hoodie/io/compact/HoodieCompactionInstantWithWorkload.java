@@ -16,27 +16,27 @@
 
 package com.uber.hoodie.io.compact;
 
-import com.uber.hoodie.avro.model.HoodieCompactionWorkload;
+import com.uber.hoodie.avro.model.HoodieCompactionPlan;
 
 /**
  * Contains Hoodie Compaction instant along with workload
  */
-public class HoodieCompactionInstantWithWorkload {
+public class HoodieCompactionInstantWithPlan {
 
   private final String compactionInstantTime;
-  private final HoodieCompactionWorkload compactionWorkload;
+  private final HoodieCompactionPlan compactionPlan;
 
-  public HoodieCompactionInstantWithWorkload(String compactionInstantTime,
-      HoodieCompactionWorkload compactionWorkload) {
+  public HoodieCompactionInstantWithPlan(String compactionInstantTime,
+      HoodieCompactionPlan compactionPlan) {
     this.compactionInstantTime = compactionInstantTime;
-    this.compactionWorkload = compactionWorkload;
+    this.compactionPlan = compactionPlan;
   }
 
   public String getCompactionInstantTime() {
     return compactionInstantTime;
   }
 
-  public HoodieCompactionWorkload getCompactionWorkload() {
-    return compactionWorkload;
+  public HoodieCompactionPlan getCompactionPlan() {
+    return compactionPlan;
   }
 }
