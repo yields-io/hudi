@@ -348,7 +348,7 @@ public class HoodieActiveTimeline extends HoodieDefaultTimeline {
     Preconditions.checkArgument(instant.getAction().equals(HoodieTimeline.COMPACTION_ACTION));
     // Write workload to auxiliary folder
     createFileInAuxiliaryFolder(instant, content);
-    createFileInMetaPath(instant.getFileName(), Optional.empty());
+    createFileInMetaPath(instant.getFileName(), content);
   }
 
   private void createFileInMetaPath(String filename, Optional<byte[]> content) {
