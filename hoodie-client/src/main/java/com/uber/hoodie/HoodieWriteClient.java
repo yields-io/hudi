@@ -64,6 +64,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -998,6 +999,14 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
           "Earliest ingestion inflight instant time must be later "
               + "than compaction time. Earliest :" + earliestInflight + ", Compaction scheduled at " + instantTime);
     });
+    // Committed and pending compaction instants should have strictly lower timestamps
+    List<HoodieInstant> conflictingInstants =
+        metaClient.getActiveTimeline().getCommitsAndCompactionTimeline().getInstants().filter(instant ->
+        HoodieTimeline.compareTimestamps(instant.getTimestamp(), instantTime,
+            HoodieTimeline.GREATER_OR_EQUAL)).collect(Collectors.toList());
+    Preconditions.checkArgument(conflictingInstants.isEmpty(),
+        "Following instants have timestamps >= compactionInstant. Instants :"
+            + conflictingInstants);
     HoodieTable<T> table = HoodieTable.getHoodieTable(metaClient, config, jsc);
     HoodieCompactionPlan workload = table.scheduleCompaction(jsc, instantTime);
     if (workload != null && (workload.getOperations() != null) && (!workload.getOperations().isEmpty())) {

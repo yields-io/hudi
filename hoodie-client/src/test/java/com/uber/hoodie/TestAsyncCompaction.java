@@ -231,6 +231,57 @@ public class TestAsyncCompaction extends TestHoodieClientBase {
   }
 
   @Test
+  public void testScheduleCompactionWithOlderOrSameTimestamp() throws Exception {
+    // Case: Failure case. Earliest ingestion inflight instant time must be later than compaction time
+
+    HoodieWriteConfig cfg = getConfig(false);
+    HoodieWriteClient client = new HoodieWriteClient(jsc, cfg, true);
+
+    String firstInstantTime = "001";
+    String secondInstantTime = "004";
+    String compactionInstantTime = "002";
+    int numRecs = 2000;
+
+    List<HoodieRecord> records = dataGen.generateInserts(firstInstantTime, numRecs);
+    records = runNextDeltaCommits(client, Arrays.asList(firstInstantTime, secondInstantTime),
+        records, cfg, true, new ArrayList<>());
+
+    HoodieTableMetaClient metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), cfg.getBasePath());
+    boolean gotException = false;
+    try {
+      // Schedule compaction but do not run them
+      scheduleCompaction(compactionInstantTime, client, cfg);
+    } catch (IllegalArgumentException iex) {
+      gotException = true;
+    }
+    assertTrue("Compaction Instant to be scheduled cannot have older timestamp", gotException);
+
+    // Schedule with timestamp same as that of committed instant
+    gotException = false;
+    String dupCompactionInstantTime = secondInstantTime;
+    try {
+      // Schedule compaction but do not run them
+      scheduleCompaction(dupCompactionInstantTime, client, cfg);
+    } catch (IllegalArgumentException iex) {
+      gotException = true;
+    }
+    assertTrue("Compaction Instant to be scheduled cannot have same timestamp as committed instant",
+        gotException);
+
+    compactionInstantTime = "006";
+    scheduleCompaction(compactionInstantTime, client, cfg);
+    gotException = false;
+    try {
+      // Schedule compaction with the same times as a pending compaction
+      scheduleCompaction(dupCompactionInstantTime, client, cfg);
+    } catch (IllegalArgumentException iex) {
+      gotException = true;
+    }
+    assertTrue("Compaction Instant to be scheduled cannot have same timestamp as a pending compaction",
+        gotException);
+  }
+
+  @Test
   public void testCompactionAfterTwoDeltaCommits() throws Exception {
     // No Delta Commits after compaction request
     HoodieWriteConfig cfg = getConfig(true);
