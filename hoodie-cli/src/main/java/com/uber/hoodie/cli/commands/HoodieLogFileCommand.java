@@ -68,6 +68,8 @@ public class HoodieLogFileCommand implements CommandMarker {
   public String showLogFileCommits(
       @CliOption(key = "logFilePathPattern", mandatory = true, help = "Fully qualified path for the log file") final
       String logFilePathPattern,
+      @CliOption(key = {"disableHeaderFooter"}, help = "Print without header and footer",
+          unspecifiedDefaultValue = "false") final boolean disableHeaderFooter,
       @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
       @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
       @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
@@ -141,12 +143,14 @@ public class HoodieLogFileCommand implements CommandMarker {
       String instantTime = entry.getKey().toString();
       for (Tuple3<HoodieLogBlockType, Tuple2<Map<HeaderMetadataType, String>,
           Map<HeaderMetadataType, String>>, Integer> tuple3 : entry.getValue()) {
-        Comparable[] output = new Comparable[5];
+        Comparable[] output = new Comparable[disableHeaderFooter ? 3 : 5];
         output[0] = instantTime;
         output[1] = tuple3._3();
         output[2] = tuple3._1().toString();
-        output[3] = objectMapper.writeValueAsString(tuple3._2()._1());
-        output[4] = objectMapper.writeValueAsString(tuple3._2()._2());
+        if (!disableHeaderFooter) {
+          output[3] = objectMapper.writeValueAsString(tuple3._2()._1());
+          output[4] = objectMapper.writeValueAsString(tuple3._2()._2());
+        }
         rows.add(output);
         i++;
       }
@@ -155,10 +159,10 @@ public class HoodieLogFileCommand implements CommandMarker {
     TableHeader header = new TableHeader()
         .addTableHeaderField("InstantTime")
         .addTableHeaderField("RecordCount")
-        .addTableHeaderField("BlockType")
-        .addTableHeaderField("HeaderMetadata")
-        .addTableHeaderField("FooterMetadata");
-
+        .addTableHeaderField("BlockType");
+    if (!disableHeaderFooter) {
+      header = header.addTableHeaderField("HeaderMetadata").addTableHeaderField("FooterMetadata");
+    }
     return HoodiePrintHelper.print(header, new HashMap<>(), sortByField, descending, limit, headerOnly, rows);
   }
 
