@@ -57,6 +57,9 @@ public class CompactionCommand implements CommandMarker {
   @CliCommand(value = "compactions show all", help = "Shows all compactions that are in active timeline")
   public String compactionsAll(
       @CliOption(key = {
+          "includeExtraMetadata"}, help = "Include extra metadata", unspecifiedDefaultValue = "false") final
+      boolean includeExtraMetadata,
+      @CliOption(key = {
           "limit"}, mandatory = false, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
       @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
       @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
@@ -93,11 +96,16 @@ public class CompactionCommand implements CommandMarker {
         if (committed.contains(instant.getTimestamp())) {
           state = State.COMPLETED;
         }
-        rows.add(new Comparable[]{instant.getTimestamp(),
-            state.toString(),
-            workload.getCompactorId(),
-            workload.getOperations() == null ? 0 : workload.getOperations().size(),
-            workload.getExtraMetadata().toString()});
+        if (includeExtraMetadata) {
+          rows.add(new Comparable[]{instant.getTimestamp(),
+              state.toString(),
+              workload.getOperations() == null ? 0 : workload.getOperations().size(),
+              workload.getExtraMetadata().toString()});
+        } else {
+          rows.add(new Comparable[]{instant.getTimestamp(),
+              state.toString(),
+              workload.getOperations() == null ? 0 : workload.getOperations().size()});
+        }
       }
     }
 
@@ -105,9 +113,10 @@ public class CompactionCommand implements CommandMarker {
     TableHeader header = new TableHeader()
         .addTableHeaderField("Compaction Instant Time")
         .addTableHeaderField("State")
-        .addTableHeaderField("Compactor Id")
-        .addTableHeaderField("Total FileIds to be Compacted")
-        .addTableHeaderField("Extra Metadata");
+        .addTableHeaderField("Total FileIds to be Compacted");
+    if (includeExtraMetadata) {
+      header = header.addTableHeaderField("Extra Metadata");
+    }
     return HoodiePrintHelper.print(header, fieldNameToConverterMap, sortByField, descending, limit, headerOnly, rows);
   }
 
