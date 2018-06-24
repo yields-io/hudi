@@ -64,6 +64,106 @@ public class HoodieLogFileCommand implements CommandMarker {
     return HoodieCLI.tableMetadata != null;
   }
 
+  @CliCommand(value = "show logfile metadata2", help = "Read commit metadata from log files")
+  public String showLogFileCommits2(
+      @CliOption(key = "logFilePathPattern", mandatory = true, help = "Fully qualified path for the log file") final
+      String logFilePathPattern,
+      @CliOption(key = {"disableHeaderFooter"}, help = "Print without header and footer",
+          unspecifiedDefaultValue = "false") final boolean disableHeaderFooter,
+      @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
+      @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
+      @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
+      @CliOption(key = {
+          "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
+      throws IOException {
+
+    FileSystem fs = HoodieCLI.tableMetadata.getFs();
+    List<String> logFilePaths = Arrays.stream(fs.globStatus(new Path(logFilePathPattern)))
+        .map(status -> status.getPath().toString()).collect(Collectors.toList());
+    Map<String, List<Tuple3<HoodieLogBlockType, Tuple2<Map<HeaderMetadataType, String>, Map<HeaderMetadataType,
+        String>>, Integer>>>
+        commitCountAndMetadata = Maps.newHashMap();
+    int totalEntries = 0;
+    int numCorruptBlocks = 0;
+    int dummyInstantTimeCount = 0;
+
+    List<Comparable[]> rows = new ArrayList<>();
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    for (String logFilePath : logFilePaths) {
+      FileStatus[] fsStatus = fs.listStatus(new Path(logFilePath));
+      HoodieLogFormat.Reader reader = HoodieLogFormat
+          .newReader(fs, new HoodieLogFile(fsStatus[0].getPath()), null);
+      try {
+        // read the avro blocks
+        while (reader.hasNext()) {
+          HoodieLogBlock n = reader.next();
+          String instantTime = null;
+          int recordCount = -1;
+          if (n instanceof HoodieCorruptBlock) {
+            try {
+              instantTime = n.getLogBlockHeader().get(HeaderMetadataType.INSTANT_TIME);
+              if (instantTime == null) {
+                throw new Exception("Invalid instant time " + instantTime);
+              }
+            } catch (Exception e) {
+              numCorruptBlocks++;
+              instantTime = "corrupt_block_" + numCorruptBlocks;
+              // could not read metadata for corrupt block
+            }
+          } else {
+            instantTime = n.getLogBlockHeader().get(HeaderMetadataType.INSTANT_TIME);
+            if (instantTime == null) {
+              // This can happen when reading archived commit files since they were written without any instant time
+              dummyInstantTimeCount++;
+              instantTime = "dummy_instant_time_" + dummyInstantTimeCount;
+            }
+            if (n instanceof HoodieAvroDataBlock) {
+              recordCount = ((HoodieAvroDataBlock) n).getRecords().size();
+            }
+          }
+          if (commitCountAndMetadata.containsKey(instantTime)) {
+            commitCountAndMetadata.get(instantTime).add(
+                new Tuple3<>(n.getBlockType(), new Tuple2<>(n.getLogBlockHeader(), n.getLogBlockFooter()),
+                    recordCount));
+            totalEntries++;
+          } else {
+            List<Tuple3<HoodieLogBlockType, Tuple2<Map<HeaderMetadataType, String>, Map<HeaderMetadataType, String>>,
+                Integer>> list = new ArrayList<>();
+            list.add(
+                new Tuple3<>(n.getBlockType(), new Tuple2<>(n.getLogBlockHeader(), n.getLogBlockFooter()),
+                    recordCount));
+            commitCountAndMetadata.put(instantTime, list);
+            totalEntries++;
+          }
+
+          Comparable[] output = new Comparable[disableHeaderFooter ? 3 : 5];
+          output[0] = instantTime;
+          output[1] = recordCount;
+          output[2] = n.getBlockType().toString();
+          if (!disableHeaderFooter) {
+            output[3] = objectMapper.writeValueAsString(n.getLogBlockHeader());
+            output[4] = objectMapper.writeValueAsString(n.getLogBlockFooter());
+          }
+          rows.add(output);
+        }
+      } catch (Exception ex) {
+        ex.printStackTrace();
+        System.err.println("Skipping rest of log file " + logFilePath);
+        break;
+      }
+    }
+
+    TableHeader header = new TableHeader()
+        .addTableHeaderField("InstantTime")
+        .addTableHeaderField("RecordCount")
+        .addTableHeaderField("BlockType");
+    if (!disableHeaderFooter) {
+      header = header.addTableHeaderField("HeaderMetadata").addTableHeaderField("FooterMetadata");
+    }
+    return HoodiePrintHelper.print(header, new HashMap<>(), sortByField, descending, limit, headerOnly, rows);
+  }
+
   @CliCommand(value = "show logfile metadata", help = "Read commit metadata from log files")
   public String showLogFileCommits(
       @CliOption(key = "logFilePathPattern", mandatory = true, help = "Fully qualified path for the log file") final
@@ -73,8 +173,9 @@ public class HoodieLogFileCommand implements CommandMarker {
       @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
       @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
       @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
-      @CliOption(key = {"headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false")
-      final boolean headerOnly) throws IOException {
+      @CliOption(key = {
+          "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
+      throws IOException {
 
     FileSystem fs = HoodieCLI.tableMetadata.getFs();
     List<String> logFilePaths = Arrays.stream(fs.globStatus(new Path(logFilePathPattern)))
@@ -88,49 +189,53 @@ public class HoodieLogFileCommand implements CommandMarker {
 
     for (String logFilePath : logFilePaths) {
       FileStatus[] fsStatus = fs.listStatus(new Path(logFilePath));
-      Schema writerSchema = new AvroSchemaConverter().convert(
-          SchemaUtil.readSchemaFromLogFile(HoodieCLI.tableMetadata.getFs(), new Path(logFilePath)));
       HoodieLogFormat.Reader reader = HoodieLogFormat
-          .newReader(fs, new HoodieLogFile(fsStatus[0].getPath()), writerSchema);
+          .newReader(fs, new HoodieLogFile(fsStatus[0].getPath()), null);
 
       // read the avro blocks
       while (reader.hasNext()) {
         HoodieLogBlock n = reader.next();
-        String instantTime;
-        int recordCount = 0;
-        if (n instanceof HoodieCorruptBlock) {
-          try {
+        String instantTime = null;
+        int recordCount = -1;
+        try {
+          if (n instanceof HoodieCorruptBlock) {
+            try {
+              instantTime = n.getLogBlockHeader().get(HeaderMetadataType.INSTANT_TIME);
+              if (instantTime == null) {
+                throw new Exception("Invalid instant time " + instantTime);
+              }
+            } catch (Exception e) {
+              numCorruptBlocks++;
+              instantTime = "corrupt_block_" + numCorruptBlocks;
+              // could not read metadata for corrupt block
+            }
+          } else {
             instantTime = n.getLogBlockHeader().get(HeaderMetadataType.INSTANT_TIME);
             if (instantTime == null) {
-              throw new Exception("Invalid instant time " + instantTime);
+              // This can happen when reading archived commit files since they were written without any instant time
+              dummyInstantTimeCount++;
+              instantTime = "dummy_instant_time_" + dummyInstantTimeCount;
             }
-          } catch (Exception e) {
-            numCorruptBlocks++;
-            instantTime = "corrupt_block_" + numCorruptBlocks;
-            // could not read metadata for corrupt block
+            if (n instanceof HoodieAvroDataBlock) {
+              recordCount = ((HoodieAvroDataBlock) n).getRecords().size();
+            }
           }
-        } else {
-          instantTime = n.getLogBlockHeader().get(HeaderMetadataType.INSTANT_TIME);
-          if (instantTime == null) {
-            // This can happen when reading archived commit files since they were written without any instant time
-            dummyInstantTimeCount++;
-            instantTime = "dummy_instant_time_" + dummyInstantTimeCount;
+          if (commitCountAndMetadata.containsKey(instantTime)) {
+            commitCountAndMetadata.get(instantTime).add(
+                new Tuple3<>(n.getBlockType(), new Tuple2<>(n.getLogBlockHeader(), n.getLogBlockFooter()),
+                    recordCount));
+            totalEntries++;
+          } else {
+            List<Tuple3<HoodieLogBlockType, Tuple2<Map<HeaderMetadataType, String>, Map<HeaderMetadataType, String>>,
+                Integer>> list = new ArrayList<>();
+            list.add(
+                new Tuple3<>(n.getBlockType(), new Tuple2<>(n.getLogBlockHeader(), n.getLogBlockFooter()),
+                    recordCount));
+            commitCountAndMetadata.put(instantTime, list);
+            totalEntries++;
           }
-          if (n instanceof HoodieAvroDataBlock) {
-            recordCount = ((HoodieAvroDataBlock) n).getRecords().size();
-          }
-        }
-        if (commitCountAndMetadata.containsKey(instantTime)) {
-          commitCountAndMetadata.get(instantTime).add(
-              new Tuple3<>(n.getBlockType(), new Tuple2<>(n.getLogBlockHeader(), n.getLogBlockFooter()), recordCount));
-          totalEntries++;
-        } else {
-          List<Tuple3<HoodieLogBlockType, Tuple2<Map<HeaderMetadataType, String>, Map<HeaderMetadataType, String>>,
-              Integer>> list = new ArrayList<>();
-          list.add(
-              new Tuple3<>(n.getBlockType(), new Tuple2<>(n.getLogBlockHeader(), n.getLogBlockFooter()), recordCount));
-          commitCountAndMetadata.put(instantTime, list);
-          totalEntries++;
+        } catch (Exception ex) {
+          ex.printStackTrace();
         }
       }
     }
@@ -138,7 +243,7 @@ public class HoodieLogFileCommand implements CommandMarker {
     int i = 0;
     ObjectMapper objectMapper = new ObjectMapper();
     for (Map.Entry<String, List<Tuple3<HoodieLogBlockType,
-            Tuple2<Map<HeaderMetadataType, String>, Map<HeaderMetadataType, String>>, Integer>>> entry
+        Tuple2<Map<HeaderMetadataType, String>, Map<HeaderMetadataType, String>>, Integer>>> entry
         : commitCountAndMetadata.entrySet()) {
       String instantTime = entry.getKey().toString();
       for (Tuple3<HoodieLogBlockType, Tuple2<Map<HeaderMetadataType, String>,
@@ -238,6 +343,6 @@ public class HoodieLogFileCommand implements CommandMarker {
       rows[i] = data;
       i++;
     }
-    return HoodiePrintHelper.print(new String[] {"Records"}, rows);
+    return HoodiePrintHelper.print(new String[]{"Records"}, rows);
   }
 }
