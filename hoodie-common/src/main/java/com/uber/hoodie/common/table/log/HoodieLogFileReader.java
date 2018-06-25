@@ -134,8 +134,8 @@ class HoodieLogFileReader implements HoodieLogFormat.Reader {
         // 1 Read the total size of the block
         blocksize = (int) inputStream.readLong();
       }
-    } catch (EOFException | CorruptedLogFileException e) {
-      // An exception reading any of the above indicates a corrupt block
+    } catch (EOFException | CorruptedLogFileException | IllegalArgumentException e) {
+      // An exception reading any of the above indicates a corrupt blockyes,
       // Create a corrupt block by finding the next OLD_MAGIC marker or EOF
       return createCorruptBlock();
     }
@@ -217,12 +217,13 @@ class HoodieLogFileReader implements HoodieLogFormat.Reader {
   }
 
   private HoodieLogBlock createCorruptBlock() throws IOException {
-    log.info("Log " + logFile + " has a corrupted block at " + inputStream.getPos());
+    System.out.println("Log " + logFile + " has a corrupted block at " + inputStream.getPos());
     long currentPos = inputStream.getPos();
     long nextBlockOffset = scanForNextAvailableBlockOffset();
     // Rewind to the initial start and read corrupted bytes till the nextBlockOffset
     inputStream.seek(currentPos);
-    log.info("Next available block in " + logFile + " starts at " + nextBlockOffset);
+    System.out.println("Next available block in " + logFile + " starts at " + nextBlockOffset
+        + ", curr :" + currentPos);
     int corruptedBlockSize = (int) (nextBlockOffset - currentPos);
     long contentPosition = inputStream.getPos();
     byte[] corruptedBytes = HoodieLogBlock
