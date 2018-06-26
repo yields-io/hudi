@@ -381,7 +381,7 @@ public class HoodieActiveTimeline extends HoodieDefaultTimeline {
     try (FSDataInputStream is = metaClient.getFs().open(detailPath)) {
       return Optional.of(IOUtils.toByteArray(is));
     } catch (IOException e) {
-      throw new HoodieIOException("Could not read commit details from " + detailPath, e);
+      throw new HoodieIOException("Could not read details from " + detailPath, e);
     }
   }
 
