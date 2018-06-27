@@ -117,6 +117,7 @@ public class HoodieMergeHandle<T extends HoodieRecordPayload> extends HoodieIOHa
 
       // handle cases of partial failures, for update task
       if (fs.exists(newFilePath)) {
+        logger.info("DELETING partially written parquet file " + newFilePath.toString());
         fs.delete(newFilePath, false);
       }
 
@@ -204,6 +205,7 @@ public class HoodieMergeHandle<T extends HoodieRecordPayload> extends HoodieIOHa
    */
   public void write(GenericRecord oldRecord) {
     String key = oldRecord.get(HoodieRecord.RECORD_KEY_METADATA_FIELD).toString();
+    logger.info("Writing record with key :" + key);
     HoodieRecord<T> hoodieRecord = keyToNewRecords.get(key);
     boolean copyOldRecord = true;
     if (keyToNewRecords.containsKey(key)) {
@@ -257,10 +259,12 @@ public class HoodieMergeHandle<T extends HoodieRecordPayload> extends HoodieIOHa
       while (pendingRecordsItr.hasNext()) {
         String key = pendingRecordsItr.next();
         if (!writtenRecordKeys.contains(key)) {
+          logger.info("Writing pending record with key :" + key);
           HoodieRecord<T> hoodieRecord = keyToNewRecords.get(key);
           writeUpdateRecord(hoodieRecord, hoodieRecord.getData().getInsertValue(schema));
         }
       }
+
       keyToNewRecords.clear();
       writtenRecordKeys.clear();
 
@@ -280,6 +284,7 @@ public class HoodieMergeHandle<T extends HoodieRecordPayload> extends HoodieIOHa
       writeStatus.getStat().setRuntimeStats(runtimeStats);
       return writeStatus;
     } catch (IOException e) {
+      logger.error("Failed when closing parquet writer ", e);
       throw new HoodieUpsertException("Failed to close UpdateHandle", e);
     }
   }

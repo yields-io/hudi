@@ -275,6 +275,8 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
                                 .withFileId(wStat.getFileId()).overBaseCommit(baseCommitTime)
                                 .withFs(this.metaClient.getFs())
                                 .withFileExtension(HoodieLogFile.DELTA_EXTENSION).build();
+                            logger.info("Writing rollback block to " + writer.getLogFile().getPath());
+
                             Long numRollbackBlocks = 0L;
                             // generate metadata
                             Map<HeaderMetadataType, String> header =

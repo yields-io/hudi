@@ -355,6 +355,7 @@ public class FSUtils {
     // skip MIN_CLEAN_TO_KEEP and delete rest
     instants.skip(MIN_CLEAN_TO_KEEP).map(s -> {
       try {
+        LOG.info("DELETING older clean meta file " + new Path(metaPath, s.getFileName()));
         return fs.delete(new Path(metaPath, s.getFileName()), false);
       } catch (IOException e) {
         throw new HoodieIOException("Could not delete clean meta files" + s.getFileName(),
@@ -369,6 +370,7 @@ public class FSUtils {
     // skip MIN_ROLLBACK_TO_KEEP and delete rest
     instants.skip(MIN_ROLLBACK_TO_KEEP).map(s -> {
       try {
+        LOG.info("DELETING older rollback meta file " + new Path(metaPath, s.getFileName()));
         return fs.delete(new Path(metaPath, s.getFileName()), false);
       } catch (IOException e) {
         throw new HoodieIOException(
