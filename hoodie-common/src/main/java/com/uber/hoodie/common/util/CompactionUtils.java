@@ -282,8 +282,9 @@ public class CompactionUtils {
    */
   public static void renameLogFile(HoodieTableMetaClient metaClient, HoodieLogFile oldLogFile,
       HoodieLogFile newLogFile) throws IOException {
-    FileStatus status = metaClient.getFs().getFileStatus(oldLogFile.getPath());
-    Preconditions.checkArgument(status.isFile(), "Source File must exist");
+    FileStatus[] statuses = metaClient.getFs().listStatus(oldLogFile.getPath());
+    Preconditions.checkArgument(statuses.length == 1,"Only one status must be present");
+    Preconditions.checkArgument(statuses[0].isFile(), "Source File must exist");
     Preconditions.checkArgument(oldLogFile.getPath().getParent().equals(newLogFile.getPath().getParent()),
         "Log file must only be moved within the parent directory");
     metaClient.getFs().rename(oldLogFile.getPath(), newLogFile.getPath());
@@ -320,7 +321,9 @@ public class CompactionUtils {
         Set<HoodieLogFile> logFilesInCompactionOp = operation.getDeltaFilePaths().stream()
             .map(dp -> {
               try {
-                return new HoodieLogFile(metaClient.getFs().getFileStatus(new Path(dp)));
+                FileStatus[] fileStatuses = metaClient.getFs().listStatus(new Path(dp));
+                Preconditions.checkArgument(fileStatuses.length == 1, "Expect only 1 file-status");
+                return new HoodieLogFile(fileStatuses[0]);
               } catch (IOException ioe) {
                 throw new HoodieIOException(ioe.getMessage(), ioe);
               }
