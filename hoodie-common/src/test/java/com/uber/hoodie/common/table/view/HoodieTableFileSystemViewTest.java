@@ -294,7 +294,7 @@ public class HoodieTableFileSystemViewTest {
     } else {
       assertFalse("No data-file expected as it was not created", fileSlice.getDataFile().isPresent());
     }
-    assertEquals("Compaction requested instant must be base instant", compactionRequestedTime,
+    assertEquals("Base Instant of penultimate file-slice must be base instant", instantTime1,
         fileSlice.getBaseInstantTime());
     List<HoodieLogFile> logFiles = fileSlice.getLogFiles().collect(Collectors.toList());
     assertEquals("Log files must include those after compaction request", 4, logFiles.size());

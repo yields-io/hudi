@@ -343,14 +343,13 @@ public class HoodieTableFileSystemView implements TableFileSystemView,
   }
 
   /**
-   * Helper to merge last 2 file-slices so that the last file-slice base-instant is considered outstanding compaction
-   * instant. These 2 file-slices do not have compaction done yet.
+   * Helper to merge last 2 file-slices. These 2 file-slices do not have compaction done yet.
    *
    * @param lastSlice        Latest File slice for a file-group
    * @param penultimateSlice Penultimate file slice for a file-group in commit timeline order
    */
   private static FileSlice mergeCompactionPendingFileSlices(FileSlice lastSlice, FileSlice penultimateSlice) {
-    FileSlice merged = new FileSlice(lastSlice.getBaseInstantTime(), lastSlice.getFileId());
+    FileSlice merged = new FileSlice(penultimateSlice.getBaseInstantTime(), penultimateSlice.getFileId());
     if (penultimateSlice.getDataFile().isPresent()) {
       merged.setDataFile(penultimateSlice.getDataFile().get());
     }
