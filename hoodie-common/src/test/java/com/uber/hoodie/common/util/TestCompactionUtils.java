@@ -195,15 +195,17 @@ public class TestCompactionUtils {
 
   @Test
   public void testUnscheduleCompactionPlan() throws IOException {
-    Map<String, Pair<String, HoodieCompactionOperation>> expPendingCompactionOperations =
-        testGetAllPendingCompactionOperations(false, 10, 10, 10, 10);
-    validateRenameActions("000", "001");
-    validateRenameActions("002", "003");
-    validateRenameActions("004", "005");
-    validateRenameActions("006", "007");
+    int numEntriesPerInstant = 10;
+    testGetAllPendingCompactionOperations(false, numEntriesPerInstant, numEntriesPerInstant,
+        numEntriesPerInstant, numEntriesPerInstant);
+    validateRenameActions("000", "001", numEntriesPerInstant);
+    validateRenameActions("002", "003", numEntriesPerInstant);
+    validateRenameActions("004", "005", numEntriesPerInstant);
+    validateRenameActions("006", "007", numEntriesPerInstant);
   }
 
-  private void validateRenameActions(String ingestionInstant, String compactionInstant) throws IOException {
+  private void validateRenameActions(String ingestionInstant, String compactionInstant, int numEntriesPerInstant)
+      throws IOException {
     List<ValidationResult> validationResults = CompactionUtils.validateCompactionPlan(metaClient, compactionInstant);
     Assert.assertFalse("Some validations failed",
         validationResults.stream().filter(v -> !v.isSuccess()).findAny().isPresent());
@@ -254,8 +256,6 @@ public class TestCompactionUtils {
           newLogFile.getLogVersion() > lastLogFileBeforeCompaction.getLogVersion());
     });
 
-    System.out.println(fsView.getLatestMergedFileSlicesBeforeOrOn(DEFAULT_PARTITION_PATHS[0], compactionInstant)
-        .collect(Collectors.toList()).get(0));
     Map<String, Long> fileIdToCountsBeforeRenaming =
         fsView.getLatestMergedFileSlicesBeforeOrOn(DEFAULT_PARTITION_PATHS[0], compactionInstant)
             .filter(fs -> fs.getBaseInstantTime().equals(ingestionInstant))
@@ -290,6 +290,7 @@ public class TestCompactionUtils {
 
     Assert.assertEquals("Each File Id has same number of log-files",
         fileIdToCountsBeforeRenaming, fileIdToCountsAfterRenaming);
+    Assert.assertEquals("Not Empty", numEntriesPerInstant, fileIdToCountsAfterRenaming.size());
   }
 
 
