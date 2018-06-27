@@ -249,6 +249,8 @@ public class HoodieMergeHandle<T extends HoodieRecordPayload> extends HoodieIOHa
 
   @Override
   public WriteStatus close() {
+    logger.info("Closing Merge Handle which is writing to : " + getStorageWriterPath());
+
     try {
       // write out any pending records (this can happen when inserts are turned into updates)
       Iterator<String> pendingRecordsItr = keyToNewRecords.keySet().iterator();
@@ -263,7 +265,9 @@ public class HoodieMergeHandle<T extends HoodieRecordPayload> extends HoodieIOHa
       writtenRecordKeys.clear();
 
       if (storageWriter != null) {
+        logger.info("Closing storage writer for : " + getStorageWriterPath());
         storageWriter.close();
+        storageWriter = null;
       }
 
       writeStatus.getStat().setTotalWriteBytes(FSUtils.getFileSize(fs, getStorageWriterPath()));
