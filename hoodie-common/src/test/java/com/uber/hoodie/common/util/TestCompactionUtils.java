@@ -34,7 +34,7 @@ import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
 import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.table.view.HoodieTableFileSystemView;
-import com.uber.hoodie.common.util.CompactionUtils.ValidationResult;
+import com.uber.hoodie.common.util.CompactionUtils.CompactionValidationResult;
 import com.uber.hoodie.exception.HoodieIOException;
 import java.io.IOException;
 import java.util.Arrays;
@@ -206,12 +206,13 @@ public class TestCompactionUtils {
 
   private void validateRenameActions(String ingestionInstant, String compactionInstant, int numEntriesPerInstant)
       throws IOException {
-    List<ValidationResult> validationResults = CompactionUtils.validateCompactionPlan(metaClient, compactionInstant);
+    List<CompactionValidationResult> validationResults = CompactionUtils.validateCompactionPlan(metaClient,
+        compactionInstant);
     Assert.assertFalse("Some validations failed",
         validationResults.stream().filter(v -> !v.isSuccess()).findAny().isPresent());
     List<Pair<HoodieLogFile, HoodieLogFile>> renameFiles =
         CompactionUtils.getRenamingActionsForUnschedulingCompactionPlan(metaClient, compactionInstant,
-            Optional.empty());
+            Optional.empty(), false);
     metaClient = new HoodieTableMetaClient(metaClient.getHadoopConf(), basePath, true);
     /*
      * Log files belonging to file-slices created because of compaction request must be renamed
