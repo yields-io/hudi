@@ -35,7 +35,7 @@ import com.uber.hoodie.common.table.timeline.HoodieInstant;
 import com.uber.hoodie.common.table.timeline.HoodieInstant.State;
 import com.uber.hoodie.common.util.AvroUtils;
 import com.uber.hoodie.common.util.CompactionUtils;
-import com.uber.hoodie.common.util.CompactionUtils.ValidationResult;
+import com.uber.hoodie.common.util.CompactionUtils.CompactionValidationResult;
 import com.uber.hoodie.exception.HoodieIOException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -195,13 +195,13 @@ public class CompactionCommand implements CommandMarker {
           "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
       throws Exception {
     HoodieTableMetaClient metaClient = HoodieCLI.tableMetadata;
-    List<ValidationResult> res = CompactionUtils.validateCompactionPlan(metaClient, compactionInstant);
+    List<CompactionValidationResult> res = CompactionUtils.validateCompactionPlan(metaClient, compactionInstant);
     List<Comparable[]> rows = new ArrayList<>();
     res.stream().forEach(r -> {
-      Comparable[] row = new Comparable[] { r.getOperation().getFileId(),
+      Comparable[] row = new Comparable[]{r.getOperation().getFileId(),
           r.getOperation().getBaseInstantTime(), r.getOperation().getDataFilePath(),
           r.getOperation().getDeltaFilePaths().size(), r.isSuccess(),
-          r.getErrorMessage().isPresent() ? r.getErrorMessage().get().getMessage() : "" };
+          r.getErrorMessage().isPresent() ? r.getErrorMessage().get().getMessage() : ""};
       rows.add(row);
     });
 
@@ -220,12 +220,14 @@ public class CompactionCommand implements CommandMarker {
   @CliCommand(value = "compaction unschedule", help = "Unschedule Compaction")
   public String unscheduleCompaction(
       @CliOption(key = "compactionInstant", mandatory = true, help = "Compaction Instant")
-      final String compactionInstant) throws Exception {
+      final String compactionInstant,
+      @CliOption(key = {"skipValidation"}, help = "Ordering", unspecifiedDefaultValue = "false")
+      final boolean skipValidation) throws Exception {
 
     HoodieTableMetaClient metaClient = HoodieCLI.tableMetadata;
     List<Pair<HoodieLogFile, HoodieLogFile>> renameActions =
         CompactionUtils.getRenamingActionsForUnschedulingCompactionPlan(metaClient, compactionInstant,
-            Optional.empty());
+            Optional.empty(), skipValidation);
 
     runRenamingOps(metaClient, renameActions);
 
@@ -236,7 +238,7 @@ public class CompactionCommand implements CommandMarker {
             .build();
     HoodieInstant inflight = new HoodieInstant(State.INFLIGHT, COMPACTION_ACTION, compactionInstant);
     Path inflightPath = new Path(metaClient.getMetaPath(), inflight.getFileName());
-    if ( metaClient.getFs().exists(inflightPath)) {
+    if (metaClient.getFs().exists(inflightPath)) {
       // revert if in inflight state
       metaClient.getActiveTimeline().revertCompactionInflightToRequested(inflight);
     }
@@ -248,11 +250,15 @@ public class CompactionCommand implements CommandMarker {
 
   @CliCommand(value = "compaction unscheduleFileId", help = "UnSchedule Compaction for a fileId")
   public String unscheduleCompactFile(
-      @CliOption(key = "fileId", mandatory = true, help = "File Id") final String fileId) throws Exception {
+      @CliOption(key = "fileId", mandatory = true, help = "File Id") final String fileId,
+      @CliOption(key = {
+          "skipValidation"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean skipValidation)
+      throws Exception {
 
     HoodieTableMetaClient metaClient = HoodieCLI.tableMetadata;
     List<Pair<HoodieLogFile, HoodieLogFile>> renameActions =
-        CompactionUtils.getRenamingActionsForUnschedulingCompactionForFileId(metaClient, fileId, Optional.empty());
+        CompactionUtils.getRenamingActionsForUnschedulingCompactionForFileId(metaClient, fileId,
+            Optional.empty(), skipValidation);
 
     runRenamingOps(metaClient, renameActions);
 
@@ -267,7 +273,7 @@ public class CompactionCommand implements CommandMarker {
     HoodieInstant inflight = new HoodieInstant(State.INFLIGHT, COMPACTION_ACTION,
         compactionOperationWithInstant.getLeft());
     Path inflightPath = new Path(metaClient.getMetaPath(), inflight.getFileName());
-    if ( metaClient.getFs().exists(inflightPath)) {
+    if (metaClient.getFs().exists(inflightPath)) {
       // revert if in inflight state
       metaClient.getActiveTimeline().revertCompactionInflightToRequested(inflight);
     }
