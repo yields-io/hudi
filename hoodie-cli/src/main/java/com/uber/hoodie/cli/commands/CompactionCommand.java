@@ -48,6 +48,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.hadoop.fs.Path;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.spark.launcher.SparkLauncher;
@@ -233,6 +234,12 @@ public class CompactionCommand implements CommandMarker {
     HoodieCompactionPlan newPlan =
         HoodieCompactionPlan.newBuilder().setOperations(new ArrayList<>()).setExtraMetadata(plan.getExtraMetadata())
             .build();
+    HoodieInstant inflight = new HoodieInstant(State.INFLIGHT, COMPACTION_ACTION, compactionInstant);
+    Path inflightPath = new Path(metaClient.getMetaPath(), inflight.getFileName());
+    if ( metaClient.getFs().exists(inflightPath)) {
+      // revert if in inflight state
+      metaClient.getActiveTimeline().revertCompactionInflightToRequested(inflight);
+    }
     metaClient.getActiveTimeline().saveToCompactionRequested(
         new HoodieInstant(State.REQUESTED, COMPACTION_ACTION, compactionInstant),
         AvroUtils.serializeCompactionPlan(newPlan));
@@ -257,9 +264,17 @@ public class CompactionCommand implements CommandMarker {
         .filter(op -> !op.getFileId().equals(fileId)).collect(Collectors.toList());
     HoodieCompactionPlan newPlan =
         HoodieCompactionPlan.newBuilder().setOperations(newOps).setExtraMetadata(plan.getExtraMetadata()).build();
+    HoodieInstant inflight = new HoodieInstant(State.INFLIGHT, COMPACTION_ACTION,
+        compactionOperationWithInstant.getLeft());
+    Path inflightPath = new Path(metaClient.getMetaPath(), inflight.getFileName());
+    if ( metaClient.getFs().exists(inflightPath)) {
+      // revert if in inflight state
+      metaClient.getActiveTimeline().revertCompactionInflightToRequested(inflight);
+    }
     metaClient.getActiveTimeline().saveToCompactionRequested(
         new HoodieInstant(State.REQUESTED, COMPACTION_ACTION, compactionOperationWithInstant.getLeft()),
         AvroUtils.serializeCompactionPlan(newPlan));
+
     return "Successfully removed file " + fileId
         + " from compaction instant " + compactionOperationWithInstant.getLeft();
   }

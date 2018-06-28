@@ -58,6 +58,7 @@ public class FSUtils {
   private static final String HOODIE_ENV_PROPS_PREFIX = "HOODIE_ENV_";
 
   public static Configuration prepareHadoopConf(Configuration conf) {
+    conf.set("fs.viewfs.impl", org.apache.hadoop.fs.viewfs.ViewFileSystem.class.getName());
     conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
     conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
 
