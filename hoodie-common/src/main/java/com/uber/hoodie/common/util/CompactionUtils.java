@@ -43,11 +43,15 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 /**
  * Helper class to generate compaction plan from FileGroup/FileSlice abstraction
  */
 public class CompactionUtils {
+
+  private static final Logger LOG = LogManager.getLogger(CompactionUtils.class);
 
   /**
    * Generate compaction operation from file-slice
@@ -149,6 +153,8 @@ public class CompactionUtils {
     List<Pair<HoodieInstant, HoodieCompactionPlan>> pendingCompactionPlanWithInstants =
         getAllPendingCompactionPlans(metaClient);
 
+    LOG.info("Following instants are deemed pending compaction instants :"
+        + pendingCompactionPlanWithInstants.stream().map(Pair::getKey).collect(Collectors.toList()));
     Map<String, Pair<String, HoodieCompactionOperation>> fileIdToPendingCompactionWithInstantMap = new HashMap<>();
     pendingCompactionPlanWithInstants.stream().flatMap(instantPlanPair -> {
       HoodieInstant instant = instantPlanPair.getKey();
@@ -170,6 +176,9 @@ public class CompactionUtils {
       }
       fileIdToPendingCompactionWithInstantMap.put(pair.getKey(), pair.getValue());
     });
+    fileIdToPendingCompactionWithInstantMap.entrySet().stream()
+        .forEach(e -> LOG.info("Pending Compaction File (" + e.getKey() + ") with compaction instant ("
+            + e.getValue().getLeft() + ") and operation (" + e.getValue().getRight() + ")"));
     return fileIdToPendingCompactionWithInstantMap;
   }
 
