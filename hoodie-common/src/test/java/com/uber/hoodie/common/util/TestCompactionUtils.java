@@ -342,9 +342,9 @@ public class TestCompactionUtils {
     // Expect all file-slice whose base-commit is same as compaction commit to contain no new Log files
     newFsView.getLatestFileSlicesBeforeOrOn(DEFAULT_PARTITION_PATHS[0], compactionInstant)
         .filter(fs -> fs.getBaseInstantTime().equals(compactionInstant)).forEach(fs -> {
-      Assert.assertFalse("No Data file must be present", fs.getDataFile().isPresent());
-      Assert.assertTrue("No Log Files", fs.getLogFiles().count() == 0);
-    });
+          Assert.assertFalse("No Data file must be present", fs.getDataFile().isPresent());
+          Assert.assertTrue("No Log Files", fs.getLogFiles().count() == 0);
+        });
 
     // Ensure same number of log-files before and after renaming per fileId
     Map<String, Long> fileIdToCountsAfterRenaming =

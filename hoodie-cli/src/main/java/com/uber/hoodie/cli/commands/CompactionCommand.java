@@ -214,8 +214,9 @@ public class CompactionCommand implements CommandMarker {
   public String unscheduleCompaction(
       @CliOption(key = "compactionInstant", mandatory = true, help = "Compaction Instant")
       final String compactionInstant,
-      @CliOption(key = {"skipValidation"}, help = "Ordering", unspecifiedDefaultValue = "false")
-      final boolean skipValidation) throws Exception {
+      @CliOption(key = {
+          "skipValidation"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean skipValidation)
+      throws Exception {
 
     HoodieTableMetaClient metaClient = HoodieCLI.tableMetadata;
     List<Pair<HoodieLogFile, HoodieLogFile>> renameActions =
@@ -301,12 +302,13 @@ public class CompactionCommand implements CommandMarker {
   @CliCommand(value = "compaction repair", help = "Repair Compaction")
   public String repairCompaction(
       @CliOption(key = "compactionInstant", mandatory = true, help = "Compaction Instant")
-      final String compactionInstant) throws Exception {
+      final String compactionInstant)
+      throws Exception {
     HoodieTableMetaClient metaClient = HoodieCLI.tableMetadata;
     List<CompactionValidationResult> validationResults =
         CompactionUtils.validateCompactionPlan(metaClient, compactionInstant);
     List<CompactionValidationResult> failed = validationResults.stream()
-        .filter(v->!v.isSuccess()).collect(Collectors.toList());
+        .filter(v -> !v.isSuccess()).collect(Collectors.toList());
     if (failed.isEmpty()) {
       return "Compaction instant " + compactionInstant + " already valid. Nothing to repair.";
     }
@@ -314,11 +316,11 @@ public class CompactionCommand implements CommandMarker {
     final HoodieTableFileSystemView fsView = new HoodieTableFileSystemView(metaClient,
         metaClient.getCommitsAndCompactionTimeline());
     List<Pair<HoodieLogFile, HoodieLogFile>> renameActions = failed.stream().flatMap(v ->
-      CompactionUtils.getRenamingActionsToAlignWithCompactionOperation(metaClient, compactionInstant,
-          v.getOperation(), Optional.of(fsView)).stream()).collect(Collectors.toList());
+        CompactionUtils.getRenamingActionsToAlignWithCompactionOperation(metaClient, compactionInstant,
+            v.getOperation(), Optional.of(fsView)).stream()).collect(Collectors.toList());
     runRenamingOps(metaClient, renameActions);
     validationResults = CompactionUtils.validateCompactionPlan(metaClient, compactionInstant);
-    failed = validationResults.stream().filter(v->!v.isSuccess()).collect(Collectors.toList());
+    failed = validationResults.stream().filter(v -> !v.isSuccess()).collect(Collectors.toList());
     List<Comparable[]> rows = new ArrayList<>();
     failed.stream().forEach(r -> {
       Comparable[] row = new Comparable[]{r.getOperation().getFileId(),
