@@ -279,6 +279,39 @@ public class CompactionUtils {
   }
 
   /**
+   * Get Renaming actions to ensure the log-files of merged file-slices is aligned with compaction operation. This
+   * method is used to recover from failures during unschedule compaction operations.
+   *
+   * @param metaClient        Hoodie Table Meta Client
+   * @param compactionInstant Compaction Instant
+   * @param op                Compaction Operation
+   * @param fsViewOpt         File System View
+   */
+  public static List<Pair<HoodieLogFile, HoodieLogFile>> getRenamingActionsToAlignWithCompactionOperation(
+      HoodieTableMetaClient metaClient, String compactionInstant,
+      HoodieCompactionOperation op, Optional<HoodieTableFileSystemView> fsViewOpt) {
+    HoodieTableFileSystemView fileSystemView = fsViewOpt.isPresent() ? fsViewOpt.get() :
+        new HoodieTableFileSystemView(metaClient, metaClient.getCommitsAndCompactionTimeline());
+    HoodieInstant lastInstant = metaClient.getCommitsAndCompactionTimeline().lastInstant().get();
+    FileSlice merged =
+        fileSystemView.getLatestMergedFileSlicesBeforeOrOn(op.getPartitionPath(), lastInstant.getTimestamp())
+            .filter(fs -> fs.getFileId().equals(op.getFileId())).findFirst().get();
+    final int maxVersion =
+        op.getDeltaFilePaths().stream().map(lf -> FSUtils.getFileVersionFromLog(new Path(lf)))
+            .reduce((x, y) -> x > y ? x : y).map(x -> x).orElse(0);
+    List<HoodieLogFile> logFilesToBeMoved =
+        merged.getLogFiles().filter(lf -> lf.getLogVersion() > maxVersion).collect(Collectors.toList());
+    return logFilesToBeMoved.stream().map(lf -> {
+      Preconditions.checkArgument(lf.getLogVersion() - maxVersion > 0,
+          "Expect new log version to be sane");
+      HoodieLogFile newLogFile = new HoodieLogFile(new Path(lf.getPath().getParent(),
+          FSUtils.makeLogFileName(lf.getFileId(), "." + FSUtils.getFileExtensionFromLog(lf.getPath()),
+              compactionInstant, lf.getLogVersion() - maxVersion)));
+      return Pair.of(lf, newLogFile);
+    }).collect(Collectors.toList());
+  }
+
+  /**
    * Rename log files. This is done for un-scheduling a pending compaction operation NOTE: Can only be used safely when
    * no writer (ingestion/compaction) is running.
    *

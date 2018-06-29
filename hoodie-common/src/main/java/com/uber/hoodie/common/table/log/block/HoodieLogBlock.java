@@ -57,6 +57,8 @@ public abstract class HoodieLogBlock {
   protected FSDataInputStream inputStream;
   // Toggle flag, whether to read blocks lazily (I/O intensive) or not (Memory intensive)
   protected boolean readBlockLazily;
+  // Log Block Size in file
+  private int blockSizeInFile;
 
   public HoodieLogBlock(@Nonnull Map<HeaderMetadataType, String> logBlockHeader,
       @Nonnull Map<HeaderMetadataType, String> logBlockFooter,
@@ -255,6 +257,14 @@ public abstract class HoodieLogBlock {
         throw new HoodieIOException("unable to lazily read log block from disk", io);
       }
     }
+  }
+
+  public int getBlockSizeInFile() {
+    return blockSizeInFile;
+  }
+
+  public void setBlockSizeInFile(int blockSizeInFile) {
+    this.blockSizeInFile = blockSizeInFile;
   }
 
   /**
