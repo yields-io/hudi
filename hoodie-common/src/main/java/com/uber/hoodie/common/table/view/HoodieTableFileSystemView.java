@@ -198,6 +198,7 @@ public class HoodieTableFileSystemView implements TableFileSystemView,
   private boolean isDataFileDueToPendingCompaction(HoodieDataFile dataFile) {
     String compactionInstantTime = fileIdToPendingCompactionInstantTime.get(dataFile.getFileId());
     if ((null != compactionInstantTime) && dataFile.getCommitTime().equals(compactionInstantTime)) {
+      log.info("Data File " + dataFile + " is due to pending compaction : " + compactionInstantTime);
       return true;
     }
     return false;
@@ -310,6 +311,7 @@ public class HoodieTableFileSystemView implements TableFileSystemView,
   private boolean isFileSliceAfterPendingCompaction(FileSlice fileSlice) {
     String compactionInstantTime = fileIdToPendingCompactionInstantTime.get(fileSlice.getFileId());
     if ((null != compactionInstantTime) && fileSlice.getBaseInstantTime().equals(compactionInstantTime)) {
+      log.info("File Slice " + fileSlice + " is after pending compaction : " + compactionInstantTime);
       return true;
     }
     return false;

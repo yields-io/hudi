@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 public class LogFileSizeBasedCompactionStrategy extends BoundedIOCompactionStrategy implements
     Comparator<HoodieCompactionOperation> {
 
+  private static final String TOTAL_LOG_FILE_SIZE = "TOTAL_LOG_FILE_SIZE";
 
   @Override
   public Map<String, Double> captureMetrics(HoodieWriteConfig config, Optional<HoodieDataFile> dataFile,

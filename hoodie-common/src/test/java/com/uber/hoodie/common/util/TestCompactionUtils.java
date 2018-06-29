@@ -198,18 +198,82 @@ public class TestCompactionUtils {
     int numEntriesPerInstant = 10;
     testGetAllPendingCompactionOperations(false, numEntriesPerInstant, numEntriesPerInstant,
         numEntriesPerInstant, numEntriesPerInstant);
-    validateRenameActions("000", "001", numEntriesPerInstant);
-    validateRenameActions("002", "003", numEntriesPerInstant);
-    validateRenameActions("004", "005", numEntriesPerInstant);
-    validateRenameActions("006", "007", numEntriesPerInstant);
+    // THere are delta-commits after compaction instant
+    validateUnSchedule("000", "001", numEntriesPerInstant, 2 * numEntriesPerInstant);
+    // THere are delta-commits after compaction instant
+    validateUnSchedule("002", "003", numEntriesPerInstant, 2 * numEntriesPerInstant);
+    // THere are no delta-commits after compaction instant
+    validateUnSchedule("004", "005", numEntriesPerInstant, 0);
+    // THere are no delta-commits after compaction instant
+    validateUnSchedule("006", "007", numEntriesPerInstant, 0);
   }
 
-  private void validateRenameActions(String ingestionInstant, String compactionInstant, int numEntriesPerInstant)
-      throws IOException {
+  @Test
+  public void testRepairCompactionPlan() throws IOException {
+    int numEntriesPerInstant = 10;
+    testGetAllPendingCompactionOperations(false, numEntriesPerInstant, numEntriesPerInstant,
+        numEntriesPerInstant, numEntriesPerInstant);
+    // THere are delta-commits after compaction instant
+    validateRepair("000", "001", numEntriesPerInstant, 2 * numEntriesPerInstant);
+    // THere are delta-commits after compaction instant
+    validateRepair("002", "003", numEntriesPerInstant, 2 * numEntriesPerInstant);
+    // THere are no delta-commits after compaction instant
+    validateRepair("004", "005", numEntriesPerInstant, 0);
+    // THere are no delta-commits after compaction instant
+    validateRepair("006", "007", numEntriesPerInstant, 0);
+  }
+
+  private void validateRepair(String ingestionInstant, String compactionInstant, int numEntriesPerInstant,
+      int expNumRepairs) throws IOException {
+    List<Pair<HoodieLogFile, HoodieLogFile>> renameFiles =
+        validateUnSchedule(ingestionInstant, compactionInstant, numEntriesPerInstant, expNumRepairs);
+    metaClient = new HoodieTableMetaClient(metaClient.getHadoopConf(), basePath, true);
+    List<CompactionValidationResult> result = CompactionUtils.validateCompactionPlan(metaClient, compactionInstant);
+    if (expNumRepairs > 0) {
+      Assert.assertTrue("Expect some failures in validation", result.stream().filter(r -> !r.isSuccess()).count() > 0);
+    }
+    // Now repair
+    List<Pair<HoodieLogFile, HoodieLogFile>> undoFiles = result.stream().flatMap(r ->
+        CompactionUtils.getRenamingActionsToAlignWithCompactionOperation(metaClient,
+            compactionInstant, r.getOperation(), Optional.empty()).stream())
+        .map(rn -> {
+          try {
+            CompactionUtils.renameLogFile(metaClient, rn.getKey(), rn.getValue());
+          } catch (IOException e) {
+            throw new HoodieIOException(e.getMessage(), e);
+          }
+          return rn;
+        }).collect(Collectors.toList());
+    Map<String, String> renameFilesFromUndo =
+        undoFiles.stream().collect(Collectors.toMap(p -> p.getRight().getPath().toString(),
+            x -> x.getLeft().getPath().toString()));
+    Map<String, String> expRenameFiles =
+        renameFiles.stream().collect(Collectors.toMap(p -> p.getLeft().getPath().toString(),
+            x -> x.getRight().getPath().toString()));
+    if (expNumRepairs > 0) {
+      Assert.assertFalse("Rename Files must be non-empty", renameFiles.isEmpty());
+    } else {
+      Assert.assertTrue("Rename Files must be empty", renameFiles.isEmpty());
+    }
+    expRenameFiles.entrySet().stream().forEach(r -> {
+      System.out.println("Key :" + r.getKey() + " renamed to " + r.getValue() + " rolled back to "
+          + renameFilesFromUndo.get(r.getKey()));
+    });
+
+    Assert.assertEquals("Undo must completely rollback renames", expRenameFiles, renameFilesFromUndo);
+    // Now expect validation to succeed
+    result = CompactionUtils.validateCompactionPlan(metaClient, compactionInstant);
+    Assert.assertTrue("Expect no failures in validation", result.stream().filter(r -> !r.isSuccess()).count() == 0);
+    Assert.assertEquals("Expected Num Repairs", expNumRepairs, undoFiles.size());
+  }
+
+  private List<Pair<HoodieLogFile, HoodieLogFile>> validateUnSchedule(String ingestionInstant,
+      String compactionInstant, int numEntriesPerInstant, int expNumRenames) throws IOException {
     List<CompactionValidationResult> validationResults = CompactionUtils.validateCompactionPlan(metaClient,
         compactionInstant);
     Assert.assertFalse("Some validations failed",
         validationResults.stream().filter(v -> !v.isSuccess()).findAny().isPresent());
+    HoodieCompactionPlan compactionPlan = CompactionUtils.getCompactionPlan(metaClient, compactionInstant);
     List<Pair<HoodieLogFile, HoodieLogFile>> renameFiles =
         CompactionUtils.getRenamingActionsForUnschedulingCompactionPlan(metaClient, compactionInstant,
             Optional.empty(), false);
@@ -292,8 +356,9 @@ public class TestCompactionUtils {
     Assert.assertEquals("Each File Id has same number of log-files",
         fileIdToCountsBeforeRenaming, fileIdToCountsAfterRenaming);
     Assert.assertEquals("Not Empty", numEntriesPerInstant, fileIdToCountsAfterRenaming.size());
+    Assert.assertEquals("Expected number of renames", expNumRenames, renameFiles.size());
+    return renameFiles;
   }
-
 
   private Map<String, Pair<String, HoodieCompactionOperation>> testGetAllPendingCompactionOperations(boolean inflight,
       int numEntriesInPlan1, int numEntriesInPlan2,

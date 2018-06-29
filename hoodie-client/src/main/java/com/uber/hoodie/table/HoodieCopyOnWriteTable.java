@@ -332,7 +332,7 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
     for (FileStatus file : toBeDeleted) {
       boolean success = fs.delete(file.getPath(), false);
       results.put(file, success);
-      logger.info("DELETING file " + file.getPath() + "\t" + success);
+      logger.info("Delete file " + file.getPath() + "\t" + success);
     }
     return results;
   }
@@ -513,7 +513,6 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
 
     @Override
     protected void finish() {
-      logger.info("Finished writing records !");
     }
 
     @Override

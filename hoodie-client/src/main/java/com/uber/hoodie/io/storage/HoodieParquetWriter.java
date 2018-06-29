@@ -28,8 +28,6 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.apache.parquet.hadoop.ParquetFileWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.spark.TaskContext;
@@ -42,7 +40,6 @@ public class HoodieParquetWriter<T extends HoodieRecordPayload, R extends Indexe
     ParquetWriter<IndexedRecord> implements HoodieStorageWriter<R> {
 
   private static AtomicLong recordIndex = new AtomicLong(1);
-  private static Logger logger = LogManager.getLogger(HoodieParquetWriter.class);
 
   private final Path file;
   private final HoodieWrapperFileSystem fs;
@@ -102,10 +99,5 @@ public class HoodieParquetWriter<T extends HoodieRecordPayload, R extends Indexe
   public void writeAvro(String key, IndexedRecord object) throws IOException {
     super.write(object);
     writeSupport.add(key);
-  }
-
-  public void close() throws IOException {
-    logger.info("Closing parquet writer : " + file.toString());
-    super.close();
   }
 }

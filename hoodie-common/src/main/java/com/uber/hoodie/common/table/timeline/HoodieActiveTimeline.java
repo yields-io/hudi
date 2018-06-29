@@ -306,17 +306,13 @@ public class HoodieActiveTimeline extends HoodieDefaultTimeline {
 
   private void transitionState(HoodieInstant fromInstant, HoodieInstant toInstant,
       Optional<byte[]> data) {
-    log.info("Transitioning state from " + fromInstant + " to " + toInstant);
     Preconditions.checkArgument(fromInstant.getTimestamp().equals(toInstant.getTimestamp()));
     Path commitFilePath = new Path(metaClient.getMetaPath(), toInstant.getFileName());
     try {
       // open a new file and write the commit metadata in
       Path inflightCommitFile = new Path(metaClient.getMetaPath(), fromInstant.getFileName());
       createFileInMetaPath(fromInstant.getFileName(), data);
-      log.info("Renaming file from " + inflightCommitFile + " to " + commitFilePath);
       boolean success = metaClient.getFs().rename(inflightCommitFile, commitFilePath);
-      log.info("Renaming file from " + inflightCommitFile + " to " + commitFilePath
-          + " success ?" + success);
       if (!success) {
         throw new HoodieIOException(
             "Could not rename " + inflightCommitFile + " to " + commitFilePath);
@@ -327,16 +323,12 @@ public class HoodieActiveTimeline extends HoodieDefaultTimeline {
   }
 
   private void revertCompleteToInflight(HoodieInstant completed, HoodieInstant inflight) {
-    log.info("Reverting state from " + completed + " to " + inflight);
     Preconditions.checkArgument(completed.getTimestamp().equals(inflight.getTimestamp()));
     Path inFlightCommitFilePath = new Path(metaClient.getMetaPath(), inflight.getFileName());
     try {
       if (!metaClient.getFs().exists(inFlightCommitFilePath)) {
         Path commitFilePath = new Path(metaClient.getMetaPath(), completed.getFileName());
-        log.info("Renaming file from " + commitFilePath + " to " + inFlightCommitFilePath);
         boolean success = metaClient.getFs().rename(commitFilePath, inFlightCommitFilePath);
-        log.info("Renaming file from " + commitFilePath + " to " + inFlightCommitFilePath
-            + " success ?" + success);
         if (!success) {
           throw new HoodieIOException(
               "Could not rename " + commitFilePath + " to " + inFlightCommitFilePath);
@@ -373,16 +365,12 @@ public class HoodieActiveTimeline extends HoodieDefaultTimeline {
         } else {
           throw new HoodieIOException("Failed to create file " + fullPath);
         }
-      } else {
-        log.info("Skipped creating a new file in meta path: " + fullPath);
       }
 
       if (content.isPresent()) {
-        log.info("Overwriting content in " + fullPath);
         FSDataOutputStream fsout = metaClient.getFs().create(fullPath, true);
         fsout.write(content.get());
         fsout.close();
-        log.info("Finished Overwriting content in " + fullPath);
       }
     } catch (IOException e) {
       throw new HoodieIOException("Failed to create file " + fullPath, e);

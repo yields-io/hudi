@@ -215,12 +215,6 @@ public interface HoodieLogFormat {
     return new HoodieLogFileReader(fs, logFile, readerSchema, HoodieLogFileReader.DEFAULT_BUFFER_SIZE, false, false);
   }
 
-  static HoodieLogFormat.Reader newReader(FileSystem fs, HoodieLogFile logFile, Schema readerSchema,
-      boolean readBlockLazily) throws IOException {
-    return new HoodieLogFileReader(fs, logFile, readerSchema, HoodieLogFileReader.DEFAULT_BUFFER_SIZE,
-        readBlockLazily, false);
-  }
-
   /**
    * A set of feature flags associated with a log format. Versions are changed when the log format
    * changes. TODO(na) - Implement policies around major/minor versions

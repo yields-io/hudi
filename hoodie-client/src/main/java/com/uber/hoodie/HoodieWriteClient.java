@@ -1218,7 +1218,6 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
    * @param table Hoodie Table
    */
   private void rollbackInflightCompaction(HoodieInstant inflightInstant, HoodieTable table) throws IOException {
-    logger.info("Rolling back inflight compaction : " + inflightInstant);
     table.rollback(jsc, ImmutableList.copyOf(new String[] { inflightInstant.getTimestamp() }));
     // Revert instant state file
     table.getActiveTimeline().revertCompactionInflightToRequested(inflightInstant);
@@ -1251,7 +1250,6 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
           new HoodieInstant(State.INFLIGHT, HoodieTimeline.COMPACTION_ACTION, compactionCommitTime),
           Optional.of(metadata.toJsonString().getBytes(StandardCharsets.UTF_8)));
     } catch (IOException e) {
-      logger.error("Failed to do compaction commit at instant " + compactionCommitTime, e);
       throw new HoodieCompactionException(
           "Failed to commit " + metaClient.getBasePath() + " at time " + compactionCommitTime, e);
     }
