@@ -263,7 +263,9 @@ public class HoodieMergeHandle<T extends HoodieRecordPayload> extends HoodieIOHa
       writtenRecordKeys.clear();
 
       if (storageWriter != null) {
+        logger.info("Closing storage writer for file : " + getStorageWriterPath());
         storageWriter.close();
+        logger.info("Closed storage writer for file : " + getStorageWriterPath());
       }
 
       writeStatus.getStat().setTotalWriteBytes(FSUtils.getFileSize(fs, getStorageWriterPath()));
