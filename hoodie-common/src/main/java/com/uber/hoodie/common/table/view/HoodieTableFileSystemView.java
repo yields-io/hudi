@@ -124,7 +124,7 @@ public class HoodieTableFileSystemView implements TableFileSystemView,
   /**
    * Adds the provided statuses into the file system view, and also caches it inside this object.
    */
-  private List<HoodieFileGroup> addFilesToView(FileStatus[] statuses) {
+  protected List<HoodieFileGroup> addFilesToView(FileStatus[] statuses) {
     Map<Pair<String, String>, List<HoodieDataFile>> dataFiles = convertFileStatusesToDataFiles(
         statuses)
         .collect(Collectors.groupingBy((dataFile) -> {
@@ -437,5 +437,13 @@ public class HoodieTableFileSystemView implements TableFileSystemView,
       throw new HoodieIOException(
           "Failed to list data files in partition " + partitionPathStr, e);
     }
+  }
+
+  /**
+   * Used by Hoodie CLI
+   * @return
+   */
+  public HashMap<String, HoodieFileGroup> getFileGroupMap() {
+    return fileGroupMap;
   }
 }
