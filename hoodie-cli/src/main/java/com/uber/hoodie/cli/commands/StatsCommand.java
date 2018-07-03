@@ -22,10 +22,13 @@ import com.codahale.metrics.UniformReservoir;
 import com.uber.hoodie.cli.HoodieCLI;
 import com.uber.hoodie.cli.HoodiePrintHelper;
 import com.uber.hoodie.cli.TableHeader;
+import com.uber.hoodie.common.model.FileSlice;
 import com.uber.hoodie.common.model.HoodieCommitMetadata;
+import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
+import com.uber.hoodie.common.table.view.HoodieTableFileSystemView;
 import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.common.util.NumericUtils;
 import java.io.IOException;
@@ -61,8 +64,9 @@ public class StatsCommand implements CommandMarker {
       @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
       @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
       @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
-      @CliOption(key = {"headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false")
-      final boolean headerOnly) throws IOException {
+      @CliOption(key = {
+          "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
+      throws IOException {
 
     long totalRecordsUpserted = 0;
     long totalRecordsWritten = 0;
@@ -106,6 +110,65 @@ public class StatsCommand implements CommandMarker {
         s.getStdDev()};
   }
 
+  @CliCommand(value = "stats fileslice latest", help = "File Slice level Size stats")
+  public String fileSliceStats(
+      @CliOption(key = {"partitionPath"}, help = "Partition path", mandatory = true) final String partition,
+      @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
+      @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
+      @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
+      @CliOption(key = {
+          "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
+      throws IOException {
+
+    HoodieTableMetaClient metaClient = new HoodieTableMetaClient(HoodieCLI.tableMetadata.getHadoopConf(),
+        HoodieCLI.tableMetadata.getBasePath());
+    HoodieTableFileSystemView fileSystemView = new HoodieTableFileSystemView(metaClient,
+        metaClient.getActiveTimeline().getCommitsAndCompactionTimeline());
+    HoodieInstant latestInstant = metaClient.getActiveTimeline().getCommitsAndCompactionTimeline().lastInstant().get();
+    List<FileSlice> latest = fileSystemView.getLatestMergedFileSlicesBeforeOrOn(partition, latestInstant.getTimestamp())
+        .collect(Collectors.toList());
+    List<Comparable[]> rows = new ArrayList<>();
+    for (FileSlice fSlice : latest) {
+      Long dataFileSize = new Long(-1);
+      if (fSlice.getDataFile().isPresent()) {
+        dataFileSize = fSlice.getDataFile().get().getFileSize();
+      }
+
+      long logFilesTotalSize = fSlice.getLogFiles().filter(f -> f.getFileSize().isPresent())
+          .mapToLong(f -> f.getFileSize().get()).sum();
+
+      double logToBaseRatio = dataFileSize > 0 ? logFilesTotalSize / (dataFileSize * 1.0) : -1;
+      Comparable[] row = new Comparable[7];
+      int idx = 0;
+      row[idx++] = partition;
+      row[idx++] = fSlice.getFileId();
+      row[idx++] = fSlice.getBaseInstantTime();
+      row[idx++] = dataFileSize;
+      row[idx++] = fSlice.getLogFiles().count();
+      row[idx++] = logFilesTotalSize;
+      row[idx++] = logToBaseRatio;
+      rows.add(row);
+    }
+
+    Function<Object, String> converterFunction = entry -> {
+      return NumericUtils.humanReadableByteCount((Double.valueOf(entry.toString())));
+    };
+    Map<String, Function<Object, String>> fieldNameToConverterMap = new HashMap<>();
+    fieldNameToConverterMap.put("Base File Size", converterFunction);
+    fieldNameToConverterMap.put("Total Log Files Size", converterFunction);
+
+    TableHeader header = new TableHeader()
+        .addTableHeaderField("Partition")
+        .addTableHeaderField("FileId")
+        .addTableHeaderField("BaseInstant")
+        .addTableHeaderField("Base File Size")
+        .addTableHeaderField("Number of Log Files")
+        .addTableHeaderField("Total Log Files Size")
+        .addTableHeaderField("Log To Base Ratio");
+
+    return HoodiePrintHelper.print(header, fieldNameToConverterMap, sortByField, descending, limit, headerOnly, rows);
+  }
+
   @CliCommand(value = "stats filesizes", help = "File Sizes. Display summary stats on sizes of files")
   public String fileSizeStats(
       @CliOption(key = {"partitionPath"},
@@ -113,8 +176,9 @@ public class StatsCommand implements CommandMarker {
       @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
       @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
       @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
-      @CliOption(key = {"headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false")
-      final boolean headerOnly) throws IOException {
+      @CliOption(key = {
+          "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
+      throws IOException {
 
     FileSystem fs = HoodieCLI.fs;
     String globPath = String.format("%s/%s/*", HoodieCLI.tableMetadata.getBasePath(), globRegex);
