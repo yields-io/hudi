@@ -146,6 +146,11 @@ public class HoodieCleanHelper<T extends HoodieRecordPayload<T>> {
           .collect(Collectors.toList());
       for (HoodieFileGroup fileGroup : fileGroups) {
         List<FileSlice> fileSliceList = fileGroup.getAllFileSlices().collect(Collectors.toList());
+
+        if (fileSliceList.isEmpty()) {
+          continue;
+        }
+
         String lastVersion = fileSliceList.get(0).getBaseInstantTime();
         String lastVersionBeforeEarliestCommitToRetain = getLatestVersionBeforeCommit(fileSliceList,
             earliestCommitToRetain);
