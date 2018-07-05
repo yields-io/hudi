@@ -70,6 +70,8 @@ public class HoodieParquetWriter<T extends HoodieRecordPayload, R extends Indexe
     // stream and the actual file size reported by HDFS
     this.maxFileSize = parquetConfig.getMaxFileSize() + Math
         .round(parquetConfig.getMaxFileSize() * parquetConfig.getCompressionRatio());
+    logger.info("BALAJI HoodieParquetWriter.maxFileSize = " + maxFileSize
+        + ", Original =" + parquetConfig.getMaxFileSize() + ", Compression =" + parquetConfig.getCompressionRatio());
     this.writeSupport = parquetConfig.getWriteSupport();
     this.commitTime = commitTime;
     this.schema = schema;

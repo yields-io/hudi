@@ -30,6 +30,8 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.concurrent.Immutable;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.apache.spark.storage.StorageLevel;
 
 /**
@@ -37,6 +39,8 @@ import org.apache.spark.storage.StorageLevel;
  */
 @Immutable
 public class HoodieWriteConfig extends DefaultHoodieConfig {
+
+  private static transient Logger logger = LogManager.getLogger(HoodieStorageConfig.class);
 
   public static final String TABLE_NAME = "hoodie.table.name";
   private static final String BASE_PATH_PROP = "hoodie.base.path";
@@ -298,7 +302,9 @@ public class HoodieWriteConfig extends DefaultHoodieConfig {
    * storage properties
    **/
   public long getParquetMaxFileSize() {
-    return Long.parseLong(props.getProperty(HoodieStorageConfig.PARQUET_FILE_MAX_BYTES));
+    long size =  Long.parseLong(props.getProperty(HoodieStorageConfig.PARQUET_FILE_MAX_BYTES));
+    logger.info("BALAJI HoodieWriteConfig.getParquetMaxFileSize = " + size);
+    return size;
   }
 
   public int getParquetBlockSize() {
