@@ -22,6 +22,7 @@ import com.uber.hoodie.avro.model.HoodieRollbackMetadata;
 import com.uber.hoodie.cli.HoodieCLI;
 import com.uber.hoodie.cli.HoodiePrintHelper;
 import com.uber.hoodie.cli.TableHeader;
+import com.uber.hoodie.common.table.HoodieTableMetaClient;
 import com.uber.hoodie.common.table.HoodieTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
@@ -41,7 +42,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class RollbacksCommand implements CommandMarker {
 
-  @CliCommand(value = "show rollbacks ", help = "Read commits from archived files and show details")
+  @CliCommand(value = "show rollbacks", help = "Read commits from archived files and show details")
   public String showRollbacks(
       @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "10") final Integer limit,
       @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
@@ -49,7 +50,7 @@ public class RollbacksCommand implements CommandMarker {
       @CliOption(key = {
           "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
       throws IOException {
-    HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
+    HoodieActiveTimeline activeTimeline = new RollbackTimeline(HoodieCLI.tableMetadata);
     HoodieTimeline rollback = activeTimeline.getRollbackTimeline().filterCompletedInstants();
 
     final List<Comparable[]> rows = new ArrayList<>();
@@ -79,7 +80,7 @@ public class RollbacksCommand implements CommandMarker {
     return HoodiePrintHelper.print(header, new HashMap<>(), sortByField, descending, limit, headerOnly, rows);
   }
 
-  @CliCommand(value = "show rollback ", help = "Read commits from archived files and show details")
+  @CliCommand(value = "show rollback", help = "Read commits from archived files and show details")
   public String showRollback(
       @CliOption(key = {"instant"}, help = "Ordering", mandatory = true) String rollbackInstant,
       @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "10") final Integer limit,
@@ -88,7 +89,7 @@ public class RollbacksCommand implements CommandMarker {
       @CliOption(key = {
           "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
       throws IOException {
-    HoodieActiveTimeline activeTimeline = HoodieCLI.tableMetadata.getActiveTimeline();
+    HoodieActiveTimeline activeTimeline = new RollbackTimeline(HoodieCLI.tableMetadata);
     final List<Comparable[]> rows = new ArrayList<>();
     HoodieRollbackMetadata metadata = AvroUtils.deserializeAvroMetadata(
         activeTimeline.getInstantDetails(new HoodieInstant(State.COMPLETED, ROLLBACK_ACTION, rollbackInstant))
@@ -114,5 +115,12 @@ public class RollbacksCommand implements CommandMarker {
         .addTableHeaderField("Deleted File")
         .addTableHeaderField("Succeeded");
     return HoodiePrintHelper.print(header, new HashMap<>(), sortByField, descending, limit, headerOnly, rows);
+  }
+
+  class RollbackTimeline extends HoodieActiveTimeline {
+
+    public RollbackTimeline(HoodieTableMetaClient metaClient) {
+      super(metaClient, new String[] { ROLLBACK_EXTENSION });
+    }
   }
 }

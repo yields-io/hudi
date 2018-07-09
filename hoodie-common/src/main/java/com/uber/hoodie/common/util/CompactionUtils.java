@@ -176,9 +176,6 @@ public class CompactionUtils {
       }
       fileIdToPendingCompactionWithInstantMap.put(pair.getKey(), pair.getValue());
     });
-    fileIdToPendingCompactionWithInstantMap.entrySet().stream()
-        .forEach(e -> LOG.info("Pending Compaction File (" + e.getKey() + ") with compaction instant ("
-            + e.getValue().getLeft() + ") and operation (" + e.getValue().getRight() + ")"));
     return fileIdToPendingCompactionWithInstantMap;
   }
 
