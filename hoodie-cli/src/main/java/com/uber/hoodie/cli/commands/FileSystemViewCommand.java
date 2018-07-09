@@ -41,16 +41,17 @@ import java.util.stream.Stream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.springframework.shell.core.CommandMarker;
 import org.springframework.shell.core.annotation.CliCommand;
 import org.springframework.shell.core.annotation.CliOption;
 import org.springframework.stereotype.Component;
 
 @Component
-public class FileSystemViewCommand {
+public class FileSystemViewCommand implements CommandMarker {
 
   @CliCommand(value = "show fsview all", help = "Show entire file-system view")
   public String showAllFileSlices(
-      @CliOption(key = {"partitionPath"},
+      @CliOption(key = {"pathRegex"},
           help = "regex to select files, eg: 2016/08/02", unspecifiedDefaultValue = "*/*/*") String globRegex,
       @CliOption(key = {
           "readOptimizedOnly"}, help = "Max Instant", unspecifiedDefaultValue = "false") boolean readOptimizedOnly,
