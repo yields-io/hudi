@@ -31,6 +31,7 @@ import com.uber.hoodie.exception.HoodieException;
 import com.uber.hoodie.exception.HoodieIOException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -197,7 +198,7 @@ public class CompactionUtils {
         new HoodieTableFileSystemView(metaClient, metaClient.getCommitsAndCompactionTimeline());
     HoodieCompactionPlan plan = getCompactionPlan(metaClient, compactionInstant);
     if (plan.getOperations() != null) {
-      return plan.getOperations().stream().flatMap(op -> {
+      return plan.getOperations().stream().map(CompactionUtils::buildCompactionOperation).flatMap(op -> {
         try {
           return getRenamingActionsForUnschedulingCompactionOperation(metaClient, compactionInstant, op,
               Optional.of(fsView), skipValidation).stream();
@@ -230,7 +231,7 @@ public class CompactionUtils {
     if (allPendingCompactions.containsKey(fileId)) {
       Pair<String, HoodieCompactionOperation> opWithInstant = allPendingCompactions.get(fileId);
       return getRenamingActionsForUnschedulingCompactionOperation(metaClient, opWithInstant.getKey(),
-          opWithInstant.getValue(), fsViewOpt, skipValidation);
+          CompactionUtils.buildCompactionOperation(opWithInstant.getValue()), fsViewOpt, skipValidation);
     }
     throw new HoodieException("FileId " + fileId + " not in pending compaction");
   }
@@ -248,7 +249,7 @@ public class CompactionUtils {
    * compaction.
    */
   public static List<Pair<HoodieLogFile, HoodieLogFile>> getRenamingActionsForUnschedulingCompactionOperation(
-      HoodieTableMetaClient metaClient, String compactionInstant, HoodieCompactionOperation operation,
+      HoodieTableMetaClient metaClient, String compactionInstant, CompactionOperation operation,
       Optional<HoodieTableFileSystemView> fsViewOpt, boolean skipValidation) throws IOException {
     List<Pair<HoodieLogFile, HoodieLogFile>> result = new ArrayList<>();
     HoodieTableFileSystemView fileSystemView = fsViewOpt.isPresent() ? fsViewOpt.get() :
@@ -295,7 +296,7 @@ public class CompactionUtils {
    */
   public static List<Pair<HoodieLogFile, HoodieLogFile>> getRenamingActionsToAlignWithCompactionOperation(
       HoodieTableMetaClient metaClient, String compactionInstant,
-      HoodieCompactionOperation op, Optional<HoodieTableFileSystemView> fsViewOpt) {
+      CompactionOperation op, Optional<HoodieTableFileSystemView> fsViewOpt) {
     HoodieTableFileSystemView fileSystemView = fsViewOpt.isPresent() ? fsViewOpt.get() :
         new HoodieTableFileSystemView(metaClient, metaClient.getCommitsAndCompactionTimeline());
     HoodieInstant lastInstant = metaClient.getCommitsAndCompactionTimeline().lastInstant().get();
@@ -344,7 +345,7 @@ public class CompactionUtils {
    * @param fsViewOpt         File System View
    */
   public static void validateCompactionOperation(HoodieTableMetaClient metaClient, String compactionInstant,
-      HoodieCompactionOperation operation, Optional<HoodieTableFileSystemView> fsViewOpt)
+      CompactionOperation operation, Optional<HoodieTableFileSystemView> fsViewOpt)
       throws IOException {
     HoodieTableFileSystemView fileSystemView = fsViewOpt.isPresent() ? fsViewOpt.get() :
         new HoodieTableFileSystemView(metaClient, metaClient.getCommitsAndCompactionTimeline());
@@ -356,8 +357,9 @@ public class CompactionUtils {
       if (fileSliceOptional.isPresent()) {
         FileSlice fs = fileSliceOptional.get();
         Optional<HoodieDataFile> df = fs.getDataFile();
-        if (operation.getDataFilePath() != null) {
-          String expPath = metaClient.getFs().getFileStatus(new Path(operation.getDataFilePath())).getPath().toString();
+        if (operation.getDataFilePath().isPresent()) {
+          String expPath = metaClient.getFs().getFileStatus(
+              new Path(operation.getDataFilePath().get())).getPath().toString();
           Preconditions.checkArgument(df.isPresent(), "Data File must be present");
           Preconditions.checkArgument(df.get().getPath().equals(expPath),
               "Base Path in operation is specified as " + expPath + " but got path " + df.get().getPath());
@@ -409,7 +411,7 @@ public class CompactionUtils {
         new HoodieTableFileSystemView(metaClient, metaClient.getCommitsAndCompactionTimeline());
 
     if (plan.getOperations() != null) {
-      return plan.getOperations().stream().map(op -> {
+      return plan.getOperations().stream().map(CompactionUtils::buildCompactionOperation).map(op -> {
         try {
           validateCompactionOperation(metaClient, compactionInstant, op, Optional.of(fsView));
           return new CompactionValidationResult(op, true, Optional.empty());
@@ -426,20 +428,20 @@ public class CompactionUtils {
   /**
    * Holds validation result for batch validations
    */
-  public static class CompactionValidationResult {
+  public static class CompactionValidationResult implements Serializable {
 
-    private final HoodieCompactionOperation operation;
+    private final CompactionOperation operation;
     private final boolean success;
     private final Optional<Exception> exception;
 
-    public CompactionValidationResult(HoodieCompactionOperation operation, boolean success,
+    public CompactionValidationResult(CompactionOperation operation, boolean success,
         Optional<Exception> exception) {
       this.operation = operation;
       this.success = success;
       this.exception = exception;
     }
 
-    public HoodieCompactionOperation getOperation() {
+    public CompactionOperation getOperation() {
       return operation;
     }
 

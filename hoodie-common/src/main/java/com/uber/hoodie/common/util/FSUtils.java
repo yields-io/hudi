@@ -129,6 +129,9 @@ public class FSUtils {
     return fullFileName.split("_")[0];
   }
 
+  public static String getBaseInstantFromDataFile(String fullFileName) {
+    return fullFileName.split("_")[2];
+  }
 
   /**
    * Gets all partition paths assuming date partitioning (year, month, day) three levels down.

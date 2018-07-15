@@ -117,7 +117,7 @@ public class RollbacksCommand implements CommandMarker {
     return HoodiePrintHelper.print(header, new HashMap<>(), sortByField, descending, limit, headerOnly, rows);
   }
 
-  class RollbackTimeline extends HoodieActiveTimeline {
+  protected static class RollbackTimeline extends HoodieActiveTimeline {
 
     public RollbackTimeline(HoodieTableMetaClient metaClient) {
       super(metaClient, new String[] { ROLLBACK_EXTENSION });

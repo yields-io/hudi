@@ -52,7 +52,7 @@ public class SparkUtil {
     sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
     sparkConf.set("spark.driver.maxResultSize", "2g");
     sparkConf.set("spark.eventLog.overwrite", "true");
-    sparkConf.set("spark.eventLog.enabled", "false");
+    sparkConf.set("spark.eventLog.enabled", "true");
 
     // Configure hadoop conf
     sparkConf.set("spark.hadoop.mapred.output.compress", "true");

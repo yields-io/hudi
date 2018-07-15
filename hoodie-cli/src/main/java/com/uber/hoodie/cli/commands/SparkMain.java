@@ -40,6 +40,7 @@ public class SparkMain {
    */
   enum SparkCommand {
     ROLLBACK, DEDUPLICATE, ROLLBACK_TO_SAVEPOINT, SAVEPOINT, IMPORT, UPSERT, COMPACT_SCHEDULE, COMPACT_RUN,
+    COMPACT_VALIDATE
   }
 
   public static void main(String[] args) throws Exception {
@@ -76,12 +77,16 @@ public class SparkMain {
       case COMPACT_RUN:
         assert (args.length == 9);
         returnCode = compact(jsc, args[1], args[2], args[3], args[4], args[5], Integer.parseInt(args[6]),
-            args[7], args[8], Integer.parseInt(args[9]), false);
+            args[7], args[8], Integer.parseInt(args[9]), false, args[10], args[11]);
         break;
       case COMPACT_SCHEDULE:
         assert (args.length == 10);
         returnCode = compact(jsc, args[1], args[2], args[3], args[4], args[5], Integer.parseInt(args[6]),
-            args[7], args[8], Integer.parseInt(args[9]), true);
+            args[7], args[8], Integer.parseInt(args[9]), true, args[10], args[11]);
+        break;
+      case COMPACT_VALIDATE:
+        assert (args.length == 10);
+        returnCode = validateCompaction(jsc, args[1], args[2], Integer.parseInt(args[3]), args[4]);
         break;
       default:
         break;
@@ -124,7 +129,8 @@ public class SparkMain {
 
   private static int compact(JavaSparkContext jsc, String basePath, String tableName, String compactionInstant,
       String rowKey, String partitionKey, int parallelism, String schemaFile,
-      String sparkMemory, int retry, boolean schedule) throws Exception {
+      String sparkMemory, int retry, boolean schedule, String strategyClassName, String extraMetadata)
+      throws Exception {
     HoodieCompactor.Config cfg = new HoodieCompactor.Config();
     cfg.basePath = basePath;
     cfg.tableName = tableName;
@@ -134,8 +140,21 @@ public class SparkMain {
     cfg.parallelism = parallelism;
     cfg.schemaFile = schemaFile;
     cfg.runSchedule = schedule;
+    cfg.strategyClassName = strategyClassName;
+    cfg.extraMetadata = extraMetadata;
     jsc.getConf().set("spark.executor.memory", sparkMemory);
     return new HoodieCompactor(cfg).compact(jsc, retry);
+  }
+
+  private static int validateCompaction(JavaSparkContext jsc, String basePath,
+      String compactionInstant, int parallelism, String sparkMemory) throws Exception {
+    HoodieCompactor.Config cfg = new HoodieCompactor.Config();
+    cfg.basePath = basePath;
+    cfg.compactionInstantTime = compactionInstant;
+    cfg.parallelism = parallelism;
+    jsc.getConf().set("spark.executor.memory", sparkMemory);
+    new HoodieCompactor(cfg).doValidate(jsc);
+    return 0;
   }
 
   private static int deduplicatePartitionPath(JavaSparkContext jsc, String duplicatedPartitionPath,

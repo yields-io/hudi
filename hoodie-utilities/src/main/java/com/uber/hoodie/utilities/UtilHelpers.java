@@ -154,7 +154,8 @@ public class UtilHelpers {
    * @param parallelism Parallelism
    */
   public static HoodieWriteClient createHoodieClient(JavaSparkContext jsc, String basePath,
-      String schemaStr, int parallelism, Optional<String> compactionStrategyClass) throws Exception {
+      String schemaStr, int parallelism, Optional<String> compactionStrategyClass, boolean autoCommit)
+      throws Exception {
     HoodieCompactionConfig compactionConfig =
         compactionStrategyClass.map(strategy -> HoodieCompactionConfig.newBuilder().withInlineCompaction(false)
             .withCompactionStrategy(ReflectionUtils.loadClass(strategy))
@@ -163,6 +164,7 @@ public class UtilHelpers {
         .withParallelism(parallelism, parallelism).withSchema(schemaStr)
         .combineInput(true, true)
         .withCompactionConfig(compactionConfig)
+        .withAutoCommit(autoCommit)
         .withIndexConfig(HoodieIndexConfig.newBuilder().withIndexType(HoodieIndex.IndexType.BLOOM).build())
         .build();
     return new HoodieWriteClient(jsc, config);

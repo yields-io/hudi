@@ -233,9 +233,9 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
                   Map<FileStatus, Long> filesToNumBlocksRollback = new HashMap<>();
 
                   // In case all data was inserts and the commit failed, there is no partition stats
-                  //if (commitMetadata.getPartitionToWriteStats().size() == 0) {
-                  super.deleteCleanedFiles(filesToDeletedStatus, partitionPath, filter);
-                  //}
+                  if (commitMetadata.getPartitionToWriteStats().size() == 0) {
+                    super.deleteCleanedFiles(filesToDeletedStatus, partitionPath, filter);
+                  }
 
                   // append rollback blocks for updates
                   if (commitMetadata.getPartitionToWriteStats().containsKey(partitionPath)) {
