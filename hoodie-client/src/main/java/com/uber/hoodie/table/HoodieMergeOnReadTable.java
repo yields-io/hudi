@@ -150,7 +150,8 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
     HoodieRealtimeTableCompactor compactor = new HoodieRealtimeTableCompactor();
     try {
       return compactor.generateCompactionPlan(jsc, this, config, instantTime,
-          new HashSet<>(CompactionUtils.getAllPendingCompactionOperations(metaClient).keySet()));
+          new HashSet<>(((HoodieTableFileSystemView)getRTFileSystemView())
+              .getFileIdToPendingCompactionInstantTimeMap().keySet()));
     } catch (IOException e) {
       throw new HoodieCompactionException("Could not schedule compaction " + config.getBasePath(), e);
     }
@@ -233,9 +234,9 @@ public class HoodieMergeOnReadTable<T extends HoodieRecordPayload> extends
                   Map<FileStatus, Long> filesToNumBlocksRollback = new HashMap<>();
 
                   // In case all data was inserts and the commit failed, there is no partition stats
-                  if (commitMetadata.getPartitionToWriteStats().size() == 0) {
-                    super.deleteCleanedFiles(filesToDeletedStatus, partitionPath, filter);
-                  }
+                  //if (commitMetadata.getPartitionToWriteStats().size() == 0) {
+                  super.deleteCleanedFiles(filesToDeletedStatus, partitionPath, filter);
+                  //}
 
                   // append rollback blocks for updates
                   if (commitMetadata.getPartitionToWriteStats().containsKey(partitionPath)) {

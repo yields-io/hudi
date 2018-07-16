@@ -111,7 +111,7 @@ public class HDFSParquetImporter implements Serializable {
           .initializePathAsHoodieDataset(jsc.hadoopConfiguration(), cfg.targetPath, properties);
 
       HoodieWriteClient client = UtilHelpers.createHoodieClient(jsc, cfg.targetPath, schemaStr,
-          cfg.parallelism, Optional.empty(), true);
+          cfg.parallelism, Optional.empty());
 
       JavaRDD<HoodieRecord<HoodieRecordPayload>> hoodieRecords = buildHoodieRecordsForImport(jsc, schemaStr);
       // Get instant time.

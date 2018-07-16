@@ -30,6 +30,7 @@ import com.uber.hoodie.common.table.log.block.HoodieCorruptBlock;
 import com.uber.hoodie.common.table.log.block.HoodieLogBlock;
 import com.uber.hoodie.common.table.log.block.HoodieLogBlock.HeaderMetadataType;
 import com.uber.hoodie.common.table.log.block.HoodieLogBlock.HoodieLogBlockType;
+
 import com.uber.hoodie.config.HoodieCompactionConfig;
 import com.uber.hoodie.config.HoodieMemoryConfig;
 import com.uber.hoodie.hive.util.SchemaUtil;

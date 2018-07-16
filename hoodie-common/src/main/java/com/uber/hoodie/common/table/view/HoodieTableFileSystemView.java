@@ -278,6 +278,10 @@ public class HoodieTableFileSystemView implements TableFileSystemView,
         .filter(df -> !isDataFileDueToPendingCompaction(df));
   }
 
+  public Map<String, String> getFileIdToPendingCompactionInstantTimeMap() {
+    return fileIdToPendingCompactionInstantTime;
+  }
+
   @Override
   public Stream<FileSlice> getLatestFileSlices(String partitionPath) {
     return getAllFileGroups(partitionPath)

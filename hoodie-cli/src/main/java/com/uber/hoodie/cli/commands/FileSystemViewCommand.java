@@ -19,7 +19,6 @@ package com.uber.hoodie.cli.commands;
 import com.uber.hoodie.cli.HoodieCLI;
 import com.uber.hoodie.cli.HoodiePrintHelper;
 import com.uber.hoodie.cli.TableHeader;
-import com.uber.hoodie.cli.commands.HoodieLogFileCommand.LogFileProcessResult;
 import com.uber.hoodie.common.model.FileSlice;
 import com.uber.hoodie.common.model.HoodieFileGroup;
 import com.uber.hoodie.common.table.HoodieTableMetaClient;
@@ -39,13 +38,9 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.parquet.hadoop.Footer;
-import org.apache.parquet.hadoop.ParquetFileReader;
-import org.apache.parquet.hadoop.metadata.BlockMetaData;
 import org.springframework.shell.core.CommandMarker;
 import org.springframework.shell.core.annotation.CliCommand;
 import org.springframework.shell.core.annotation.CliOption;
@@ -54,21 +49,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class FileSystemViewCommand implements CommandMarker {
 
-  /**
-   * Show file system file-slices
-   *
-   * @param globRegex         Regex to filter files before generating view
-   * @param readOptimizedOnly Use Commit Timeline only
-   * @param maxInstant        Max Instant to be used for filtering file slices
-   * @param includeMaxInstant Max Instant Inclusive
-   * @param includeInflight   Include file-slices belonging to inflight instants
-   * @param excludeCompaction Exclude Compaction Instants
-   * @param limit             Max Number of file-slices to be included
-   * @param sortByField       Column for sorting
-   * @param descending        Descending order while sorting
-   * @param headerOnly        Print only headers
-   */
-  @CliCommand(value = "fsview show all", help = "Show entire file-system view")
+  @CliCommand(value = "show fsview all", help = "Show entire file-system view")
   public String showAllFileSlices(
       @CliOption(key = {"pathRegex"},
           help = "regex to select files, eg: 2016/08/02", unspecifiedDefaultValue = "*/*/*") String globRegex,
@@ -129,21 +110,7 @@ public class FileSystemViewCommand implements CommandMarker {
     return HoodiePrintHelper.print(header, fieldNameToConverterMap, sortByField, descending, limit, headerOnly, rows);
   }
 
-  /**
-   * Show file system's latest file-slices
-   *
-   * @param partition         Partition Path
-   * @param readOptimizedOnly Use Commit Timeline only
-   * @param maxInstant        Max Instant to be used for filtering file slices
-   * @param includeMaxInstant Max Instant Inclusive
-   * @param includeInflight   Include file-slices belonging to inflight instants
-   * @param excludeCompaction Exclude Compaction Instants
-   * @param limit             Max Number of file-slices to be included
-   * @param sortByField       Column for sorting
-   * @param descending        Descending order while sorting
-   * @param headerOnly        Print only headers
-   */
-  @CliCommand(value = "fsview show latest", help = "Show latest file-system view")
+  @CliCommand(value = "show fsview latest", help = "Show latest file-system view")
   public String showLatestFileSlices(
       @CliOption(key = {"partitionPath"},
           help = "valid paritition path", mandatory = true) String partition,
@@ -267,106 +234,5 @@ public class FileSystemViewCommand implements CommandMarker {
     HoodieTimeline filteredTimeline = new HoodieDefaultTimeline(instantsStream,
         (Function<HoodieInstant, Optional<byte[]>> & Serializable) metaClient.getActiveTimeline()::getInstantDetails);
     return new HoodieTableFileSystemView(metaClient, filteredTimeline, statuses);
-  }
-
-  /**
-   * File System View Detailed Stats
-   *
-   * @param partition   Partition for generating file system view
-   * @param limit       Limit the number of fileIds to be displayed
-   * @param sortByField Column name for sorting
-   * @param descending  Descending order
-   * @param headerOnly  Print header only
-   */
-  @CliCommand(value = "fsview detailed stats", help = "File Slice level Size stats")
-  public String fileSliceStats(
-      @CliOption(key = {"partitionPath"}, help = "Partition path", mandatory = true) final String partition,
-      @CliOption(key = {"limit"}, help = "Limit commits", unspecifiedDefaultValue = "-1") final Integer limit,
-      @CliOption(key = {"sortBy"}, help = "Sorting Field", unspecifiedDefaultValue = "") final String sortByField,
-      @CliOption(key = {"desc"}, help = "Ordering", unspecifiedDefaultValue = "false") final boolean descending,
-      @CliOption(key = {
-          "headeronly"}, help = "Print Header Only", unspecifiedDefaultValue = "false") final boolean headerOnly)
-      throws IOException {
-
-    HoodieTableMetaClient metaClient = new HoodieTableMetaClient(HoodieCLI.tableMetadata.getHadoopConf(),
-        HoodieCLI.tableMetadata.getBasePath());
-    HoodieTableFileSystemView fileSystemView = new HoodieTableFileSystemView(metaClient,
-        metaClient.getActiveTimeline().getCommitsAndCompactionTimeline());
-    HoodieInstant latestInstant = metaClient.getActiveTimeline().getCommitsAndCompactionTimeline()
-        .filterCompletedInstants().lastInstant().get();
-    List<FileSlice> latest = fileSystemView.getLatestMergedFileSlicesBeforeOrOn(partition, latestInstant.getTimestamp())
-        .collect(Collectors.toList());
-    List<Comparable[]> rows = new ArrayList<>();
-    for (FileSlice fSlice : latest) {
-      Long dataFileSize = new Long(-1);
-      Long numRowsInParquet = new Long(-1);
-      if (fSlice.getDataFile().isPresent()) {
-        dataFileSize = fSlice.getDataFile().get().getFileSize();
-        numRowsInParquet = getRowCount(fSlice.getDataFile().get().getFileStatus(), metaClient.getHadoopConf());
-      }
-
-      long logFilesTotalSize = fSlice.getLogFiles().filter(f -> f.getFileSize().isPresent())
-          .mapToLong(f -> f.getFileSize().get()).sum();
-      List<String> logFilePaths = fSlice.getLogFiles()
-          .map(lf -> lf.getPath().toString()).collect(Collectors.toList());
-      LogFileProcessResult result = HoodieLogFileCommand.processLogFile(logFilePaths, metaClient.getFs());
-      double logToBaseRatio = dataFileSize > 0 ? logFilesTotalSize / (dataFileSize * 1.0) : -1;
-      Comparable[] row = new Comparable[10];
-      int idx = 0;
-      row[idx++] = partition;
-      row[idx++] = fSlice.getFileId();
-      row[idx++] = fSlice.getBaseInstantTime();
-      row[idx++] = dataFileSize;
-      row[idx++] = fSlice.getLogFiles().count();
-      row[idx++] = logFilesTotalSize;
-      row[idx++] = logToBaseRatio;
-      row[idx++] = numRowsInParquet;
-      row[idx++] = result.totalRecordsCount;
-      row[idx++] = numRowsInParquet > 0 ? (result.totalRecordsCount * 1.0) / numRowsInParquet : -1;
-
-      rows.add(row);
-    }
-
-    Function<Object, String> converterFunction = entry -> {
-      return NumericUtils.humanReadableByteCount((Double.valueOf(entry.toString())));
-    };
-    Function<Object, String> roundFunction = entry -> {
-      return String.format("%.5f", entry);
-    };
-    Map<String, Function<Object, String>> fieldNameToConverterMap = new HashMap<>();
-    fieldNameToConverterMap.put("Base File Size", converterFunction);
-    fieldNameToConverterMap.put("Total Log Files Size", converterFunction);
-    fieldNameToConverterMap.put("Num Rows Ratio", roundFunction);
-
-    TableHeader header = new TableHeader()
-        .addTableHeaderField("Partition")
-        .addTableHeaderField("FileId")
-        .addTableHeaderField("BaseInstant")
-        .addTableHeaderField("Base File Size")
-        .addTableHeaderField("Number of Log Files")
-        .addTableHeaderField("Total Log Files Size")
-        .addTableHeaderField("Log To Base Ratio")
-        .addTableHeaderField("Num Rows in Base File")
-        .addTableHeaderField("Num Rows in Log Files")
-        .addTableHeaderField("Num Rows Ratio");
-
-    return HoodiePrintHelper.print(header, fieldNameToConverterMap, sortByField, descending, limit, headerOnly, rows);
-  }
-
-  /**
-   * Fetch Parquet row count
-   * @param fs
-   * @param conf
-   * @return
-   * @throws IOException
-   */
-  private static long getRowCount(FileStatus fs, Configuration conf) throws IOException {
-    long rowCount = 0;
-    for (Footer f : ParquetFileReader.readFooters(conf, fs, false)) {
-      for (BlockMetaData b : f.getParquetMetadata().getBlocks()) {
-        rowCount += b.getRowCount();
-      }
-    }
-    return rowCount;
   }
 }

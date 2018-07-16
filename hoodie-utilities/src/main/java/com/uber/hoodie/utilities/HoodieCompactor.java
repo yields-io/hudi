@@ -20,29 +20,19 @@ package com.uber.hoodie.utilities;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
 import com.uber.hoodie.HoodieWriteClient;
 import com.uber.hoodie.WriteStatus;
-import com.uber.hoodie.common.table.HoodieTableMetaClient;
-import com.uber.hoodie.common.util.CompactionUtils;
-import com.uber.hoodie.common.util.CompactionUtils.CompactionValidationException;
-import com.uber.hoodie.common.util.CompactionUtils.CompactionValidationResult;
 import com.uber.hoodie.common.util.FSUtils;
-import com.uber.hoodie.exception.HoodieIOException;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
 
-public class HoodieCompactor implements Serializable {
+public class HoodieCompactor {
 
   private static volatile Logger logger = LogManager.getLogger(HDFSParquetImporter.class);
   private final Config cfg;
@@ -84,10 +74,6 @@ public class HoodieCompactor implements Serializable {
     public Boolean runSchedule = false;
     @Parameter(names = {"--strategy", "-st"}, description = "Stratgey Class", required = false)
     public String strategyClassName = null;
-    @Parameter(names = {"--extraMetadata", "-e"}, description = "Extra Metadata", required = false)
-    public String extraMetadata = null;
-    @Parameter(names = {"--outputPath", "-o"}, description = "Extra Metadata", required = false)
-    public String outputPath = "/tmp";
     @Parameter(names = {"--help", "-h"}, help = true)
     public Boolean help = false;
   }
@@ -104,6 +90,7 @@ public class HoodieCompactor implements Serializable {
   }
 
   public int compact(JavaSparkContext jsc, int retry) {
+    this.fs = FSUtils.getFs(cfg.basePath, jsc.hadoopConfiguration());
     int ret = -1;
     try {
       do {
@@ -123,54 +110,20 @@ public class HoodieCompactor implements Serializable {
   }
 
   private int doCompact(JavaSparkContext jsc) throws Exception {
-    this.fs = FSUtils.getFs(cfg.basePath, jsc.hadoopConfiguration());
     //Get schema.
     String schemaStr = UtilHelpers.parseSchema(fs, cfg.schemaFile);
     HoodieWriteClient client = UtilHelpers.createHoodieClient(jsc, cfg.basePath, schemaStr, cfg.parallelism,
-        Optional.empty(), false);
+        Optional.empty());
     JavaRDD<WriteStatus> writeResponse = client.compact(cfg.compactionInstantTime);
-    int result = UtilHelpers.handleErrors(jsc, cfg.compactionInstantTime, writeResponse);
-    if (result == 0) {
-      // Success
-      client.commitCompaction(cfg.compactionInstantTime, writeResponse,
-          Optional.of(cfg.extraMetadata.getBytes()));
-    }
-    return result;
+    return UtilHelpers.handleErrors(jsc, cfg.compactionInstantTime, writeResponse);
   }
 
   private int doSchedule(JavaSparkContext jsc) throws Exception {
     //Get schema.
     String schemaStr = UtilHelpers.parseSchema(fs, cfg.schemaFile);
     HoodieWriteClient client = UtilHelpers.createHoodieClient(jsc, cfg.basePath, schemaStr, cfg.parallelism,
-        Optional.of(cfg.strategyClassName), true);
-    client.scheduleCompactionWithTime(cfg.compactionInstantTime, Optional.of(cfg.extraMetadata.getBytes()));
+        Optional.of(cfg.strategyClassName));
+    client.scheduleCompactionWithTime(cfg.compactionInstantTime, Optional.empty());
     return 0;
-  }
-
-  public void doValidate(JavaSparkContext jsc) throws Exception {
-    this.fs = FSUtils.getFs(cfg.basePath, jsc.hadoopConfiguration());
-    HoodieTableMetaClient metaClient =
-        new HoodieTableMetaClient(jsc.hadoopConfiguration(), cfg.basePath, true);
-    Path outputPath = new Path(cfg.outputPath + "/" + "hoodie/cli/compaction/validation/"
-        + cfg.compactionInstantTime + "/" + System.currentTimeMillis());
-
-    Preconditions.checkArgument(!fs.exists(outputPath), "Output Directory not expected to exist");
-    fs.mkdirs(outputPath.getParent());
-
-    jsc.parallelize(CompactionUtils.getCompactionPlan(metaClient, cfg.compactionInstantTime).getOperations().stream()
-        .map(CompactionUtils::buildCompactionOperation).collect(Collectors.toList()))
-        .map(op -> {
-          try {
-            CompactionUtils.validateCompactionOperation(metaClient, cfg.compactionInstantTime, op, Optional.empty());
-            return new CompactionValidationResult(op, true, Optional.empty());
-          } catch (IOException e) {
-            throw new HoodieIOException(e.getMessage(), e);
-          } catch (CompactionValidationException | IllegalArgumentException e) {
-            return new CompactionValidationResult(op, false, Optional.of(e));
-          }
-        }).map(vr -> {
-          return new ObjectMapper().writeValueAsString(vr);
-        }).coalesce(1).saveAsTextFile(outputPath.toString());
-    logger.info("Validation result in :" + outputPath);
   }
 }
