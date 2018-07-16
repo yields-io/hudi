@@ -781,6 +781,8 @@ public class TestMergeOnReadTable {
     writeClient.commit(newCommitTime, statuses);
 
     // rollback a successful commit
+    // Sleep for small interval to force a new rollback start time.
+    Thread.sleep(5);
     writeClient.rollback(newCommitTime);
     final HoodieTableMetaClient metaClient = new HoodieTableMetaClient(jsc.hadoopConfiguration(), basePath);
     HoodieTable table = HoodieTable.getHoodieTable(metaClient, config, jsc);
