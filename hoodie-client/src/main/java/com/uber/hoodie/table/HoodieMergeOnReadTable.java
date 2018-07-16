@@ -37,7 +37,6 @@ import com.uber.hoodie.common.table.log.block.HoodieLogBlock.HeaderMetadataType;
 import com.uber.hoodie.common.table.timeline.HoodieActiveTimeline;
 import com.uber.hoodie.common.table.timeline.HoodieInstant;
 import com.uber.hoodie.common.table.view.HoodieTableFileSystemView;
-import com.uber.hoodie.common.util.CompactionUtils;
 import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.config.HoodieWriteConfig;
 import com.uber.hoodie.exception.HoodieCompactionException;
