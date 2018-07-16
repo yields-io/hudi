@@ -18,6 +18,12 @@
 
 package com.uber.hoodie.hadoop.realtime;
 
+import com.uber.hoodie.common.model.HoodieLogFile;
+import com.uber.hoodie.common.table.log.HoodieLogFormat;
+import com.uber.hoodie.common.table.log.HoodieLogFormat.Reader;
+import com.uber.hoodie.common.table.log.block.HoodieAvroDataBlock;
+import com.uber.hoodie.common.table.log.block.HoodieLogBlock;
+import com.uber.hoodie.common.util.FSUtils;
 import com.uber.hoodie.exception.HoodieException;
 import com.uber.hoodie.exception.HoodieIOException;
 import java.io.IOException;
@@ -35,6 +41,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
@@ -167,7 +174,10 @@ public abstract class AbstractRealtimeRecordReader {
           .add(new Schema.Field(field.name(), field.schema(), field.doc(), field.defaultValue()));
     }
 
-    return Schema.createRecord(projectedFields);
+    Schema projectedSchema = Schema
+        .createRecord(writeSchema.getName(), writeSchema.getDoc(), writeSchema.getNamespace(), writeSchema.isError());
+    projectedSchema.setFields(projectedFields);
+    return projectedSchema;
   }
 
   /**
@@ -179,6 +189,7 @@ public abstract class AbstractRealtimeRecordReader {
     if (value == null) {
       return NullWritable.get();
     }
+    Writable[] wrapperWritable;
 
     switch (schema.getType()) {
       case STRING:
@@ -214,7 +225,8 @@ public abstract class AbstractRealtimeRecordReader {
         for (Object obj : arrayValue) {
           values2[index2++] = avroToArrayWritable(obj, schema.getElementType());
         }
-        return new ArrayWritable(Writable.class, values2);
+        wrapperWritable = new Writable[]{new ArrayWritable(Writable.class, values2)};
+        return new ArrayWritable(Writable.class, wrapperWritable);
       case MAP:
         Map mapValue = (Map) value;
         Writable[] values3 = new Writable[mapValue.size()];
@@ -226,7 +238,8 @@ public abstract class AbstractRealtimeRecordReader {
           mapValues[1] = avroToArrayWritable(mapEntry.getValue(), schema.getValueType());
           values3[index3++] = new ArrayWritable(Writable.class, mapValues);
         }
-        return new ArrayWritable(Writable.class, values3);
+        wrapperWritable = new Writable[]{new ArrayWritable(Writable.class, values3)};
+        return new ArrayWritable(Writable.class, wrapperWritable);
       case UNION:
         List<Schema> types = schema.getTypes();
         if (types.size() != 2) {
@@ -248,12 +261,32 @@ public abstract class AbstractRealtimeRecordReader {
     }
   }
 
+  public static Schema readSchemaFromLogFile(FileSystem fs, Path path) throws IOException {
+    Reader reader = HoodieLogFormat.newReader(fs, new HoodieLogFile(path), null);
+    HoodieAvroDataBlock lastBlock = null;
+    while (reader.hasNext()) {
+      HoodieLogBlock block = reader.next();
+      if (block instanceof HoodieAvroDataBlock) {
+        lastBlock = (HoodieAvroDataBlock) block;
+      }
+    }
+    if (lastBlock != null) {
+      return lastBlock.getSchema();
+    }
+    return null;
+  }
+
   /**
    * Goes through the log files and populates a map with latest version of each key logged, since
    * the base split was written.
    */
   private void init() throws IOException {
     writerSchema = new AvroSchemaConverter().convert(baseFileSchema);
+    if (split.getDeltaFilePaths().size() > 0) {
+      String logPath = split.getDeltaFilePaths().get(split.getDeltaFilePaths().size() - 1);
+      FileSystem fs = FSUtils.getFs(logPath, jobConf);
+      writerSchema = readSchemaFromLogFile(fs, new Path(logPath));
+    }
     List<String> projectionFields = orderFields(
         jobConf.get(ColumnProjectionUtils.READ_COLUMN_NAMES_CONF_STR),
         jobConf.get(ColumnProjectionUtils.READ_COLUMN_IDS_CONF_STR),
