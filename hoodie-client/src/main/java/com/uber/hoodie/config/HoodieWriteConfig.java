@@ -303,7 +303,6 @@ public class HoodieWriteConfig extends DefaultHoodieConfig {
    **/
   public long getParquetMaxFileSize() {
     long size =  Long.parseLong(props.getProperty(HoodieStorageConfig.PARQUET_FILE_MAX_BYTES));
-    logger.info("BALAJI HoodieWriteConfig.getParquetMaxFileSize = " + size);
     return size;
   }
 

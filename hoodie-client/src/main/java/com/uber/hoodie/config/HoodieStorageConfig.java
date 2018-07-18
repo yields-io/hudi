@@ -80,7 +80,6 @@ public class HoodieStorageConfig extends DefaultHoodieConfig {
     }
 
     public Builder limitFileSize(long maxFileSize) {
-      logger.info("BALAJI Setting Parquet size in bytes : " + maxFileSize);
       props.setProperty(PARQUET_FILE_MAX_BYTES, String.valueOf(maxFileSize));
       return this;
     }
