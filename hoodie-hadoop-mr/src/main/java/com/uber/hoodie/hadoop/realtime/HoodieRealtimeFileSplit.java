@@ -97,4 +97,5 @@ public class HoodieRealtimeFileSplit extends FileSplit {
       deltaFilePaths.add(readString(in));
     }
   }
+
 }

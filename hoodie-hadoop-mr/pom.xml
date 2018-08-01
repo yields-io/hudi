@@ -86,6 +86,10 @@
       <artifactId>parquet-avro</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>parquet-hadoop-bundle</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.twitter.common</groupId>
       <artifactId>objectsize</artifactId>
       <version>0.0.12</version>
@@ -126,10 +130,33 @@
               <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml
               </dependencyReducedPomLocation>
               <minimizeJar>true</minimizeJar>
+              <relocations>
+                 <relocation>
+                   <pattern>parquet.avro</pattern>
+                   <shadedPattern>hide.parquet.avro</shadedPattern>
+                 </relocation>
+                 <relocation>
+                   <pattern>parquet.column</pattern>
+                   <shadedPattern>hide.parquet.column</shadedPattern>
+                 </relocation>
+                 <relocation>
+                   <pattern>parquet.format.</pattern>
+                   <shadedPattern>hide.parquet.format.</shadedPattern>
+                 </relocation>
+                 <relocation>
+                   <pattern>parquet.hadoop.</pattern>
+                   <shadedPattern>hide.parquet.hadoop.</shadedPattern>
+                 </relocation>
+                 <relocation>
+                   <pattern>parquet.schema</pattern>
+                   <shadedPattern>hide.parquet.schema</shadedPattern>
+                 </relocation>
+              </relocations>
               <artifactSet>
                 <includes>
                   <include>com.uber.hoodie:hoodie-common</include>
                   <include>com.twitter:parquet-avro</include>
+                  <include>com.twitter:parquet-hadoop-bundle</include>
                   <include>com.twitter.common:objectsize</include>
                 </includes>
               </artifactSet>

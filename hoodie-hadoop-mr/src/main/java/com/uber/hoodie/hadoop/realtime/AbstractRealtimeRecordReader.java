@@ -38,6 +38,7 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericFixed;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -164,11 +165,26 @@ public abstract class AbstractRealtimeRecordReader {
    * columns
    */
   public static Schema generateProjectionSchema(Schema writeSchema, List<String> fieldNames) {
+    /**
+     * Avro & Presto field names seems to be case sensitive (support fields differing only in case)
+     * whereas Hive/Impala/SparkSQL(default) are case-insensitive. Spark allows this to be configurable
+     * using spark.sql.caseSensitive=true
+     *
+     * For a RT table setup with no delta-files (for a latest file-slice) -> we translate parquet schema to Avro
+     * Here the field-name case is dependent on parquet schema. Hive (1.x/2.x/CDH) translate column projections
+     * to lower-cases
+     *
+     * @vinothchandar : Question : add hoodie-level config to support both behaviors ?
+     */
     List<Schema.Field> projectedFields = new ArrayList<>();
+    Map<String, Schema.Field> schemaFieldsMap = writeSchema.getFields().stream()
+        .map(r -> Pair.of(r.name().toLowerCase(), r)).collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
     for (String fn : fieldNames) {
-      Schema.Field field = writeSchema.getField(fn);
+      Schema.Field field = schemaFieldsMap.get(fn.toLowerCase());
       if (field == null) {
-        throw new HoodieException("Field " + fn + " not found log schema. Query cannot proceed!");
+        throw new HoodieException("Field " + fn + " not found in log schema. Query cannot proceed! "
+            + "Derived Schema Fields: "
+            + schemaFieldsMap.keySet().stream().collect(Collectors.toList()));
       }
       projectedFields
           .add(new Schema.Field(field.name(), field.schema(), field.doc(), field.defaultValue()));
