@@ -174,7 +174,6 @@ public abstract class AbstractRealtimeRecordReader {
      * Here the field-name case is dependent on parquet schema. Hive (1.x/2.x/CDH) translate column projections
      * to lower-cases
      *
-     * @vinothchandar : Question : add hoodie-level config to support both behaviors ?
      */
     List<Schema.Field> projectedFields = new ArrayList<>();
     Map<String, Schema.Field> schemaFieldsMap = writeSchema.getFields().stream()

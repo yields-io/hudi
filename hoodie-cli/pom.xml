@@ -169,7 +169,6 @@
     </dependency>
 
     <dependency>
-      <!-- TODO: Need to refactor to move SchemaUtil.readSchemaFromLogFile from hoodie-hive -->
       <groupId>com.uber.hoodie</groupId>
       <artifactId>hoodie-hive</artifactId>
       <version>${project.version}</version>
