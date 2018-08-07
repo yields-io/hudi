@@ -129,6 +129,7 @@ public class HoodieWriteClient<T extends HoodieRecordPayload> implements Seriali
     this.index = index;
     this.metrics = new HoodieMetrics(config, config.getTableName());
     this.rollbackInFlight = rollbackInFlight;
+    logger.info("BALAJI 2 - Creating hoodie client for basepath : " + clientConfig.getBasePath());
   }
 
   public static SparkConf registerClasses(SparkConf conf) {
