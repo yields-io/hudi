@@ -17,6 +17,7 @@
 package com.uber.hoodie.table;
 
 import com.uber.hoodie.WriteStatus;
+import com.uber.hoodie.avro.model.HoodieCompactionPlan;
 import com.uber.hoodie.avro.model.HoodieSavepointMetadata;
 import com.uber.hoodie.common.HoodieCleanStat;
 import com.uber.hoodie.common.HoodieRollbackStat;
@@ -119,7 +120,8 @@ public abstract class HoodieTable<T extends HoodieRecordPayload> implements Seri
    * Get the real time view of the file system for this table
    */
   public TableFileSystemView.RealtimeView getRTFileSystemView() {
-    return new HoodieTableFileSystemView(metaClient, getCompletedCommitTimeline());
+    return new HoodieTableFileSystemView(metaClient,
+        metaClient.getCommitsAndCompactionTimeline().filterCompletedAndCompactionInstants());
   }
 
   /**
@@ -140,7 +142,7 @@ public abstract class HoodieTable<T extends HoodieRecordPayload> implements Seri
    * Get only the inflights (no-completed) commit timeline
    */
   public HoodieTimeline getInflightCommitTimeline() {
-    return metaClient.getCommitsTimeline().filterInflights();
+    return metaClient.getCommitsTimeline().filterInflightsExcludingCompaction();
   }
 
   /**
@@ -211,10 +213,23 @@ public abstract class HoodieTable<T extends HoodieRecordPayload> implements Seri
       Integer partition, Iterator<HoodieRecord<T>> recordIterator, Partitioner partitioner);
 
   /**
+   * Schedule compaction for the instant time
+   * @param jsc         Spark Context
+   * @param instantTime Instant Time for scheduling compaction
+   * @return
+   */
+  public abstract HoodieCompactionPlan scheduleCompaction(JavaSparkContext jsc, String instantTime);
+
+  /**
    * Run Compaction on the table. Compaction arranges the data so that it is optimized for data
    * access
+   *
+   * @param jsc                   Spark Context
+   * @param compactionInstantTime Instant Time
+   * @param compactionPlan        Compaction Plan
    */
-  public abstract JavaRDD<WriteStatus> compact(JavaSparkContext jsc, String commitTime);
+  public abstract JavaRDD<WriteStatus> compact(JavaSparkContext jsc, String compactionInstantTime,
+      HoodieCompactionPlan compactionPlan);
 
   /**
    * Clean partition paths according to cleaning policy and returns the number of files cleaned.

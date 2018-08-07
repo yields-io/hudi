@@ -19,6 +19,7 @@ package com.uber.hoodie.table;
 import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
 import com.uber.hoodie.WriteStatus;
+import com.uber.hoodie.avro.model.HoodieCompactionPlan;
 import com.uber.hoodie.common.HoodieCleanStat;
 import com.uber.hoodie.common.HoodieRollbackStat;
 import com.uber.hoodie.common.model.HoodieCommitMetadata;
@@ -162,30 +163,36 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
   }
 
   @Override
-  public JavaRDD<WriteStatus> compact(JavaSparkContext jsc, String commitTime) {
+  public HoodieCompactionPlan scheduleCompaction(JavaSparkContext jsc, String commitTime) {
     throw new HoodieNotSupportedException("Compaction is not supported from a CopyOnWrite table");
   }
 
-  public Iterator<List<WriteStatus>> handleUpdate(String commitTime, String fileLoc,
-      Iterator<HoodieRecord<T>> recordItr) throws IOException {
-    // these are updates
-    HoodieMergeHandle upsertHandle = getUpdateHandle(commitTime, fileLoc, recordItr);
-    return handleUpdateInternal(upsertHandle, commitTime, fileLoc);
+  @Override
+  public JavaRDD<WriteStatus> compact(JavaSparkContext jsc, String compactionInstantTime,
+      HoodieCompactionPlan compactionPlan) {
+    throw new HoodieNotSupportedException("Compaction is not supported from a CopyOnWrite table");
   }
 
-  public Iterator<List<WriteStatus>> handleUpdate(String commitTime, String fileLoc,
-      Map<String, HoodieRecord<T>> keyToNewRecords) throws IOException {
+  public Iterator<List<WriteStatus>> handleUpdate(String commitTime, String fileId,
+      Iterator<HoodieRecord<T>> recordItr) throws IOException {
     // these are updates
-    HoodieMergeHandle upsertHandle = getUpdateHandle(commitTime, fileLoc, keyToNewRecords);
-    return handleUpdateInternal(upsertHandle, commitTime, fileLoc);
+    HoodieMergeHandle upsertHandle = getUpdateHandle(commitTime, fileId, recordItr);
+    return handleUpdateInternal(upsertHandle, commitTime, fileId);
+  }
+
+  public Iterator<List<WriteStatus>> handleUpdate(String commitTime, String fileId,
+      Map<String, HoodieRecord<T>> keyToNewRecords, Optional<HoodieDataFile> dataFileOpt) throws IOException {
+    // these are updates
+    HoodieMergeHandle upsertHandle = getUpdateHandle(commitTime, fileId, keyToNewRecords, dataFileOpt);
+    return handleUpdateInternal(upsertHandle, commitTime, fileId);
   }
 
   protected Iterator<List<WriteStatus>> handleUpdateInternal(HoodieMergeHandle upsertHandle,
-      String commitTime, String fileLoc)
+      String commitTime, String fileId)
       throws IOException {
     if (upsertHandle.getOldFilePath() == null) {
       throw new HoodieUpsertException(
-          "Error in finding the old file path at commit " + commitTime + " at fileLoc: " + fileLoc);
+          "Error in finding the old file path at commit " + commitTime + " for fileId: " + fileId);
     } else {
       AvroReadSupport.setAvroReadSchema(getHadoopConf(), upsertHandle.getSchema());
       ParquetReader<IndexedRecord> reader = AvroParquetReader.builder(upsertHandle.getOldFilePath())
@@ -215,14 +222,14 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
         .iterator();
   }
 
-  protected HoodieMergeHandle getUpdateHandle(String commitTime, String fileLoc,
+  protected HoodieMergeHandle getUpdateHandle(String commitTime, String fileId,
       Iterator<HoodieRecord<T>> recordItr) {
-    return new HoodieMergeHandle<>(config, commitTime, this, recordItr, fileLoc);
+    return new HoodieMergeHandle<>(config, commitTime, this, recordItr, fileId);
   }
 
-  protected HoodieMergeHandle getUpdateHandle(String commitTime, String fileLoc,
-      Map<String, HoodieRecord<T>> keyToNewRecords) {
-    return new HoodieMergeHandle<>(config, commitTime, this, keyToNewRecords, fileLoc);
+  protected HoodieMergeHandle getUpdateHandle(String commitTime, String fileId,
+      Map<String, HoodieRecord<T>> keyToNewRecords, Optional<HoodieDataFile> dataFileToBeMerged) {
+    return new HoodieMergeHandle<>(config, commitTime, this, keyToNewRecords, fileId, dataFileToBeMerged);
   }
 
   public Iterator<List<WriteStatus>> handleInsert(String commitTime,
