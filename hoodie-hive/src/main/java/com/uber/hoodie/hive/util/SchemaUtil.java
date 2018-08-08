@@ -27,9 +27,11 @@ import com.uber.hoodie.hive.HiveSyncConfig;
 import com.uber.hoodie.hive.HoodieHiveSyncException;
 import com.uber.hoodie.hive.SchemaDifference;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
@@ -388,17 +390,18 @@ public class SchemaUtil {
     Map<String, String> hiveSchema = convertParquetSchemaToHiveSchema(storageSchema);
     String columns = generateSchemaString(storageSchema);
 
-    StringBuilder partitionFields = new StringBuilder();
+    List<String> partitionFields = new ArrayList<>();
     for (String partitionKey : config.partitionFields) {
-      partitionFields.append(partitionKey).append(" ")
-          .append(getPartitionKeyType(hiveSchema, partitionKey));
+      partitionFields.add(new StringBuilder().append(partitionKey).append(" ")
+          .append(getPartitionKeyType(hiveSchema, partitionKey)).toString());
     }
 
+    String paritionsStr = partitionFields.stream().collect(Collectors.joining(","));
     StringBuilder sb = new StringBuilder("CREATE EXTERNAL TABLE  IF NOT EXISTS ");
     sb = sb.append(config.databaseName).append(".").append(config.tableName);
     sb = sb.append("( ").append(columns).append(")");
     if (!config.partitionFields.isEmpty()) {
-      sb = sb.append(" PARTITIONED BY (").append(partitionFields).append(")");
+      sb = sb.append(" PARTITIONED BY (").append(paritionsStr).append(")");
     }
     sb = sb.append(" ROW FORMAT SERDE '").append(serdeClass).append("'");
     sb = sb.append(" STORED AS INPUTFORMAT '").append(inputFormatClass).append("'");
