@@ -24,6 +24,7 @@ import com.uber.hoodie.common.table.log.HoodieLogFormat.Reader;
 import com.uber.hoodie.common.table.log.block.HoodieAvroDataBlock;
 import com.uber.hoodie.common.table.log.block.HoodieLogBlock;
 import com.uber.hoodie.common.util.FSUtils;
+import com.uber.hoodie.common.util.HoodieAvroUtils;
 import com.uber.hoodie.exception.HoodieException;
 import com.uber.hoodie.exception.HoodieIOException;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import org.apache.avro.Schema;
+import org.apache.avro.Schema.Field;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericFixed;
 import org.apache.avro.generic.GenericRecord;
@@ -52,7 +54,6 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
@@ -127,10 +128,15 @@ public abstract class AbstractRealtimeRecordReader {
 
     StringBuilder builder = new StringBuilder();
     Writable[] values = writable.get();
-    builder.append(String.format("Size: %s,", values.length));
+    builder.append(String.format("(Size: %s)[", values.length));
     for (Writable w : values) {
-      builder.append(w + " ");
+      if (w instanceof ArrayWritable) {
+        builder.append(arrayWritableToString((ArrayWritable) w) + " ");
+      } else {
+        builder.append(w + " ");
+      }
     }
+    builder.append("]");
     return builder.toString();
   }
 
@@ -138,12 +144,9 @@ public abstract class AbstractRealtimeRecordReader {
    * Given a comma separated list of field names and positions at which they appear on Hive, return
    * a ordered list of field names, that can be passed onto storage.
    */
-  public static List<String> orderFields(String fieldNameCsv, String fieldOrderCsv,
-      String partitioningFieldsCsv) {
+  private static List<String> orderFields(String fieldNameCsv, String fieldOrderCsv, List<String> partitioningFields) {
 
     String[] fieldOrders = fieldOrderCsv.split(",");
-    Set<String> partitioningFields = Arrays.stream(partitioningFieldsCsv.split(","))
-        .collect(Collectors.toSet());
     List<String> fieldNames = Arrays.stream(fieldNameCsv.split(","))
         .filter(fn -> !partitioningFields.contains(fn)).collect(Collectors.toList());
 
@@ -201,9 +204,14 @@ public abstract class AbstractRealtimeRecordReader {
   public static Writable avroToArrayWritable(Object value, Schema schema) {
 
     // if value is null, make a NullWritable
+    // Hive 2.x does not like NullWritable
     if (value == null) {
-      return NullWritable.get();
+
+      return null;
+      //return NullWritable.get();
     }
+
+
     Writable[] wrapperWritable;
 
     switch (schema.getType()) {
@@ -222,7 +230,8 @@ public abstract class AbstractRealtimeRecordReader {
       case BOOLEAN:
         return new BooleanWritable((Boolean) value);
       case NULL:
-        return NullWritable.get();
+        return null;
+        // return NullWritable.get();
       case RECORD:
         GenericRecord record = (GenericRecord) value;
         Writable[] values1 = new Writable[schema.getFields().size()];
@@ -292,20 +301,45 @@ public abstract class AbstractRealtimeRecordReader {
   }
 
   /**
+   * Hive implementation of ParquetRecordReader results in partition columns not present in the original parquet file
+   * to also be part of the projected schema. Hive expects the record reader implementation to return the row in its
+   * entirety (with un-projected column having null values). As we use writerSchema for this, make sure writer schema
+   * also includes partition columns
+   * @param schema Schema to be changed
+   * @return
+   */
+  private static Schema addPartitionFields(Schema schema, List<String> partitioningFields) {
+    final Set<String> firstLevelFieldNames = schema.getFields().stream().map(Field::name)
+        .map(String::toLowerCase).collect(Collectors.toSet());
+    List<String> fieldsToAdd = partitioningFields.stream().map(String::toLowerCase)
+        .filter(x -> !firstLevelFieldNames.contains(x)).collect(Collectors.toList());
+
+    return HoodieAvroUtils.appendNullSchemaFields(schema, fieldsToAdd);
+  }
+
+  /**
    * Goes through the log files and populates a map with latest version of each key logged, since
    * the base split was written.
    */
   private void init() throws IOException {
     writerSchema = new AvroSchemaConverter().convert(baseFileSchema);
+    List<String> fieldNames = writerSchema.getFields().stream().map(Field::name).collect(Collectors.toList());
     if (split.getDeltaFilePaths().size() > 0) {
       String logPath = split.getDeltaFilePaths().get(split.getDeltaFilePaths().size() - 1);
       FileSystem fs = FSUtils.getFs(logPath, jobConf);
       writerSchema = readSchemaFromLogFile(fs, new Path(logPath));
+      fieldNames = writerSchema.getFields().stream().map(Field::name).collect(Collectors.toList());
     }
+
+    // Add partitioning fields to writer schema for resulting row to contain null values for these fields
+    List<String> partitioningFields = Arrays.stream(
+        jobConf.get("partition_columns", "").split(",")).collect(Collectors.toList());
+    writerSchema = addPartitionFields(writerSchema, partitioningFields);
+
     List<String> projectionFields = orderFields(
         jobConf.get(ColumnProjectionUtils.READ_COLUMN_NAMES_CONF_STR),
         jobConf.get(ColumnProjectionUtils.READ_COLUMN_IDS_CONF_STR),
-        jobConf.get("partition_columns", ""));
+        partitioningFields);
     // TODO(vc): In the future, the reader schema should be updated based on log files & be able
     // to null out fields not present before
     readerSchema = generateProjectionSchema(writerSchema, projectionFields);

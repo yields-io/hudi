@@ -35,7 +35,7 @@
       <groupId>com.uber.hoodie</groupId>
       <artifactId>hoodie-common</artifactId>
       <version>${project.version}</version>
-     <classifier>tests</classifier>
+      <classifier>tests</classifier>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
@@ -61,21 +61,12 @@
       <artifactId>hadoop-hdfs</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.hive</groupId>
-      <artifactId>hive-exec</artifactId>
-    </dependency>
-    <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hive</groupId>
-      <artifactId>hive-jdbc</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.parquet</groupId>
@@ -116,56 +107,60 @@
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.4</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml
-              </dependencyReducedPomLocation>
-              <minimizeJar>true</minimizeJar>
-              <relocations>
-                 <relocation>
-                   <pattern>parquet.avro</pattern>
-                   <shadedPattern>hide.parquet.avro</shadedPattern>
-                 </relocation>
-                 <relocation>
-                   <pattern>parquet.column</pattern>
-                   <shadedPattern>hide.parquet.column</shadedPattern>
-                 </relocation>
-                 <relocation>
-                   <pattern>parquet.format.</pattern>
-                   <shadedPattern>hide.parquet.format.</shadedPattern>
-                 </relocation>
-                 <relocation>
-                   <pattern>parquet.hadoop.</pattern>
-                   <shadedPattern>hide.parquet.hadoop.</shadedPattern>
-                 </relocation>
-                 <relocation>
-                   <pattern>parquet.schema</pattern>
-                   <shadedPattern>hide.parquet.schema</shadedPattern>
-                 </relocation>
-              </relocations>
-              <artifactSet>
-                <includes>
-                  <include>com.uber.hoodie:hoodie-common</include>
-                  <include>com.twitter:parquet-avro</include>
-                  <include>com.twitter:parquet-hadoop-bundle</include>
-                  <include>com.twitter.common:objectsize</include>
-                </includes>
-              </artifactSet>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
     </plugins>
   </build>
-
+  <profiles>
+    <profile>
+      <id>hive12</id>
+      <activation>
+        <property>
+          <name>!hive11</name>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>${hive12.groupid}</groupId>
+          <artifactId>hive-jdbc</artifactId>
+          <version>${hive12.version}</version>
+          <exclusions>
+            <exclusion>
+              <groupId>commons-logging</groupId>
+              <artifactId>commons-logging</artifactId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+        <dependency>
+          <groupId>${hive12.groupid}</groupId>
+          <artifactId>hive-exec</artifactId>
+          <version>${hive12.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>hive11</id>
+      <activation>
+        <property>
+          <name>hive11</name>
+        </property>
+      </activation>
+      <dependencies>
+       <dependency>
+          <groupId>${hive11.groupid}</groupId>
+          <artifactId>hive-jdbc</artifactId>
+          <version>${hive11.version}</version>
+          <exclusions>
+            <exclusion>
+              <groupId>commons-logging</groupId>
+              <artifactId>commons-logging</artifactId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+        <dependency>
+          <groupId>${hive11.groupid}</groupId>
+          <artifactId>hive-exec</artifactId>
+          <version>${hive11.version}</version>
+        </dependency>
+      </dependencies>
+   </profile>
+  </profiles>
 </project>
