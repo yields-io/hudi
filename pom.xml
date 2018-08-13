@@ -36,6 +36,9 @@
     <module>hoodie-hive</module>
     <module>hoodie-utilities</module>
     <module>hoodie-spark</module>
+    <module>packaging/hoodie-hadoop-mr-bundle</module>
+    <module>packaging/hoodie-hive-bundle</module>
+    <module>packaging/hoodie-spark-bundle</module>
   </modules>
 
   <licenses>
@@ -109,7 +112,10 @@
     <log4j.version>1.2.17</log4j.version>
     <joda.version>2.9.9</joda.version>
     <hadoop.version>2.7.3</hadoop.version>
-    <hive.version>1.2.1</hive.version>
+    <hive12.groupid>org.apache.hive</hive12.groupid>
+    <hive12.version>1.2.1</hive12.version>
+    <hive11.groupid>org.apache.hive</hive11.groupid>
+    <hive11.version>1.1.1</hive11.version>
     <metrics.version>3.1.1</metrics.version>
     <spark.version>2.1.0</spark.version>
     <avro.version>1.7.7</avro.version>
@@ -405,12 +411,6 @@
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>org.apache.hive</groupId>
-        <artifactId>hive-common</artifactId>
-        <version>${hive.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-mapreduce-client-core</artifactId>
         <version>${hadoop.version}</version>
@@ -420,12 +420,6 @@
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-mapreduce-client-common</artifactId>
         <version>${hadoop.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hive</groupId>
-        <artifactId>hive-exec</artifactId>
-        <version>${hive.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -566,22 +560,6 @@
       </dependency>
 
       <dependency>
-        <groupId>org.apache.hive</groupId>
-        <artifactId>hive-jdbc</artifactId>
-        <version>${hive.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.hive</groupId>
-        <artifactId>hive-service</artifactId>
-        <version>${hive.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hive</groupId>
-        <artifactId>hive-metastore</artifactId>
-        <version>${hive.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
         <version>3.4</version>
@@ -620,8 +598,11 @@
     </dependencies>
 
   </dependencyManagement>
-
   <repositories>
+    <repository>
+      <id>Maven repository</id>
+      <url>https://central.maven.org/maven2/</url>
+    </repository>
     <repository>
       <id>cloudera-repo-releases</id>
       <url>https://repository.cloudera.com/artifactory/public/</url>
@@ -633,13 +614,116 @@
       <id>ossrh</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
-    <repository>
+   <repository>
       <id>ossrh</id>
       <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
   </distributionManagement>
 
   <profiles>
+    <profile>
+      <id>hive12</id>
+      <activation>
+        <property>
+          <name>!hive11</name>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>${hive12.groupid}</groupId>
+          <artifactId>hive-service</artifactId>
+          <version>${hive12.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>${hive12.groupid}</groupId>
+          <artifactId>hive-shims</artifactId>
+          <version>${hive12.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>${hive12.groupid}</groupId>
+          <artifactId>hive-jdbc</artifactId>
+          <version>${hive12.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>${hive12.groupid}</groupId>
+          <artifactId>hive-serde</artifactId>
+          <version>${hive12.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>${hive12.groupid}</groupId>
+          <artifactId>hive-metastore</artifactId>
+          <version>${hive12.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>${hive12.groupid}</groupId>
+          <artifactId>hive-common</artifactId>
+          <version>${hive12.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>${hive12.groupid}</groupId>
+          <artifactId>hive-exec</artifactId>
+          <version>${hive12.version}</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>hive11</id>
+      <activation>
+        <property>
+          <name>hive11</name>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.hive</groupId>
+          <artifactId>hive-service</artifactId>
+          <version>${hive11.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hive</groupId>
+          <artifactId>hive-shims</artifactId>
+          <version>${hive11.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hive</groupId>
+          <artifactId>hive-jdbc</artifactId>
+          <version>${hive11.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hive</groupId>
+          <artifactId>hive-serde</artifactId>
+          <version>${hive11.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hive</groupId>
+          <artifactId>hive-metastore</artifactId>
+          <version>${hive11.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hive</groupId>
+          <artifactId>hive-common</artifactId>
+          <version>${hive11.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hive</groupId>
+          <artifactId>hive-exec</artifactId>
+          <version>${hive11.version}</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
     <profile>
       <id>release</id>
       <activation>
@@ -706,7 +790,7 @@
           </plugin>
         </plugins>
       </build>
-    </profile>
+    </profile> 
   </profiles>
 
   <issueManagement>

@@ -324,6 +324,14 @@ public class SchemaUtil {
     return result;
   }
 
+  private static String removeSurroundingTick(String result) {
+    if (result.startsWith("`") && result.endsWith("`")) {
+      result = result.substring(1, result.length() - 1);
+    }
+
+    return result;
+  }
+
   /**
    * Create a 'Map' schema from Parquet map field
    */
@@ -374,11 +382,17 @@ public class SchemaUtil {
   }
 
   public static String generateSchemaString(MessageType storageSchema) throws IOException {
+    return generateSchemaString(storageSchema, new ArrayList<>());
+  }
+
+  public static String generateSchemaString(MessageType storageSchema, List<String> colsToSkip) throws IOException {
     Map<String, String> hiveSchema = convertParquetSchemaToHiveSchema(storageSchema);
     StringBuilder columns = new StringBuilder();
     for (Map.Entry<String, String> hiveSchemaEntry : hiveSchema.entrySet()) {
-      columns.append(hiveSchemaEntry.getKey()).append(" ");
-      columns.append(hiveSchemaEntry.getValue()).append(", ");
+      if (!colsToSkip.contains(removeSurroundingTick(hiveSchemaEntry.getKey()))) {
+        columns.append(hiveSchemaEntry.getKey()).append(" ");
+        columns.append(hiveSchemaEntry.getValue()).append(", ");
+      }
     }
     // Remove the last ", "
     columns.delete(columns.length() - 2, columns.length());
@@ -388,7 +402,7 @@ public class SchemaUtil {
   public static String generateCreateDDL(MessageType storageSchema, HiveSyncConfig config,
       String inputFormatClass, String outputFormatClass, String serdeClass) throws IOException {
     Map<String, String> hiveSchema = convertParquetSchemaToHiveSchema(storageSchema);
-    String columns = generateSchemaString(storageSchema);
+    String columns = generateSchemaString(storageSchema, config.partitionFields);
 
     List<String> partitionFields = new ArrayList<>();
     for (String partitionKey : config.partitionFields) {

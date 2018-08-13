@@ -27,9 +27,12 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 import org.apache.avro.Schema;
+import org.apache.avro.Schema.Field;
+import org.apache.avro.Schema.Type;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -48,6 +51,8 @@ public class HoodieAvroUtils {
   private static final Schema METADATA_FIELD_SCHEMA = Schema.createUnion(Arrays.asList(
       Schema.create(Schema.Type.NULL),
       Schema.create(Schema.Type.STRING)));
+
+  private static final Schema NULL_FIELD_SCHEMA = Schema.create(Type.NULL);
 
   private static final Schema RECORD_KEY_SCHEMA = initRecordKeySchema();
 
@@ -134,6 +139,26 @@ public class HoodieAvroUtils {
     record.put(HoodieRecord.PARTITION_PATH_METADATA_FIELD, partitionPath);
     record.put(HoodieRecord.RECORD_KEY_METADATA_FIELD, recordKey);
     return record;
+  }
+
+  /**
+   * Add null fields to passed in schema. Caller is responsible for ensuring there is no duplicates.
+   * As different query engines have varying constraints regarding treating the case-sensitivity of fields, its best
+   * to let caller determine that.
+   * @param schema Passed in schema
+   * @param newFieldNames Null Field names to be added
+   * @return
+   */
+  public static Schema appendNullSchemaFields(Schema schema, List<String> newFieldNames) {
+    List<Field> newFields = schema.getFields().stream().map(field -> {
+      return new Schema.Field(field.name(), field.schema(), field.doc(), field.defaultValue());
+    }).collect(Collectors.toList());
+    for (String newField : newFieldNames) {
+      newFields.add(new Schema.Field(newField, METADATA_FIELD_SCHEMA, "", null));
+    }
+    Schema newSchema = Schema.createRecord(schema.getName(), schema.getDoc(), schema.getNamespace(), schema.isError());
+    newSchema.setFields(newFields);
+    return newSchema;
   }
 
   /**
