@@ -1,0 +1,154 @@
+version: "3.5"
+
+services:
+
+  namenode:
+    image: hoodie-hadoop-namenode_2.8.4:latest
+    hostname: namenode
+    container_name: namenode
+    volumes:
+      - namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=hoodie
+    env_file:
+      - ./hadoop.env
+
+  secnamenode:
+    image: hoodie-hadoop-secondarynamenode_2.8.4:latest
+    hostname: secnamenode
+    container_name: secnamenode
+    volumes:
+      - namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=hoodie
+    env_file:
+      - ./hadoop.env
+
+  datanode1:
+    image: hoodie-hadoop-datanode_2.8.4:latest
+    container_name: datanode1
+    hostname: datanode1
+    volumes:
+      - datanode1:/hadoop/dfs/data
+    environment:
+      - CLUSTER_NAME=hoodie
+    env_file:
+      - ./hadoop.env
+    depends_on:
+      - namenode
+
+  datanode2:
+    image: hoodie-hadoop-datanode_2.8.4:latest
+    container_name: datanode2
+    hostname: datanode2
+    volumes:
+      - datanode2:/hadoop/dfs/data
+    environment:
+      - CLUSTER_NAME=hoodie
+    env_file:
+      - ./hadoop.env
+    depends_on:
+      - namenode
+
+  datanode3:
+    image: hoodie-hadoop-datanode_2.8.4:latest
+    container_name: datanode3
+    hostname: datanode3
+    volumes:
+      - datanode3:/hadoop/dfs/data
+    environment:
+      - CLUSTER_NAME=hoodie
+    env_file:
+      - ./hadoop.env
+    depends_on:
+      - namenode
+
+  historyserver:
+    image: hoodie-hadoop-history_2.8.4:latest
+    hostname: historyserver
+    container_name: historyserver
+    volumes:
+      - historyserver:/hadoop/yarn/timeline
+    depends_on:
+      - "namenode"
+    links:
+      - "namenode"
+    ports:
+      - "58188:8188"
+    env_file:
+      - ./hadoop.env
+
+  resourcemanager:
+    image: hoodie-hadoop-resourcemanager_2.8.4:latest
+    hostname: resourcemanager
+    container_name: resourcemanager
+    depends_on:
+      - "namenode"
+    links:
+      - "namenode"
+    ports:
+      - "58088:8088"
+    env_file:
+      - ./hadoop.env
+
+  nodemanager1:
+    image: hoodie-hadoop-nodemanager_2.8.4:latest
+    hostname: nodemanager1
+    container_name: nodemanager1
+    depends_on:
+      - "namenode"
+      - "resourcemanager"
+    links:
+      - "namenode"
+      - "resourcemanager"
+    ports:
+      - "58042:8042"
+    env_file:
+      - ./hadoop.env
+
+  hivedb:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    hostname: hivedb
+    container_name: mysqldb 
+    volumes:
+      - hivedb:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: 'hive'
+      MYSQL_PASS: 'hive'
+
+  hive-server:
+    image: hoodie-hadoop-hive_2.8.4_2.3.2:latest
+    env_file:
+      - ./hadoop.env
+    environment:
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:mysql://hive-metastore/metastore"
+      SERVICE_PRECONDITION: "hive-metastore:9083"
+    ports:
+      - "10000:10000"
+
+  hive-metastore:
+    image: hoodie-hadoop-hive_2.8.4_2.3.2:latest
+    env_file:
+      - ./hadoop.env
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 hivedb:3306"
+    ports:
+      - "9083:9083"
+
+volumes:
+  namenode:
+  secnamenode:
+  historyserver:
+  datanode1:
+  datanode2:
+  datanode3:
+  hivedb:
+
+networks:
+  default:
+    name: hoodie
+

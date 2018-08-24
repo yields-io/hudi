@@ -1,0 +1,7 @@
+All Docker related setup scripts have been copied from https://github.com/big-data-europe and modified to fit our needs
+
+The original maintainers as mentioned in the Maintainer sections of the Dockerfiles were:
+
+Yiannis Mouchakis <gmouchakis@iit.demokritos.gr>
+Ivan Ermilov <ivan.s.ermilov@gmail.com>
+

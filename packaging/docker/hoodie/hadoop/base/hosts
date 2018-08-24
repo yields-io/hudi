@@ -1,0 +1,10 @@
+127.0.0.1 localhost
+127.0.0.1 spark-master
+127.0.0.1 hivedb
+127.0.0.1 hive-metastore
+127.0.0.1 hive-server
+127.0.0.1 namenode
+127.0.0.1 secnamenode
+127.0.0.1 datanode
+127.0.0.1 datanode1
+127.0.0.1 datanode2
