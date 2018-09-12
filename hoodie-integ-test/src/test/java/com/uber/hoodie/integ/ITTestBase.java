@@ -137,7 +137,8 @@ public abstract class ITTestBase {
   public class TestExecStartResultCallback extends ExecStartResultCallback {
 
     // Storing the reference in subclass to expose to clients
-    private final ByteArrayOutputStream stdout, stderr;
+    private final ByteArrayOutputStream stdout;
+    private final ByteArrayOutputStream stderr;
 
     public TestExecStartResultCallback(ByteArrayOutputStream stdout, ByteArrayOutputStream stderr) {
       super(stdout, stderr);
