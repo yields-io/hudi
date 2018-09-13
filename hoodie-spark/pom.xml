@@ -21,7 +21,7 @@
   <parent>
     <artifactId>hoodie</artifactId>
     <groupId>com.uber.hoodie</groupId>
-    <version>0.4.3-SNAPSHOT</version>
+    <version>0.4.3-y-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -112,14 +112,32 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+            <phase>test-compile</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <skip>false</skip>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
 
-
   <dependencies>
+    <dependency>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
@@ -203,16 +221,21 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.uber.hoodie</groupId>
+      <artifactId>hoodie-hive</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit-dep</artifactId>
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
-
     <dependency>
       <groupId>com.uber.hoodie</groupId>
       <artifactId>hoodie-client</artifactId>
       <version>${project.version}</version>
+      <classifier>tests</classifier>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
@@ -220,9 +243,72 @@
       <groupId>com.uber.hoodie</groupId>
       <artifactId>hoodie-common</artifactId>
       <version>${project.version}</version>
+      <classifier>tests</classifier>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
   </dependencies>
+  <profiles>
+    <profile>
+      <id>hive12</id>
+      <activation>
+        <property>
+          <name>!hive11</name>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>${hive12.groupid}</groupId>
+          <artifactId>hive-service</artifactId>
+          <version>${hive12.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>${hive12.groupid}</groupId>
+          <artifactId>hive-jdbc</artifactId>
+          <version>${hive12.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>${hive12.groupid}</groupId>
+          <artifactId>hive-metastore</artifactId>
+          <version>${hive12.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>${hive12.groupid}</groupId>
+          <artifactId>hive-common</artifactId>
+          <version>${hive12.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>hive11</id>
+      <activation>
+        <property>
+          <name>hive11</name>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>${hive11.groupid}</groupId>
+          <artifactId>hive-service</artifactId>
+          <version>${hive11.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>${hive11.groupid}</groupId>
+          <artifactId>hive-jdbc</artifactId>
+          <version>${hive11.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>${hive11.groupid}</groupId>
+          <artifactId>hive-metastore</artifactId>
+          <version>${hive11.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>${hive11.groupid}</groupId>
+          <artifactId>hive-common</artifactId>
+          <version>${hive11.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 
 </project>
