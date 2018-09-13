@@ -75,3 +75,6 @@ dependency-reduced-pom.xml
 #######################################
 hoodie-integ-test/compose_env
 
+
+# Generated files #
+docker/hoodie/hadoop/base/ws/

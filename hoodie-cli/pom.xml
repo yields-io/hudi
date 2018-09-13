@@ -19,8 +19,8 @@
   <parent>
     <artifactId>hoodie</artifactId>
     <groupId>com.uber.hoodie</groupId>
-    <version>0.4.6-SNAPSHOT</version>
-  </parent>
+    <version>0.4.5-y</version>
+  </parent>https://github.com/apache/incubator-hudi/blob/master/pom.xml#L639
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>hoodie-cli</artifactId>
@@ -32,22 +32,6 @@
     <log4j.version>1.2.17</log4j.version>
     <junit.version>4.10</junit.version>
   </properties>
-
-  <repositories>
-    <repository>
-      <id>libs-milestone</id>
-      <url>http://repo.spring.io/libs-milestone/</url>
-    </repository>
-    <repository>
-      <id>libs-release</id>
-      <url>http://repo.spring.io/libs-release/</url>
-    </repository>
-    <repository>
-      <id>scala-tools.org</id>
-      <name>Scala-tools Maven2 Repository</name>
-      <url>http://scala-tools.org/repo-releases</url>
-    </repository>
-  </repositories>
 
   <build>
     <pluginManagement>

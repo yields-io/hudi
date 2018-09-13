@@ -21,7 +21,7 @@
   <parent>
     <artifactId>hoodie</artifactId>
     <groupId>com.uber.hoodie</groupId>
-    <version>0.4.6-SNAPSHOT</version>
+    <version>0.4.5-y</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -72,6 +72,16 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
               <relocations>
                 <relocation>
                   <pattern>com.beust.</pattern>
@@ -121,32 +131,8 @@
                   <shadedPattern>com.uber.hoodie.parquet.schema</shadedPattern>
                 </relocation>
                 <relocation>
-                  <pattern>org.apache.hive.jdbc.</pattern>
-                  <shadedPattern>com.uber.hoodie.org.apache.hive.jdbc.</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.apache.hadoop.hive.metastore.</pattern>
-                  <shadedPattern>com.uber.hoodie.org.apache.hadoop_hive.metastore.</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.apache.hive.common.</pattern>
-                  <shadedPattern>com.uber.hoodie.org.apache.hive.common.</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.apache.hadoop.hive.common.</pattern>
-                  <shadedPattern>com.uber.hoodie.org.apache.hadoop_hive.common.</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.apache.hadoop.hive.conf.</pattern>
-                  <shadedPattern>com.uber.hoodie.org.apache.hadoop_hive.conf.</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.apache.hive.service.</pattern>
-                  <shadedPattern>com.uber.hoodie.org.apache.hive.service.</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.apache.hadoop.hive.service.</pattern>
-                  <shadedPattern>com.uber.hoodie.org.apache.hadoop_hive.service.</shadedPattern>
+                  <pattern>parquet.io</pattern>
+                  <shadedPattern>com.uber.hoodie.parquet.io</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>com.esotericsoftware.kryo.</pattern>
@@ -166,6 +152,7 @@
                 <excludes>
                   <exclude>com.databricks:spark-avro_2.11</exclude>
                   <exclude>log4j:*</exclude>
+                  <exclude>scala:*</exclude>
                   <exclude>org.apache.avro:*</exclude>
                   <exclude>org.apache.derby:derby</exclude>
                   <exclude>org.apache.hadoop:*</exclude>
@@ -174,7 +161,15 @@
                   <exclude>org.apache.hive:hive-exec</exclude>
                   <exclude>org.apache.hive:hive-serde</exclude>
                   <exclude>org.apache.hive:hive-shims</exclude>
+                  <exclude>org.apache.hive:hive-service</exclude>
+                  <exclude>org.apache.hive:hive-common</exclude>
+                  <exclude>org.apache.hive:hive-jdbc</exclude>
+                  <exclude>org.apache.hive:hive-metastore</exclude>
                   <exclude>org.apache.spark:*</exclude>
+                  <exclude>org.mortbay.jetty:*</exclude>
+                  <exclude>io.netty:*</exclude>
+                  <exclude>com.fasterxml.jackson.core:*</exclude>
+                  <exclude>com.fasterxml.jackson.module:*</exclude>
                 </excludes>
               </artifactSet>
               <filters>
@@ -257,10 +252,6 @@
       <version>${log4j.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.avro</groupId>
-      <artifactId>avro</artifactId>
-    </dependency>
-    <dependency>
       <groupId>${hive.groupid}</groupId>
       <artifactId>hive-service</artifactId>
       <version>${hive.version}</version>
@@ -315,4 +306,3 @@
    </dependency>
   </dependencies>
 </project>
-
