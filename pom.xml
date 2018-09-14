@@ -18,6 +18,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <parent>
+    <groupId>io.yields</groupId>
+    <artifactId>yields-parent</artifactId>
+    <version>1</version>
+    <relativePath>io.yields.pom.xml</relativePath>
+  </parent>
+
   <groupId>com.uber.hoodie</groupId>
   <artifactId>hoodie</artifactId>
   <packaging>pom</packaging>
@@ -610,17 +617,6 @@
       <url>https://repository.cloudera.com/artifactory/public/</url>
     </repository>
   </repositories>
-
-  <distributionManagement>
-    <snapshotRepository>
-      <id>nexus.yields.io</id>
-      <url>https://nexus.yields.io/repository/maven-snapshots/</url>
-    </snapshotRepository>
-    <repository>
-      <id>nexus.yields.io</id>
-      <url>https://nexus.yields.io/repository/maven-releases/</url>
-    </repository>
-  </distributionManagement>
 
   <profiles>
     <profile>
