@@ -116,7 +116,7 @@
     <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
     <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
     <parquet.version>1.8.1</parquet.version>
-    <junit.version>4.11</junit.version>
+    <junit.version>4.12</junit.version>
     <mockito.version>1.9.5</mockito.version>
     <log4j.version>1.2.17</log4j.version>
     <joda.version>2.9.9</joda.version>
@@ -346,7 +346,6 @@
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
-        <scope>test</scope>
       </dependency>
 
       <dependency>
@@ -574,11 +573,6 @@
         <version>3.4</version>
       </dependency>
 
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>4.12</version>
-      </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-hdfs</artifactId>
