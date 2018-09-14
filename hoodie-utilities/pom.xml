@@ -19,7 +19,8 @@
   <parent>
     <artifactId>hoodie</artifactId>
     <groupId>com.uber.hoodie</groupId>
-    <version>0.4.4</version>
+    <version>0.4.4-y1</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -180,7 +181,7 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>commons-dbcp</groupId>
       <artifactId>commons-dbcp</artifactId>
