@@ -609,12 +609,8 @@
   </dependencyManagement>
   <repositories>
     <repository>
-      <id>Maven repository</id>
-      <url>https://central.maven.org/maven2/</url>
-    </repository>
-    <repository>
-      <id>cloudera-repo-releases</id>
-      <url>https://repository.cloudera.com/artifactory/public/</url>
+      <id>nexus.yields.io</id>
+      <url>https://nexus.yields.io/repository/yields-central/</url>
     </repository>
   </repositories>
 
