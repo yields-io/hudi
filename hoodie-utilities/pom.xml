@@ -20,6 +20,7 @@
     <artifactId>hoodie</artifactId>
     <groupId>com.uber.hoodie</groupId>
     <version>0.4.3-y-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -173,7 +174,7 @@
     </dependency>
 
 
- 
+
     <dependency>
       <groupId>commons-dbcp</groupId>
       <artifactId>commons-dbcp</artifactId>
