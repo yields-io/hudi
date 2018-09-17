@@ -19,7 +19,8 @@
   <parent>
     <artifactId>hoodie-hadoop-docker</artifactId>
     <groupId>com.uber.hoodie</groupId>
-    <version>0.4.3-SNAPSHOT</version>
+    <version>0.4.3-y-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <packaging>pom</packaging>
