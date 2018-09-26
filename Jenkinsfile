@@ -10,9 +10,11 @@ node('aws'){
      stage("Build"){
          sh "mvn clean install -DskipTests -DskipITs"
      }
-     withCredentials([usernamePassword(credentialsId: 'jenkins-nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-         stage("Deploy"){
-             sh "mvn deploy -DskipTests -DskipITs -Dnexus.username=${USERNAME} -Dnexus.password=${PASSWORD}"
+     if (env.BRANCH_NAME == 'master') {
+         withCredentials([usernamePassword(credentialsId: 'jenkins-nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+             stage("Deploy"){
+                 sh "mvn deploy -DskipTests -DskipITs -Dnexus.username=${USERNAME} -Dnexus.password=${PASSWORD}"
+             }
          }
      }
    }
