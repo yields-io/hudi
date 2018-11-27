@@ -190,11 +190,6 @@
       <scope>test</scope>
     </dependency>
     <!-- Hbase dependencies -->
-    <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-client</artifactId>
-        <version>1.2.3</version>
-    </dependency>
 
     <dependency>
         <groupId>org.htrace</groupId>

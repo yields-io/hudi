@@ -116,6 +116,7 @@
     <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
     <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
     <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
+    <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
     <fasterxml.version>2.6.5</fasterxml.version>
     <parquet.version>1.8.1</parquet.version>
     <junit.version>4.12</junit.version>
@@ -194,6 +195,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
@@ -516,7 +518,7 @@
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-client</artifactId>
-        <version>1.0.0</version>
+        <version>1.2.3</version>
       </dependency>
 
       <dependency>
@@ -616,11 +618,6 @@
         <version>1.9.13</version>
       </dependency>
 
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>2.6.0</version>
-      </dependency>
       <dependency>
         <groupId>org.codehaus.jackson</groupId>
         <artifactId>jackson-mapper-asl</artifactId>
