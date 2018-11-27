@@ -173,6 +173,8 @@
                   <exclude>org.apache.hive:hive-serde</exclude>
                   <exclude>org.apache.hive:hive-shims</exclude>
                   <exclude>org.apache.spark:*</exclude>
+                  <exclude>org.mortbay.jetty:*</exclude>
+                  <exclude>io.netty:*</exclude>
                 </excludes>
               </artifactSet>
               <finalName>${project.artifactId}-${project.version}${hiveJarSuffix}</finalName>
