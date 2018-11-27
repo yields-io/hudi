@@ -22,7 +22,6 @@
     <groupId>io.yields</groupId>
     <artifactId>yields-parent</artifactId>
     <version>1</version>
-    <relativePath>io.yields.pom.xml</relativePath>
   </parent>
 
   <groupId>com.uber.hoodie</groupId>
