@@ -175,6 +175,8 @@
                   <exclude>org.apache.spark:*</exclude>
                   <exclude>org.mortbay.jetty:*</exclude>
                   <exclude>io.netty:*</exclude>
+                  <exclude>com.fasterxml.jackson.core:*</exclude>
+                  <exclude>com.fasterxml.jackson.module:*</exclude>
                 </excludes>
               </artifactSet>
               <finalName>${project.artifactId}-${project.version}${hiveJarSuffix}</finalName>
