@@ -130,12 +130,17 @@
                   <pattern>parquet.schema</pattern>
                   <shadedPattern>com.uber.hoodie.parquet.schema</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>parquet.io</pattern>
+                  <shadedPattern>com.uber.hoodie.parquet.io</shadedPattern>
+                </relocation>
               </relocations>
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <artifactSet>
                 <excludes>
                   <exclude>com.databricks:spark-avro_2.11</exclude>
                   <exclude>log4j:*</exclude>
+                  <exclude>scala:*</exclude>
                   <exclude>org.apache.avro:*</exclude>
                   <exclude>org.apache.derby:derby</exclude>
                   <exclude>org.apache.hadoop:*</exclude>
