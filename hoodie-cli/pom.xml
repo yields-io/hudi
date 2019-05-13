@@ -19,8 +19,8 @@
   <parent>
     <artifactId>hoodie</artifactId>
     <groupId>com.uber.hoodie</groupId>
-    <version>0.4.5-y</version>
-  </parent>https://github.com/apache/incubator-hudi/blob/master/pom.xml#L639
+    <version>0.4.5-y1</version>
+  </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>hoodie-cli</artifactId>
