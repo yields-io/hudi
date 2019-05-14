@@ -161,10 +161,6 @@
                   <exclude>org.apache.hive:hive-exec</exclude>
                   <exclude>org.apache.hive:hive-serde</exclude>
                   <exclude>org.apache.hive:hive-shims</exclude>
-                  <exclude>org.apache.hive:hive-service</exclude>
-                  <exclude>org.apache.hive:hive-common</exclude>
-                  <exclude>org.apache.hive:hive-jdbc</exclude>
-                  <exclude>org.apache.hive:hive-metastore</exclude>
                   <exclude>org.apache.spark:*</exclude>
                   <exclude>org.mortbay.jetty:*</exclude>
                   <exclude>io.netty:*</exclude>
