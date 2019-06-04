@@ -130,7 +130,7 @@
       <artifactId>hoodie-hadoop-mr-bundle</artifactId>
       <version>${project.version}</version>
     </dependency>
- 
+
     <dependency>
       <groupId>com.uber.hoodie</groupId>
       <artifactId>hoodie-hive</artifactId>
