@@ -157,6 +157,8 @@
                 <relocation>
                   <pattern>org.apache.hadoop.hive.service.</pattern>
                   <shadedPattern>com.uber.hoodie.org.apache.hadoop_hive.service.</shadedPattern>
+                  <pattern>parquet.io</pattern>
+                  <shadedPattern>com.uber.hoodie.parquet.io</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>com.esotericsoftware.kryo.</pattern>
