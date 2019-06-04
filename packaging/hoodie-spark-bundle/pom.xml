@@ -150,6 +150,8 @@
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <artifactSet>
                 <excludes>
+                  <exclude>javax.annotation:javax.annotation-api</exclude>
+                  <exclude>com.google.code.findbugs:jsr305</exclude>
                   <exclude>com.databricks:spark-avro_2.11</exclude>
                   <exclude>log4j:*</exclude>
                   <exclude>scala:*</exclude>
