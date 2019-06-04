@@ -178,6 +178,7 @@
                 <excludes>
                   <exclude>com.databricks:spark-avro_2.11</exclude>
                   <exclude>log4j:*</exclude>
+                  <exclude>scala:*</exclude>
                   <exclude>org.apache.avro:*</exclude>
                   <exclude>org.apache.derby:derby</exclude>
                   <exclude>org.apache.hadoop:*</exclude>
@@ -187,6 +188,10 @@
                   <exclude>org.apache.hive:hive-serde</exclude>
                   <exclude>org.apache.hive:hive-shims</exclude>
                   <exclude>org.apache.spark:*</exclude>
+                  <exclude>org.mortbay.jetty:*</exclude>
+                  <exclude>io.netty:*</exclude>
+                  <exclude>com.fasterxml.jackson.core:*</exclude>
+                  <exclude>com.fasterxml.jackson.module:*</exclude>
                 </excludes>
               </artifactSet>
               <filters>
