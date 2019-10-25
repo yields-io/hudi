@@ -16,7 +16,7 @@
 # limitations under the License.
 ################################################################################
 
-ARG HADOOP_VERSION=2.8.4 
+ARG HADOOP_VERSION=2.8.5
 ARG HIVE_VERSION=2.3.3
 FROM apachehudi/hudi-hadoop_${HADOOP_VERSION}-hive_${HIVE_VERSION}
 
@@ -24,7 +24,7 @@ ENV ENABLE_INIT_DAEMON true
 ENV INIT_DAEMON_BASE_URI http://identifier/init-daemon
 ENV INIT_DAEMON_STEP spark_master_init
 
-ARG SPARK_VERSION=2.3.1
+ARG SPARK_VERSION=2.4.4
 ARG SPARK_HADOOP_VERSION=2.7
 
 ENV SPARK_VERSION ${SPARK_VERSION}

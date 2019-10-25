@@ -73,7 +73,6 @@ class DataSourceTest extends AssertionsForJUnit {
     basePath = folder.getRoot.getAbsolutePath
     fs = FSUtils.getFs(basePath, spark.sparkContext.hadoopConfiguration)
   }
-
   @Test def testCopyOnWriteExtraTypesStorage() {
     // Insert Operation
     val records1 = DataSourceTestUtils
@@ -109,6 +108,7 @@ class DataSourceTest extends AssertionsForJUnit {
         )
     }
   }
+  */
   @Test def testCopyOnWriteStorage() {
     // Insert Operation
     val records1 = DataSourceTestUtils

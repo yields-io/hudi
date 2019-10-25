@@ -16,7 +16,7 @@
 # limitations under the License.
 ################################################################################
 
-ARG HADOOP_VERSION=2.8.4 
+ARG HADOOP_VERSION=2.8.5
 FROM apachehudi/hudi-hadoop_${HADOOP_VERSION}-base:latest
 
 ENV HIVE_HOME /opt/hive
