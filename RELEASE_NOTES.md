@@ -16,7 +16,7 @@
 -->
 
 
-Release 0.5.0-incubating
+Release 0.5.0-y2
 ------------------------------------
 
 ### Highlights
