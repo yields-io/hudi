@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -19,11 +20,11 @@
   <parent>
     <artifactId>hudi</artifactId>
     <groupId>org.apache.hudi</groupId>
-    <version>0.5.1-incubating</version>
+    <version>0.5.1-incubating-y1</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>hudi-spark_2.11</artifactId>
+  <artifactId>hudi-spark_2.12</artifactId>
   <packaging>jar</packaging>
 
   <properties>
