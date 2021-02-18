@@ -21,15 +21,15 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.apache</groupId>
-    <artifactId>apache</artifactId>
-    <version>21</version>
+    <groupId>io.yields</groupId>
+    <artifactId>yields-parent</artifactId>
+    <version>1</version>
   </parent>
 
   <groupId>org.apache.hudi</groupId>
   <artifactId>hudi</artifactId>
   <packaging>pom</packaging>
-  <version>0.7.0</version>
+  <version>0.7.0-y1</version>
   <description>Apache Hudi brings stream style processing on big data</description>
   <url>https://github.com/apache/hudi</url>
   <name>Hudi</name>
@@ -105,9 +105,9 @@
     <metrics.version>4.1.1</metrics.version>
     <prometheus.version>0.8.0</prometheus.version>
     <http.version>4.4.1</http.version>
-    <spark.version>2.4.4</spark.version>
+    <spark.version>2.4.5</spark.version>
     <flink.version>1.11.2</flink.version>
-    <spark2.version>2.4.4</spark2.version>
+    <spark2.version>2.4.5</spark2.version>
     <spark3.version>3.0.0</spark3.version>
     <avro.version>1.8.2</avro.version>
     <scala.version>2.11.12</scala.version>
@@ -924,25 +924,8 @@
   </dependencyManagement>
   <repositories>
     <repository>
-      <id>Maven Central</id>
-      <name>Maven Repository</name>
-      <url>https://repo.maven.apache.org/maven2</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>cloudera-repo-releases</id>
-      <url>https://repository.cloudera.com/artifactory/public/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
+      <id>nexus.yields.io</id>
+      <url>https://nexus.yields.io/repository/yields-central/</url>
     </repository>
     <repository>
       <id>confluent</id>
