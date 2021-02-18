@@ -105,9 +105,9 @@
     <metrics.version>4.1.1</metrics.version>
     <prometheus.version>0.8.0</prometheus.version>
     <http.version>4.4.1</http.version>
-    <spark.version>2.4.4</spark.version>
+    <spark.version>2.4.5</spark.version>
     <flink.version>1.11.2</flink.version>
-    <spark2.version>2.4.4</spark2.version>
+    <spark2.version>2.4.5</spark2.version>
     <spark3.version>3.0.0</spark3.version>
     <avro.version>1.8.2</avro.version>
     <scala.version>2.11.12</scala.version>
