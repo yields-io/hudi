@@ -1,47 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <!--
-  ~ Copyright (c) 2016 Uber Technologies, Inc. (hoodie-dev-group@uber.com)
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~          http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.uber.hoodie</groupId>
-  <artifactId>hoodie</artifactId>
+  <parent>
+    <groupId>io.yields</groupId>
+    <artifactId>yields-parent</artifactId>
+    <version>1</version>
+  </parent>
+
+  <groupId>org.apache.hudi</groupId>
+  <artifactId>hudi</artifactId>
   <packaging>pom</packaging>
-  <version>0.4.6-SNAPSHOT</version>
-  <description>Hoodie is a Apache Spark library that provides the ability to efficiently do
-    incremental processing on datasets in HDFS
-  </description>
-  <url>https://github.com/uber/hudi</url>
-  <name>Hoodie</name>
+  <version>0.7.0-y1</version>
+  <description>Apache Hudi brings stream style processing on big data</description>
+  <url>https://github.com/apache/hudi</url>
+  <name>Hudi</name>
 
   <modules>
-    <module>hoodie-common</module>
-    <module>hoodie-client</module>
-    <module>hoodie-cli</module>
-    <module>hoodie-hadoop-mr</module>
-    <module>hoodie-hive</module>
-    <module>hoodie-utilities</module>
-    <module>hoodie-spark</module>
-    <module>packaging/hoodie-hadoop-mr-bundle</module>
-    <module>packaging/hoodie-hive-bundle</module>
-    <module>packaging/hoodie-spark-bundle</module>
-    <module>packaging/hoodie-presto-bundle</module>
+    <module>hudi-common</module>
+    <module>hudi-cli</module>
+    <module>hudi-client</module>
+    <module>hudi-hadoop-mr</module>
+    <module>hudi-spark-datasource</module>
+    <module>hudi-timeline-service</module>
+    <module>hudi-utilities</module>
+    <module>hudi-sync</module>
+    <module>packaging/hudi-hadoop-mr-bundle</module>
+    <module>packaging/hudi-hive-sync-bundle</module>
+    <module>packaging/hudi-spark-bundle</module>
+    <module>packaging/hudi-presto-bundle</module>
+    <module>packaging/hudi-utilities-bundle</module>
+    <module>packaging/hudi-timeline-server-bundle</module>
     <module>docker/hoodie/hadoop</module>
-    <module>hoodie-integ-test</module>
+    <module>hudi-integ-test</module>
+    <module>packaging/hudi-integ-test-bundle</module>
+    <module>hudi-examples</module>
+    <module>hudi-flink</module>
+    <module>packaging/hudi-flink-bundle</module>
   </modules>
 
   <licenses>
@@ -49,120 +62,108 @@
       <name>Apache License, Version 2.0</name>
       <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
       <distribution>repo</distribution>
-      <comments>A business-friendly OSS license</comments>
     </license>
   </licenses>
 
   <organization>
-    <name>Uber Technologies Inc.</name>
-    <url>http://www.uber.com/</url>
+    <name>The Apache Software Foundation</name>
+    <url>https://www.apache.org</url>
   </organization>
 
-  <developers>
-    <developer>
-      <id>vinothchandar</id>
-      <name>Vinoth Chandar</name>
-      <organization>Uber</organization>
-    </developer>
-    <developer>
-      <id>prasannarajaperumal</id>
-      <name>Prasanna Rajaperumal</name>
-      <organization>Snowflake</organization>
-    </developer>
-    <developer>
-      <id>n3nash</id>
-      <name>Nishith Agarwal</name>
-      <organization>Uber</organization>
-    </developer>
-    <developer>
-      <id>bvaradar</id>
-      <name>Balaji Varadharajan</name>
-      <organization>Uber</organization>
-    </developer>
-  </developers>
-
-  <contributors>
-    <contributor>
-      <name>Wei Yan</name>
-      <organization>Uber</organization>
-    </contributor>
-    <contributor>
-      <name>Siddhartha Gunda</name>
-      <organization>Uber</organization>
-    </contributor>
-    <contributor>
-      <name>Omkar Joshi</name>
-      <organization>Uber</organization>
-    </contributor>
-    <contributor>
-      <name>Zeeshan Qureshi</name>
-      <organization>Shopify</organization>
-    </contributor>
-    <contributor>
-      <name>Kathy Ge</name>
-      <organization>Shopify</organization>
-    </contributor>
-    <contributor>
-      <name>Kaushik Devarajaiah</name>
-      <organization>Uber</organization>
-    </contributor>
-    <contributor>
-      <name>Anbu Cheeralan</name>
-      <organization>DoubleVerify</organization>
-    </contributor>
-    <contributor>
-      <name>Jiale Tan</name>
-      <organization>Vungle</organization>
-    </contributor>
-  </contributors>
-
-  <inceptionYear>2015-2016</inceptionYear>
-
-
   <properties>
-    <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
     <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
-    <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
-    <fasterxml.version>2.8.11</fasterxml.version>
-    <parquet.version>1.8.1</parquet.version>
-    <junit.version>4.11</junit.version>
-    <mockito.version>1.9.5</mockito.version>
+    <maven-surefire-plugin.version>3.0.0-M4</maven-surefire-plugin.version>
+    <maven-failsafe-plugin.version>3.0.0-M4</maven-failsafe-plugin.version>
+    <maven-shade-plugin.version>3.1.1</maven-shade-plugin.version>
+    <maven-javadoc-plugin.version>3.1.1</maven-javadoc-plugin.version>
+    <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
+    <maven-deploy-plugin.version>2.4</maven-deploy-plugin.version>
+    <genjavadoc-plugin.version>0.15</genjavadoc-plugin.version>
+    <build-helper-maven-plugin.version>1.7</build-helper-maven-plugin.version>
+    <maven-enforcer-plugin.version>3.0.0-M1</maven-enforcer-plugin.version>
+
+    <java.version>1.8</java.version>
+    <fasterxml.version>2.6.7</fasterxml.version>
+    <fasterxml.jackson.databind.version>2.6.7.3</fasterxml.jackson.databind.version>
+    <fasterxml.jackson.module.scala.version>2.6.7.1</fasterxml.jackson.module.scala.version>
+    <fasterxml.jackson.dataformat.yaml.version>2.7.4</fasterxml.jackson.dataformat.yaml.version>
+    <fasterxml.spark3.version>2.10.0</fasterxml.spark3.version>
+    <kafka.version>2.0.0</kafka.version>
+    <glassfish.version>2.17</glassfish.version>
+    <parquet.version>1.10.1</parquet.version>
+    <junit.jupiter.version>5.7.0-M1</junit.jupiter.version>
+    <junit.vintage.version>5.7.0-M1</junit.vintage.version>
+    <junit.platform.version>1.7.0-M1</junit.platform.version>
+    <mockito.jupiter.version>3.3.3</mockito.jupiter.version>
     <log4j.version>1.2.17</log4j.version>
+    <slf4j.version>1.7.15</slf4j.version>
     <joda.version>2.9.9</joda.version>
     <hadoop.version>2.7.3</hadoop.version>
     <hive.groupid>org.apache.hive</hive.groupid>
-    <hive.version>1.2.1</hive.version>
-    <metrics.version>3.1.1</metrics.version>
-    <spark.version>2.1.0</spark.version>
-    <avro.version>1.7.7</avro.version>
-    <scala.version>2.11.8</scala.version>
-    <scala.libversion>2.11</scala.libversion>
+    <hive.version>2.3.1</hive.version>
+    <hive.exec.classifier>core</hive.exec.classifier>
+    <metrics.version>4.1.1</metrics.version>
+    <prometheus.version>0.8.0</prometheus.version>
+    <http.version>4.4.1</http.version>
+    <spark.version>2.4.5</spark.version>
+    <flink.version>1.11.2</flink.version>
+    <spark2.version>2.4.5</spark2.version>
+    <spark3.version>3.0.0</spark3.version>
+    <avro.version>1.8.2</avro.version>
+    <scala.version>2.11.12</scala.version>
+    <scala.binary.version>2.11</scala.binary.version>
+    <scala12.version>2.12.10</scala12.version>
+    <apache-rat-plugin.version>0.12</apache-rat-plugin.version>
+    <scala-maven-plugin.version>3.3.1</scala-maven-plugin.version>
+    <scalatest.version>3.0.1</scalatest.version>
     <surefire-log4j.file>file://${project.basedir}/src/test/resources/log4j-surefire.properties</surefire-log4j.file>
     <thrift.version>0.12.0</thrift.version>
+    <jetty.version>9.4.15.v20190215</jetty.version>
+    <htrace.version>3.1.0-incubating</htrace.version>
+    <hbase.version>1.2.3</hbase.version>
+    <codehaus-jackson.version>1.9.13</codehaus-jackson.version>
+    <h2.version>1.4.199</h2.version>
+    <skipTests>false</skipTests>
+    <skipUTs>${skipTests}</skipUTs>
+    <skipFTs>${skipTests}</skipFTs>
+    <skipITs>${skipTests}</skipITs>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <main.basedir>${project.basedir}</main.basedir>
+    <spark.bundle.hive.scope>provided</spark.bundle.hive.scope>
+    <spark.bundle.hive.shade.prefix />
+    <spark.bundle.avro.scope>compile</spark.bundle.avro.scope>
+    <spark.bundle.spark.shade.prefix>org.apache.hudi.spark.</spark.bundle.spark.shade.prefix>
+    <utilities.bundle.hive.scope>provided</utilities.bundle.hive.scope>
+    <utilities.bundle.hive.shade.prefix />
+    <argLine>-Xmx2g</argLine>
+    <jacoco.version>0.8.5</jacoco.version>
+    <presto.bundle.bootstrap.scope>compile</presto.bundle.bootstrap.scope>
+    <presto.bundle.bootstrap.shade.prefix>org.apache.hudi.</presto.bundle.bootstrap.shade.prefix>
+    <shadeSources>true</shadeSources>
   </properties>
 
   <scm>
-    <connection>scm:git:git@github.com:uber/hoodie.git</connection>
-    <developerConnection>scm:git:git@github.com:uber/hoodie.git</developerConnection>
-    <url>git@github.com:uber/hoodie.git</url>
+    <connection>scm:git:git@github.com:apache/hudi.git</connection>
+    <developerConnection>scm:git:git@github.com:apache/hudi.git</developerConnection>
+    <url>git@github.com:apache/hudi.git</url>
     <tag>HEAD</tag>
   </scm>
 
-  <mailingLists>
-    <mailingList>
-      <name>User List</name>
-      <post>hoodie-user@googlegroups.com</post>
-      <archive>https://groups.google.com/d/forum/hoodie-user/</archive>
-    </mailingList>
-    <mailingList>
-      <name>Developer List</name>
-      <post>hoodie-dev@googlegroups.com</post>
-      <archive>https://groups.google.com/d/forum/hoodie-dev/</archive>
-    </mailingList>
-  </mailingLists>
-
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.2.1</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
@@ -171,7 +172,7 @@
           <dependency>
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
-            <version>8.8</version>
+            <version>8.18</version>
           </dependency>
         </dependencies>
         <configuration>
@@ -197,35 +198,41 @@
           </execution>
         </executions>
       </plugin>
+<!--
+      See https://jira.apache.org/jira/browse/HUDI-304
       <plugin>
-           <groupId>org.scalastyle</groupId>
-           <artifactId>scalastyle-maven-plugin</artifactId>
-           <version>1.0.0</version>
-           <configuration>
-             <verbose>false</verbose>
-             <failOnViolation>true</failOnViolation>
-             <includeTestSourceDirectory>true</includeTestSourceDirectory>
-             <failOnWarning>false</failOnWarning>
-             <sourceDirectory>${project.basedir}/src/main/scala</sourceDirectory>
-             <testSourceDirectory>${project.basedir}/src/test/scala</testSourceDirectory>
-             <configLocation>style/scalastyle-config.xml</configLocation>
-             <outputEncoding>UTF-8</outputEncoding>
-           </configuration>
-           <executions>
-             <execution>
-               <phase>compile</phase>
-               <goals>
-                 <goal>check</goal>
-               </goals>
-             </execution>
-           </executions>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>1.24.3</version>
+        <configuration>
+          <java>
+            <eclipse>
+              <file>${main.basedir}/style/eclipse-java-google-style.xml</file>
+              <version>4.10.0</version>
+            </eclipse>
+          </java>
+          <scala>
+            <trimTrailingWhitespace />
+          </scala>
+        </configuration>
+        <executions>
+          <execution>
+            <id>spotless-check</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
+-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
         </configuration>
       </plugin>
       <plugin>
@@ -241,101 +248,123 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>${maven-deploy-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>default-deploy</id>
+            <phase>deploy</phase>
+            <goals>
+              <goal>deploy</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${maven-surefire-plugin.version}</version>
         <configuration>
-          <!-- Sets the VM argument line used when unit tests are run. -->
-          <argLine>${surefireArgLine}</argLine>
+          <argLine>@{argLine}</argLine>
           <systemPropertyVariables>
             <log4j.configuration>
               ${surefire-log4j.file}
             </log4j.configuration>
           </systemPropertyVariables>
-          <!-- Excludes integration tests when unit tests are run. -->
-          <excludes>
-            <exclude>**/IT*.java</exclude>
-          </excludes>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${maven-failsafe-plugin.version}</version>
+        <configuration>
+          <skip>${skipITs}</skip>
+          <argLine>@{argLine}</argLine>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
       </plugin>
     </plugins>
 
     <pluginManagement>
       <plugins>
         <plugin>
-          <artifactId>maven-dependency-plugin</artifactId>
-          <version>${maven-dependency-plugin.version}</version>
-        </plugin>
-        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
           <version>${maven-jar-plugin.version}</version>
         </plugin>
         <plugin>
-          <groupId>org.jacoco</groupId>
-          <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.7.8</version>
-          <executions>
-            <!--
-                Prepares the property pointing to the JaCoCo runtime agent which
-                is passed as VM argument when Maven the Surefire plugin is executed.
-            -->
-            <execution>
-              <id>pre-unit-test</id>
-              <goals>
-                <goal>prepare-agent</goal>
-              </goals>
-              <configuration>
-                <!-- Sets the path to the file which contains the execution data. -->
-                <destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>
-                <!--
-                    Sets the name of the property containing the settings
-                    for JaCoCo runtime agent.
-                -->
-                <propertyName>surefireArgLine</propertyName>
-              </configuration>
-            </execution>
-            <!--
-                Ensures that the code coverage report for unit tests is created after
-                unit tests have been run.
-            -->
-            <execution>
-              <id>post-unit-test</id>
-              <phase>test</phase>
-              <goals>
-                <goal>report</goal>
-              </goals>
-              <configuration>
-                <!-- Sets the path to the file which contains the execution data. -->
-                <dataFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</dataFile>
-                <!-- Sets the output directory for the code coverage report. -->
-                <outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>
-              </configuration>
-            </execution>
-          </executions>
+          <groupId>net.alchim31.maven</groupId>
+          <artifactId>scala-maven-plugin</artifactId>
+          <version>${scala-maven-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
         </plugin>
         <plugin>
           <!-- excludes are inherited -->
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
-          <version>0.11</version>
+          <version>${apache-rat-plugin.version}</version>
           <configuration>
+            <excludeSubProjects>false</excludeSubProjects>
+            <numUnapprovedLicenses>0</numUnapprovedLicenses>
+            <licenses>
+              <!-- Enforce this license:
+                   Licensed to the Apache Software Foundation (ASF) under one
+                   or more contributor license agreements.  See the NOTICE file
+                   distributed with this work for additional information
+                   regarding copyright ownership.  The ASF licenses this file
+                   to you under the Apache License, Version 2.0 (the
+                   "License"); you may not use this file except in compliance
+                   with the License.  You may obtain a copy of the License at
+                   http://www.apache.org/licenses/LICENSE-2.0
+                   Unless required by applicable law or agreed to in writing,
+                   software distributed under the License is distributed on an
+                   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+                   KIND, either express or implied.  See the License for the
+                   specific language governing permissions and limitations
+                   under the License.
+              -->
+              <license implementation="org.apache.rat.analysis.license.SimplePatternBasedLicense">
+                <licenseFamilyCategory>AL2 </licenseFamilyCategory>
+                <licenseFamilyName>Apache License 2.0</licenseFamilyName>
+                <notes />
+                <patterns>
+                  <pattern>Licensed to the Apache Software Foundation (ASF) under one</pattern>
+                </patterns>
+              </license>
+            </licenses>
+            <licenseFamilies>
+              <licenseFamily implementation="org.apache.rat.license.SimpleLicenseFamily">
+                <familyName>Apache License 2.0</familyName>
+              </licenseFamily>
+            </licenseFamilies>
             <excludes>
+              <exclude>NOTICE</exclude>
+              <exclude>DISCLAIMER</exclude>
               <exclude>**/.*</exclude>
-              <exclude>**/*.txt</exclude>
-              <exclude>**/*.sh</exclude>
+              <exclude>**/*.json</exclude>
               <exclude>**/*.log</exclude>
+              <exclude>**/*.sqltemplate</exclude>
+              <exclude>**/compose_env</exclude>
+              <exclude>**/*NOTICE*</exclude>
+              <exclude>**/*LICENSE*</exclude>
               <exclude>**/dependency-reduced-pom.xml</exclude>
-              <exclude>**/test/resources/*.avsc</exclude>
               <exclude>**/test/resources/*.data</exclude>
-              <exclude>**/test/resources/*.schema</exclude>
-              <exclude>**/test/resources/*.csv</exclude>
-              <exclude>**/main/avro/*.avsc</exclude>
-              <exclude>**/target/*</exclude>
-              <exclude>**/style/*</exclude>
+              <exclude>**/test/resources/*.commit</exclude>
+              <exclude>**/target/**</exclude>
+              <exclude>**/generated-sources/**</exclude>
+              <exclude>.github/**</exclude>
             </excludes>
           </configuration>
           <executions>
             <execution>
-              <phase>package</phase>
+              <phase>compile</phase>
               <goals>
                 <goal>check</goal>
               </goals>
@@ -361,24 +390,180 @@
             </execution>
           </executions>
         </plugin>
+        <plugin>
+          <groupId>org.scalastyle</groupId>
+          <artifactId>scalastyle-maven-plugin</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <verbose>false</verbose>
+            <failOnViolation>true</failOnViolation>
+            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+            <failOnWarning>false</failOnWarning>
+            <sourceDirectory>${project.basedir}/src/main/scala</sourceDirectory>
+            <testSourceDirectory>${project.basedir}/src/test/scala</testSourceDirectory>
+            <configLocation>${main.basedir}/style/scalastyle.xml</configLocation>
+            <outputEncoding>UTF-8</outputEncoding>
+          </configuration>
+          <executions>
+            <execution>
+              <phase>compile</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>
 
   <dependencyManagement>
     <dependencies>
+      <!-- Logging -->
       <dependency>
-        <groupId>com.google.code.gson</groupId>
-        <artifactId>gson</artifactId>
-        <version>2.3.1</version>
-        <scope>test</scope>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+
+      <!-- Fasterxml -->
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${fasterxml.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${fasterxml.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${fasterxml.jackson.databind.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-guava</artifactId>
+        <version>${fasterxml.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.module</groupId>
+        <artifactId>jackson-module-scala_${scala.binary.version}</artifactId>
+        <version>${fasterxml.jackson.module.scala.version}</version>
+      </dependency>
+
+      <!-- Glassfish -->
+      <dependency>
+        <groupId>org.glassfish.jersey.core</groupId>
+        <artifactId>jersey-server</artifactId>
+        <version>${glassfish.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.connectors</groupId>
+        <artifactId>jersey-apache-connector</artifactId>
+        <version>${glassfish.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.containers</groupId>
+        <artifactId>jersey-container-servlet-core</artifactId>
+        <version>${glassfish.version}</version>
+      </dependency>
+
+      <!-- Avro -->
+      <dependency>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro</artifactId>
+        <version>${avro.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- Parquet -->
+      <dependency>
+        <groupId>org.apache.parquet</groupId>
+        <artifactId>parquet-avro</artifactId>
+        <version>${parquet.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- Spark -->
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-core_${scala.binary.version}</artifactId>
+        <version>${spark.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-sql_${scala.binary.version}</artifactId>
+        <version>${spark.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- Spark (Packages) -->
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-avro_${scala.binary.version}</artifactId>
+        <version>${spark.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- Flink -->
+      <dependency>
+        <groupId>org.apache.flink</groupId>
+        <artifactId>flink-streaming-java_${scala.binary.version}</artifactId>
+        <version>${flink.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flink</groupId>
+        <artifactId>flink-clients_${scala.binary.version}</artifactId>
+        <version>${flink.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flink</groupId>
+        <artifactId>flink-connector-kafka_${scala.binary.version}</artifactId>
+        <version>${flink.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- Dropwizard Metrics -->
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-graphite</artifactId>
+        <version>${metrics.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <version>${metrics.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-jmx</artifactId>
+        <version>${metrics.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>${junit.version}</version>
-        <scope>test</scope>
+        <groupId>io.prometheus</groupId>
+        <artifactId>simpleclient</artifactId>
+        <version>${prometheus.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.prometheus</groupId>
+        <artifactId>simpleclient_httpserver</artifactId>
+        <version>${prometheus.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.prometheus</groupId>
+        <artifactId>simpleclient_dropwizard</artifactId>
+        <version>${prometheus.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.prometheus</groupId>
+        <artifactId>simpleclient_pushgateway</artifactId>
+        <version>${prometheus.version}</version>
       </dependency>
 
       <dependency>
@@ -388,18 +573,69 @@
       </dependency>
 
       <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>log4j</artifactId>
-        <version>${log4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <!-- Used by hoodie-hive -->
         <groupId>joda-time</groupId>
         <artifactId>joda-time</artifactId>
         <version>${joda.version}</version>
       </dependency>
 
+      <dependency>
+        <groupId>xerces</groupId>
+        <artifactId>xercesImpl</artifactId>
+        <version>2.9.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>xalan</groupId>
+        <artifactId>xalan</artifactId>
+        <version>2.7.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.rocksdb</groupId>
+        <artifactId>rocksdbjni</artifactId>
+        <version>5.17.2</version>
+      </dependency>
+
+      <!-- Httpcomponents -->
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>fluent-hc</artifactId>
+        <version>${http.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpcore</artifactId>
+        <version>${http.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>${http.version}</version>
+      </dependency>
+
+      <!-- Jackson -->
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-core-asl</artifactId>
+        <version>${codehaus-jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-mapper-asl</artifactId>
+        <version>${codehaus-jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-jaxrs</artifactId>
+        <version>${codehaus-jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-xc</artifactId>
+        <version>${codehaus-jackson.version}</version>
+      </dependency>
+
+      <!-- Hadoop -->
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-client</artifactId>
@@ -407,47 +643,30 @@
         <scope>provided</scope>
         <exclusions>
           <exclusion>
-            <groupId>com.fasterxml.jackson.*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-          <exclusion>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
-
-      <dependency>
-        <groupId>org.apache.parquet</groupId>
-        <artifactId>parquet-avro</artifactId>
-        <version>${parquet.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.parquet</groupId>
-        <artifactId>parquet-hadoop</artifactId>
-        <version>${parquet.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.avro</groupId>
-        <artifactId>avro-mapred</artifactId>
-        <version>${avro.version}</version>
-      </dependency>
-
-      <!-- we have to stay at <= 16.0, due to issues with HBase client -->
-      <dependency>
-        <groupId>com.google.guava</groupId>
-        <artifactId>guava</artifactId>
-        <version>15.0</version>
-      </dependency>
-
-      <!-- Hadoop Libraries -->
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-common</artifactId>
         <version>${hadoop.version}</version>
         <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -460,243 +679,30 @@
         <artifactId>hadoop-auth</artifactId>
         <version>${hadoop.version}</version>
         <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>com.fasterxml.jackson.*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-mapreduce-client-core</artifactId>
         <version>${hadoop.version}</version>
         <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-mapreduce-client-common</artifactId>
         <version>${hadoop.version}</version>
         <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>commons-logging</groupId>
-        <artifactId>commons-logging</artifactId>
-        <version>1.2</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-io</groupId>
-        <artifactId>commons-io</artifactId>
-        <version>2.6</version>
-      </dependency>
-
-      <!-- Storage formats -->
-      <!-- Spark parquet version 1.7.0 does not play well with the hive 1.1.0 installed in cluster (which requires twitter parquet 1.5.0) -->
-      <dependency>
-        <groupId>com.twitter</groupId>
-        <artifactId>parquet-hadoop-bundle</artifactId>
-        <version>1.6.0</version>
-      </dependency>
-      <dependency>
-        <groupId>com.twitter</groupId>
-        <artifactId>parquet-hive-bundle</artifactId>
-        <version>1.6.0</version>
-      </dependency>
-      <dependency>
-        <groupId>com.twitter</groupId>
-        <artifactId>parquet-avro</artifactId>
-        <version>1.6.0</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.parquet</groupId>
-        <artifactId>parquet-hive-bundle</artifactId>
-        <version>${parquet.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-core_2.11</artifactId>
-        <version>${spark.version}</version>
-        <scope>provided</scope>
         <exclusions>
           <exclusion>
-            <groupId>com.fasterxml.jackson.**</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-sql_2.11</artifactId>
-        <version>${spark.version}</version>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>com.fasterxml.jackson.**</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-client</artifactId>
-        <version>1.0.0</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.avro</groupId>
-        <artifactId>avro</artifactId>
-        <version>${avro.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <!-- Metrics -->
-      <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-graphite</artifactId>
-        <version>${metrics.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-core</artifactId>
-        <version>${metrics.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>xerces</groupId>
-        <artifactId>xercesImpl</artifactId>
-        <version>2.9.1</version>
-      </dependency>
-      <dependency>
-        <groupId>xalan</groupId>
-        <artifactId>xalan</artifactId>
-        <version>2.7.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>commons-dbcp</groupId>
-        <artifactId>commons-dbcp</artifactId>
-        <version>1.4</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-pool</groupId>
-        <artifactId>commons-pool</artifactId>
-        <version>1.4</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpcore</artifactId>
-        <version>4.3.2</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpclient</artifactId>
-        <version>4.3.6</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>1.7.5</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-log4j12</artifactId>
-        <version>1.7.5</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-configuration2</artifactId>
-        <version>2.1.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-annotations</artifactId>
-        <version>${fasterxml.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-core</artifactId>
-        <version>${fasterxml.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>${fasterxml.version}.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.fasterxml.jackson.module</groupId>
-        <artifactId>jackson-module-scala_2.11</artifactId>
-        <version>${fasterxml.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-core-asl</artifactId>
-        <version>1.9.13</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-mapper-asl</artifactId>
-        <version>1.9.13</version>
-      </dependency>
-      <dependency>
-        <groupId>${hive.groupid}</groupId>
-        <artifactId>hive-service</artifactId>
-        <version>${hive.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>${hive.groupid}</groupId>
-        <artifactId>hive-shims</artifactId>
-        <version>${hive.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>${hive.groupid}</groupId>
-        <artifactId>hive-jdbc</artifactId>
-        <version>${hive.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>${hive.groupid}</groupId>
-        <artifactId>hive-serde</artifactId>
-        <version>${hive.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>${hive.groupid}</groupId>
-        <artifactId>hive-metastore</artifactId>
-        <version>${hive.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>${hive.groupid}</groupId>
-        <artifactId>hive-common</artifactId>
-        <version>${hive.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>${hive.groupid}</groupId>
-        <artifactId>hive-exec</artifactId>
-        <version>${hive.version}</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -709,13 +715,204 @@
         <artifactId>hadoop-common</artifactId>
         <classifier>tests</classifier>
         <version>${hadoop.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <!-- Hive -->
+      <dependency>
+        <groupId>${hive.groupid}</groupId>
+        <artifactId>hive-service</artifactId>
+        <version>${hive.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.mail</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.eclipse.jetty.aggregate</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-all</artifactId>
-        <scope>test</scope>
-        <version>1.10.19</version>
+        <groupId>${hive.groupid}</groupId>
+        <artifactId>hive-shims</artifactId>
+        <version>${hive.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.eclipse.jetty.aggregate</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
+      <dependency>
+        <groupId>${hive.groupid}</groupId>
+        <artifactId>hive-jdbc</artifactId>
+        <version>${hive.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.eclipse.jetty.aggregate</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>${hive.groupid}</groupId>
+        <artifactId>hive-serde</artifactId>
+        <version>${hive.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>${hive.groupid}</groupId>
+        <artifactId>hive-metastore</artifactId>
+        <version>${hive.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.transaction</groupId>
+            <artifactId>jta</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.transaction</groupId>
+            <artifactId>transaction-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.eclipse.jetty.aggregate</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>${hive.groupid}</groupId>
+        <artifactId>hive-common</artifactId>
+        <version>${hive.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.eclipse.jetty.aggregate</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>${hive.groupid}</groupId>
+        <artifactId>hive-exec</artifactId>
+        <version>${hive.version}</version>
+        <scope>provided</scope>
+        <classifier>${hive.exec.classifier}</classifier>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.eclipse.jetty.aggregate</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.code.gson</groupId>
+        <artifactId>gson</artifactId>
+        <version>2.3.1</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-api</artifactId>
+        <version>${junit.jupiter.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-engine</artifactId>
+        <version>${junit.jupiter.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.junit.vintage</groupId>
+        <artifactId>junit-vintage-engine</artifactId>
+        <version>${junit.vintage.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-params</artifactId>
+        <version>${junit.jupiter.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-junit-jupiter</artifactId>
+        <scope>test</scope>
+        <version>${mockito.jupiter.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.junit.platform</groupId>
+        <artifactId>junit-platform-runner</artifactId>
+        <version>${junit.platform.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.junit.platform</groupId>
+        <artifactId>junit-platform-suite-api</artifactId>
+        <version>${junit.platform.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.junit.platform</groupId>
+        <artifactId>junit-platform-commons</artifactId>
+        <version>${junit.platform.version}</version>
+        <scope>test</scope>
+      </dependency>
+
       <dependency>
         <!--Used to test execution in task executor after de-serializing-->
         <groupId>com.esotericsoftware</groupId>
@@ -724,29 +921,25 @@
         <scope>test</scope>
       </dependency>
     </dependencies>
-
   </dependencyManagement>
   <repositories>
     <repository>
-      <id>Maven repository</id>
-      <url>https://central.maven.org/maven2/</url>
+      <id>nexus.yields.io</id>
+      <url>https://nexus.yields.io/repository/yields-central/</url>
     </repository>
     <repository>
-      <id>cloudera-repo-releases</id>
-      <url>https://repository.cloudera.com/artifactory/public/</url>
+      <id>confluent</id>
+      <url>https://packages.confluent.io/maven/</url>
+    </repository>
+    <repository>
+      <id>libs-milestone</id>
+      <url>https://repo.spring.io/libs-milestone/</url>
+    </repository>
+    <repository>
+      <id>libs-release</id>
+      <url>https://repo.spring.io/libs-release/</url>
     </repository>
   </repositories>
-
-  <distributionManagement>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
 
   <profiles>
     <profile>
@@ -775,7 +968,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>2.9.1</version>
+            <version>${maven-javadoc-plugin.version}</version>
             <executions>
               <execution>
                 <id>attach-javadocs</id>
@@ -785,13 +978,13 @@
               </execution>
             </executions>
             <configuration>
-              <additionalparam>-Xdoclint:none</additionalparam>
+              <doclint>none</doclint>
             </configuration>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.5</version>
+            <version>1.4</version>
             <executions>
               <execution>
                 <id>sign-artifacts</id>
@@ -801,17 +994,6 @@
                 </goals>
               </execution>
             </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>1.6.2</version>
-            <extensions>true</extensions>
-            <configuration>
-              <serverId>ossrh</serverId>
-              <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-              <autoReleaseAfterClose>true</autoReleaseAfterClose>
-            </configuration>
           </plugin>
         </plugins>
       </build>
@@ -824,13 +1006,363 @@
         </property>
       </activation>
       <properties>
-        <surefire-log4j.file>file://${project.basedir}/src/test/resources/log4j-surefire-quiet.properties</surefire-log4j.file>
+        <surefire-log4j.file>file://${project.basedir}/src/test/resources/log4j-surefire-quiet.properties
+        </surefire-log4j.file>
       </properties>
+    </profile>
+    <profile>
+      <id>unit-tests</id>
+      <properties>
+        <skipUTs>false</skipUTs>
+        <skipFTs>true</skipFTs>
+        <skipITs>true</skipITs>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <dependencies>
+              <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.jupiter.version}</version>
+              </dependency>
+            </dependencies>
+            <configuration combine.self="append">
+              <skip>${skipUTs}</skip>
+              <forkedProcessExitTimeoutInSeconds>120</forkedProcessExitTimeoutInSeconds>
+              <excludedGroups>functional</excludedGroups>
+              <excludes>
+                <exclude>**/*FunctionalTestSuite.java</exclude>
+                <exclude>**/IT*.java</exclude>
+                <exclude>**/testsuite/**/Test*.java</exclude>
+              </excludes>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>post-unit-tests</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>functional-tests</id>
+      <properties>
+        <skipUTs>true</skipUTs>
+        <skipFTs>false</skipFTs>
+        <skipITs>true</skipITs>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <dependencies>
+              <dependency>
+                <groupId>org.apache.maven.surefire</groupId>
+                <artifactId>surefire-junit47</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+              </dependency>
+            </dependencies>
+            <configuration combine.self="append">
+              <skip>${skipFTs}</skip>
+              <forkCount>1</forkCount>
+              <reuseForks>true</reuseForks>
+              <includes>
+                <include>**/*FunctionalTestSuite.java</include>
+              </includes>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>post-functional-tests</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.reporting.outputDirectory}/jacoco-ft</outputDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>integration-tests</id>
+      <properties>
+        <skipUTs>true</skipUTs>
+        <skipFTs>true</skipFTs>
+        <skipITs>false</skipITs>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration combine.self="override">
+              <skip>${skipUTs}</skip>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration combine.self="override">
+              <skip>${skipITs}</skip>
+              <includes>
+                <include>**/IT*.java</include>
+              </includes>
+            </configuration>
+            <executions>
+              <execution>
+                <phase>integration-test</phase>
+                <goals>
+                  <goal>integration-test</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>verify-integration-test</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>post-integration-tests</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>javadocs</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <source>${java.version}</source>
+              <target>${java.version}</target>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>net.alchim31.maven</groupId>
+            <artifactId>scala-maven-plugin</artifactId>
+            <version>${scala-maven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>doc</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>compile</goal>
+                </goals>
+                <configuration>
+                  <excludes>
+                    <exclude>${project.basedir}/src/main/scala</exclude>
+                  </excludes>
+                </configuration>
+              </execution>
+            </executions>
+            <configuration>
+              <args>
+                <arg>-P:genjavadoc:out=${project.build.directory}/genjavadoc</arg>
+              </args>
+              <compilerPlugins>
+                <compilerPlugin>
+                  <groupId>com.typesafe.genjavadoc</groupId>
+                  <artifactId>genjavadoc-plugin_${scala.version}</artifactId>
+                  <version>${genjavadoc-plugin.version}</version>
+                </compilerPlugin>
+              </compilerPlugins>
+              <excludes>
+                <exclude>**/*.scala</exclude>
+              </excludes>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <version>${build-helper-maven-plugin.version}</version>
+            <executions>
+              <execution>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>add-source</goal>
+                </goals>
+                <configuration>
+                  <sources>
+                    <source>${project.build.directory}/genjavadoc</source>
+                  </sources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>${maven-javadoc-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>aggregate</id>
+                <goals>
+                  <goal>aggregate</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <!-- Turn off the javadoc doclint for now due to incomplete javadoc in the source
+              <doclint>all,-missing</doclint>
+              -->
+              <doclint>none</doclint>
+              <detectLinks>true</detectLinks>
+              <links>
+                <link>https://avro.apache.org/docs/${avro.version}/api/java</link>
+                <link>https://docs.spring.io/spring-shell/docs/1.2.0.RELEASE</link>
+                <link>https://fasterxml.github.io/jackson-databind/javadoc/2.6</link>
+                <link>https://hadoop.apache.org/docs/r${hadoop.version}/api</link>
+                <link>https://hbase.apache.org/1.2/apidocs</link>
+                <link>https://hive.apache.org/javadocs/r2.3.6/api</link>
+                <link>https://javadoc.io/static/io.javalin/javalin/2.3.0</link>
+                <link>https://javadoc.io/doc/org.apache.parquet/parquet-avro/${parquet.version}</link>
+                <link>https://javadoc.io/static/org.apache.parquet/parquet-hadoop/${parquet.version}</link>
+                <link>https://logging.apache.org/log4j/1.2/apidocs</link>
+                <link>https://metrics.dropwizard.io/4.1.0/apidocs</link>
+                <link>https://spark.apache.org/docs/${spark.version}/api/java</link>
+              </links>
+              <sourceFileExcludes>
+                <!--
+                    Exclude the generated java files with the static reference to
+                    the singleton instance of the Scala object, to avoid redundancy in javadoc
+                -->
+                <exclude>**/*$.java</exclude>
+              </sourceFileExcludes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <!-- Exists for backwards compatibility; profile doesn't do anything -->
+    <profile>
+      <id>scala-2.11</id>
+    </profile>
+
+    <profile>
+      <id>scala-2.12</id>
+      <properties>
+        <scala.version>${scala12.version}</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
+      </properties>
+      <activation>
+        <property>
+          <name>scala-2.12</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-enforcer-plugin</artifactId>
+            <version>${maven-enforcer-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>enforce-versions</id>
+                <goals>
+                  <goal>enforce</goal>
+                </goals>
+                <configuration>
+                  <rules>
+                    <bannedDependencies>
+                      <excludes combine.children="append">
+                        <exclude>*:*_2.11</exclude>
+                      </excludes>
+                    </bannedDependencies>
+                  </rules>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>spark3</id>
+      <properties>
+        <spark.version>${spark3.version}</spark.version>
+        <scala.version>${scala12.version}</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
+        <kafka.version>2.4.1</kafka.version>
+        <fasterxml.version>${fasterxml.spark3.version}</fasterxml.version>
+        <fasterxml.jackson.databind.version>${fasterxml.spark3.version}</fasterxml.jackson.databind.version>
+        <fasterxml.jackson.module.scala.version>${fasterxml.spark3.version}</fasterxml.jackson.module.scala.version>
+        <fasterxml.jackson.dataformat.yaml.version>${fasterxml.spark3.version}</fasterxml.jackson.dataformat.yaml.version>
+      </properties>
+      <activation>
+        <property>
+          <name>spark3</name>
+        </property>
+      </activation>
+    </profile>
+
+    <profile>
+      <id>skipShadeSources</id>
+      <properties>
+        <shadeSources>false</shadeSources>
+      </properties>
+      <activation>
+        <property>
+          <name>skipShadeSources</name>
+        </property>
+      </activation>
     </profile>
   </profiles>
 
-  <issueManagement>
-    <system>GitHub</system>
-    <url>https://github.com/uber/hoodie/issues</url>
-  </issueManagement>
 </project>

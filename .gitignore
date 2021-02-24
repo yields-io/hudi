@@ -6,6 +6,7 @@ target/
 .DS_Store
  
 *.class
+.java-version
  
 # Package Files #
 *.jar
@@ -14,6 +15,7 @@ target/
 *.war
 *.ear
 *.db
+*.patch 
  
 ######################
 # OSX
@@ -63,6 +65,7 @@ local.properties
 *.ipr
 *.iws
 *.iml
+*.log
 
 #######################################
 # Maven
@@ -73,5 +76,6 @@ dependency-reduced-pom.xml
 #######################################
 # Docker
 #######################################
-hoodie-integ-test/compose_env
-
+hudi-integ-test/compose_env
+node_modules
+package-lock.json
