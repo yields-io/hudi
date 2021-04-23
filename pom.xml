@@ -21,9 +21,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.apache</groupId>
-    <artifactId>apache</artifactId>
-    <version>21</version>
+    <groupId>io.yields</groupId>
+    <artifactId>yields-parent</artifactId>
+    <version>1</version>
   </parent>
 
   <groupId>org.apache.hudi</groupId>
@@ -924,25 +924,8 @@
   </dependencyManagement>
   <repositories>
     <repository>
-      <id>Maven Central</id>
-      <name>Maven Repository</name>
-      <url>https://repo.maven.apache.org/maven2</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>cloudera-repo-releases</id>
-      <url>https://repository.cloudera.com/artifactory/public/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
+      <id>nexus.yields.io</id>
+      <url>https://nexus.yields.io/repository/yields-central/</url>
     </repository>
     <repository>
       <id>confluent</id>
